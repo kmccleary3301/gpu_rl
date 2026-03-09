@@ -1,0 +1,12 @@
+{
+  "subject": "attention_score_kernel",
+  "profile_summary": {
+    "kernel_name": "attention_score_kernel",
+    "classification": "memory_bound",
+    "occupancy": 48.0,
+    "registers_per_thread": 52,
+    "dram_throughput_pct_peak": 81.0,
+    "sm_throughput_pct_peak": 34.0,
+    "l2_hit_rate": 67.0
+  }
+}

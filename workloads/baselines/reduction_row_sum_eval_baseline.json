@@ -1,0 +1,12 @@
+{
+  "baseline_id": "baseline/reduction_row_sum/eval/v1",
+  "command": [
+    "python3",
+    "workloads/reference/triton_row_sum_baseline.py",
+    "--benchmark-repeats",
+    "50"
+  ],
+  "notes": [
+    "Naive CPU row-wise summation baseline."
+  ]
+}

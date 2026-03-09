@@ -1,0 +1,53 @@
+{
+  "type": "cuda_cpp",
+  "schema_version": 2,
+  "task_id": "CUDA/0",
+  "date": "2025-11-05",
+  "prompt": "Implement the `launch` function as declared in `include/launch.h`.\n\nThe function should launch the `kernel` function (declared in `include/kernel.h`) with the provided grid and block dimensions using CUDA's triple chevron syntax.\n\nThe function signature is provided in `include/launch.h`:\n```cuda\nvoid launch(int gridSizeX, int blockSizeX, int gridSizeY = 1, int blockSizeY = 1, int gridSizeZ = 1, int blockSizeZ = 1);\n```\n\nThe kernel function is declared in `include/kernel.h`:\n```cuda\n__global__ void kernel();\n```\n\nNote that the kernel takes no parameters. Your implementation should create the appropriate grid and block dimension configurations and launch the kernel. The x, y, z grid sizes and block sizes will be provided as parameters to the `launch` function.",
+  "context_files": [
+    {
+      "path": "include/cuda_helpers.h",
+      "content": "#ifndef CUDA_HELPERS_H\n#define CUDA_HELPERS_H\n\n#include <cuda.h>\n#include <cuda_runtime.h>\n#include <cstdio>\n#include <cstdlib>\n\n#define cudaCheckErrors(msg)                                                                 \\\n    do                                                                                       \\\n    {                                                                                        \\\n        cudaError_t __err = cudaGetLastError();                                              \\\n        if (__err != cudaSuccess)                                                            \\\n        {                                                                                    \\\n            fprintf(stderr, \"Fatal error: %s (%s at %s:%d)\", msg, cudaGetErrorString(__err), \\\n                    __FILE__, __LINE__);                                                     \\\n            fprintf(stderr, \"*** FAILED - ABORTING\");                                        \\\n            exit(1);                                                                         \\\n        }                                                                                    \\\n    }                                                                                        \\\n    while (0)\n\n#endif"
+    },
+    {
+      "path": "include/kernel.h",
+      "content": "#ifndef KERNEL_H\n#define KERNEL_H\n\n__global__ void kernel();\n\n#endif"
+    },
+    {
+      "path": "include/launch.h",
+      "content": "#ifndef LAUNCH_H\n#define LAUNCH_H\n\nvoid launch(int gridSizeX, int blockSizeX, int gridSizeY = 1, int blockSizeY = 1, int gridSizeZ = 1,\n            int blockSizeZ = 1);\n\n#endif"
+    },
+    {
+      "path": "helpers/kernel.cu",
+      "content": "#include \"kernel.h\"\n\n__global__ void kernel()\n{\n    // Empty kernel for testing launch configuration\n}"
+    }
+  ],
+  "test_files": [
+    {
+      "path": "test/test_main.cu",
+      "content": "#include \"launch.h\"\n#include \"cuda_helpers.h\"\n\nint main() {\n    launch(4, 1024);\n    cudaDeviceSynchronize();\n    cudaCheckErrors(\"kernel launch failed\");\n    \n    launch(4, 32, 4, 32);\n    cudaDeviceSynchronize();\n    cudaCheckErrors(\"kernel launch failed\");\n    \n    launch(4, 16, 4, 16, 4, 4);\n    cudaDeviceSynchronize();\n    cudaCheckErrors(\"kernel launch failed\");\n    \n    return 0;\n}"
+    }
+  ],
+  "source_references": null,
+  "build_command": "nvcc -I include -o test.out solution.cu helpers/kernel.cu test/*.cu -arch=sm_80",
+  "test_command": "./test.out",
+  "min_cuda_toolkit": "12.0",
+  "timeout_seconds": 30.0,
+  "metadata": {
+    "difficulty": "easy",
+    "tags": [
+      "kernel-launch",
+      "cuda-basics",
+      "grid-dimensions"
+    ],
+    "releases": [
+      "2025-1",
+      "2025-2",
+      "2025-3"
+    ],
+    "do_not_release": false
+  },
+  "arch_list": [
+    "sm_80"
+  ]
+}

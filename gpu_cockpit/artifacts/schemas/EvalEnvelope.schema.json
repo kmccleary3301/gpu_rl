@@ -1,0 +1,51 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "compile_gate": {
+      "title": "Compile Gate",
+      "type": "string"
+    },
+    "correctness_gate": {
+      "title": "Correctness Gate",
+      "type": "string"
+    },
+    "anti_hack_gate": {
+      "title": "Anti Hack Gate",
+      "type": "string"
+    },
+    "determinism_gate": {
+      "title": "Determinism Gate",
+      "type": "string"
+    },
+    "perf_gate": {
+      "title": "Perf Gate",
+      "type": "string"
+    },
+    "reward_components": {
+      "additionalProperties": {
+        "type": "number"
+      },
+      "title": "Reward Components",
+      "type": "object"
+    },
+    "final_score": {
+      "title": "Final Score",
+      "type": "number"
+    }
+  },
+  "required": [
+    "compile_gate",
+    "correctness_gate",
+    "anti_hack_gate",
+    "determinism_gate",
+    "perf_gate",
+    "final_score"
+  ],
+  "title": "EvalEnvelope",
+  "type": "object"
+}

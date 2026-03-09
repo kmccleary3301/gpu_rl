@@ -1,0 +1,93 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "compile_ok": {
+      "title": "Compile Ok",
+      "type": "boolean"
+    },
+    "visible_tests_ok": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Visible Tests Ok"
+    },
+    "hidden_tests_ok": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Hidden Tests Ok"
+    },
+    "dtype_sweep": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Dtype Sweep",
+      "type": "object"
+    },
+    "shape_sweep": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Shape Sweep",
+      "type": "object"
+    },
+    "determinism": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "string"
+          }
+        ]
+      },
+      "title": "Determinism",
+      "type": "object"
+    },
+    "numerical_deltas_ref": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Numerical Deltas Ref"
+    },
+    "failures": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Failures",
+      "type": "array"
+    }
+  },
+  "required": [
+    "compile_ok"
+  ],
+  "title": "CorrectnessReport",
+  "type": "object"
+}

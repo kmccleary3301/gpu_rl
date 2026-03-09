@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "artifact_17c132d69e57",
+  "run_id": "eval_20260309_174742_962645_a422a5",
+  "kind": "anti_hack_report",
+  "path": "eval/anti_hack_report.json",
+  "mime": "application/json",
+  "sha256": "b2804eb5c0a60dab4ceea25bf67e7945070212d7b2abce86057735836e9ee8a2",
+  "producer_event_id": null,
+  "semantic_tags": [
+    "eval",
+    "anti-hack",
+    "summary"
+  ],
+  "size_bytes": 278
+}

@@ -1,0 +1,27 @@
+{
+  "benchmark_case_id": "kernelbench/level1/88_mingptnewgelu",
+  "benchmark_case_version": "v0.1",
+  "problem_relpath": "../level1/88_MinGPTNewGelu.py",
+  "init_inputs": [],
+  "visible_inputs": [
+    [
+      [-1.5, -0.25, 0.0, 0.75],
+      [1.5, 2.0, -2.0, 0.5]
+    ]
+  ],
+  "hidden_inputs": [
+    [
+      [-3.0, -1.0, 0.2, 1.5],
+      [2.5, -2.5, 0.9, -0.7]
+    ]
+  ],
+  "benchmark": {
+    "init_inputs": [],
+    "inputs": [
+      [
+        [0.0, 0.1, 0.2, 0.3],
+        [0.4, 0.5, 0.6, 0.7]
+      ]
+    ]
+  }
+}

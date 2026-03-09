@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "baseline_id": "baseline/kernelbench/level1/32_hardtanh/eval/v1",
+  "timer": "wall_clock",
+  "warmups": 1,
+  "repeats": 3,
+  "cold_compile_ms": null,
+  "steady_state_ms_p50": 1411.0,
+  "steady_state_ms_p95": 1429.0,
+  "baseline_steady_state_ms_p50": 1429.0,
+  "baseline_steady_state_ms_p95": 1448.8,
+  "speedup_vs_baseline": 1.0127569099929128,
+  "variance_pct": 0.987423898865598,
+  "memory_peak_mb": null,
+  "perf_notes": [
+    "subprocess benchmark",
+    "baseline:baseline/kernelbench/level1/32_hardtanh/eval/v1"
+  ]
+}

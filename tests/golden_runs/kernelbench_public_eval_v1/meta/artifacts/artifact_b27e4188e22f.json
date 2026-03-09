@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "artifact_b27e4188e22f",
+  "run_id": "eval_20260309_174742_962645_a422a5",
+  "kind": "hook_execution",
+  "path": "correctness/hidden_tests_summary.json",
+  "mime": "application/json",
+  "sha256": "3ac08d32aba86814eea794b3796f2ca2dce3b5da69b50f511778fb829d620683",
+  "producer_event_id": "evt_000007",
+  "semantic_tags": [
+    "correctness",
+    "hook",
+    "hidden_tests",
+    "summary"
+  ],
+  "size_bytes": 256
+}

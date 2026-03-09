@@ -1,0 +1,22 @@
+{
+  "case_id": "case/profile_diagnose/eval/v1",
+  "adapter": "profile_diagnose",
+  "task_ref": "task/profile_diagnose/eval/v1",
+  "description": "Structured diagnosis over normalized profiler fixtures with visible and hidden bottleneck checks.",
+  "operator_family": "profile_diagnose",
+  "difficulty": "medium",
+  "allowed_backends": ["cuda"],
+  "feature_requirements": [],
+  "default_command": [
+    "python3",
+    "workloads/reference/profile_diagnose_candidate.py",
+    "--benchmark-repeats",
+    "50"
+  ],
+  "tags": [
+    "diagnose",
+    "profile",
+    "bottleneck",
+    "analysis"
+  ]
+}

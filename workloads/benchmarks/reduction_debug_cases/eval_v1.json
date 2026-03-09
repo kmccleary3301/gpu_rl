@@ -1,0 +1,28 @@
+{
+  "case_id": "case/reduction_debug/eval/v1",
+  "adapter": "reduction_debug",
+  "task_ref": "task/reduction_debug/eval/v1",
+  "description": "Debug a broken Triton row-sum kernel with a masked last-column bug.",
+  "operator_family": "reduction_sum",
+  "difficulty": "medium",
+  "allowed_backends": [
+    "triton"
+  ],
+  "feature_requirements": [
+    "cuda",
+    "torch",
+    "triton"
+  ],
+  "default_command": [
+    "python3",
+    "workloads/reference/triton_row_sum_debug_candidate.py",
+    "--benchmark-repeats",
+    "20"
+  ],
+  "tags": [
+    "debug",
+    "triton",
+    "reduction",
+    "masking"
+  ]
+}

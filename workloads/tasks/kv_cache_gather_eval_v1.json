@@ -1,0 +1,49 @@
+{
+  "task_id": "task/kv_cache_gather/eval/v1",
+  "verb": "optimize",
+  "operator_family": "kv_cache_gather",
+  "difficulty": "medium",
+  "prompt": "Run a Triton paged KV-cache gather kernel on CUDA and print JSON with visible_kv_rows and hidden_kv_rows. The candidate should gather rows from a cache table using page_ids and should use Triton for the gather path rather than torch.index_select or advanced indexing shortcuts.",
+  "baseline_ref": "workloads/baselines/kv_cache_gather_eval_baseline.json",
+  "reference_impl_ref": "workloads/reference/triton_kv_cache_gather_candidate.py",
+  "visible_tests_ref": "workloads/tests/kv_cache_visible.py",
+  "hidden_tests_ref": "workloads/tests/kv_cache_hidden.py",
+  "input_generator_ref": null,
+  "deterministic_mode": true,
+  "feature_requirements": [
+    "cuda",
+    "torch",
+    "triton"
+  ],
+  "numerical_policy": {
+    "dtype_matrix": [
+      "fp32"
+    ],
+    "rtol": 1e-05,
+    "atol": 1e-06
+  },
+  "perf_protocol": {
+    "warmups": 1,
+    "repeats": 3,
+    "timer": "wall_clock",
+    "split_compile_from_run": true
+  },
+  "allowed_backends": [
+    "triton"
+  ],
+  "forbidden_patterns": [
+    "torch.index_select(",
+    ".index_select(",
+    "cache[page_ids"
+  ],
+  "required_artifacts": [
+    "meta/doctor_report.json",
+    "prompt/task_spec.json",
+    "correctness/correctness.json",
+    "correctness/determinism.json",
+    "eval/anti_hack_report.json",
+    "eval/eval_envelope.json",
+    "perf/benchmark.json",
+    "perf/raw_timings.json"
+  ]
+}

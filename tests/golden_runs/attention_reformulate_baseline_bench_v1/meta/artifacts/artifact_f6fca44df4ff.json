@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "artifact_f6fca44df4ff",
+  "run_id": "bench_20260309_174710_322994_669535",
+  "kind": "doctor_report",
+  "path": "meta/doctor_report.json",
+  "mime": "application/json",
+  "sha256": "87966e8cf17ab0360404493ee0930e9b0a2a70eb7652d1abe332e51d30933ca2",
+  "producer_event_id": null,
+  "semantic_tags": [
+    "doctor",
+    "environment"
+  ],
+  "size_bytes": 3799
+}

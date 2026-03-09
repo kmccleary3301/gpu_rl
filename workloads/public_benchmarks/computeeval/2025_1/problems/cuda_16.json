@@ -1,0 +1,48 @@
+{
+  "type": "cuda_cpp",
+  "schema_version": 2,
+  "task_id": "CUDA/16",
+  "date": "2025-10-31",
+  "prompt": "Write a CUDA function called `performComplexConcurrentOperations` that takes three input arrays and an output array, performs a series of operations using CUDA kernels, and returns the processed data back to the host.\n\nThe CUDA kernel functions you need to apply are defined in `include/concurrent_operations.h`:\n\n```cuda\n__global__ void kernelSquare(int *data, int size);\n__global__ void kernelIncrement(int *data, int size);\n__global__ void kernelDouble(int *data, int size);\n__global__ void kernelAdd(int *result, const int *a, const int *b, int size);\n```\n\nIn the `performComplexConcurrentOperations` function, use CUDA streams to perform the following operations efficiently:\n1. Compute the intermediate arrays: X' = X\u00b2, Y' = Y + 1, and Z' = 2Z\n2. Calculate A = X' + Y' and B = Y + Z'\n3. Finally compute the result as: result = (A + B)\u00b2\n\nEnsure the use of appropriate concurrency mechanisms to optimize performance.\n\nThe signature of the `performComplexConcurrentOperations` function is:\n```cuda\nvoid performComplexConcurrentOperations(int *result, const int *arrayX, const int *arrayY,\n                                        const int *arrayZ, int size);\n```",
+  "context_files": [
+    {
+      "path": "helpers.cu",
+      "content": "#include \"concurrent_operations.h\"\n\n__global__ void kernelSquare(int *data, int size)\n{\n    int i = blockIdx.x * blockDim.x + threadIdx.x;\n    if (i < size)\n    {\n        data[i] = data[i] * data[i];\n    }\n}\n\n__global__ void kernelIncrement(int *data, int size)\n{\n    int i = blockIdx.x * blockDim.x + threadIdx.x;\n    if (i < size)\n    {\n        data[i] += 1;\n    }\n}\n\n__global__ void kernelDouble(int *data, int size)\n{\n    int i = blockIdx.x * blockDim.x + threadIdx.x;\n    if (i < size)\n    {\n        data[i] *= 2;\n    }\n}\n\n__global__ void kernelAdd(int *result, const int *a, const int *b, int size)\n{\n    int i = blockIdx.x * blockDim.x + threadIdx.x;\n    if (i < size)\n    {\n        result[i] = a[i] + b[i];\n    }\n}\n\nvoid calculateOnCPU(int *result, const int *arrayX, const int *arrayY, const int *arrayZ, int size)\n{\n    for (int i = 0; i < size; ++i)\n    {\n        int X_prime = arrayX[i] * arrayX[i];\n        int Y_prime = arrayY[i] + 1;\n        int Z_prime = arrayZ[i] * 2;\n        int A       = X_prime + Y_prime;\n        int B       = arrayY[i] + Z_prime;\n        result[i]   = (A + B) * (A + B);\n    }\n}"
+    },
+    {
+      "path": "include/concurrent_operations.h",
+      "content": "#ifndef CONCURRENT_OPERATIONS_H\n#define CONCURRENT_OPERATIONS_H\n\n// Kernel function declarations\n__global__ void kernelSquare(int *data, int size);\n__global__ void kernelIncrement(int *data, int size);\n__global__ void kernelDouble(int *data, int size);\n__global__ void kernelAdd(int *result, const int *a, const int *b, int size);\n\n// Main function to implement\nvoid performComplexConcurrentOperations(int *result, const int *arrayX, const int *arrayY,\n                                        const int *arrayZ, int size);\n\n// CPU validation function\nvoid calculateOnCPU(int *result, const int *arrayX, const int *arrayY, const int *arrayZ, int size);\n\n#endif // CONCURRENT_OPERATIONS_H"
+    }
+  ],
+  "test_files": [
+    {
+      "path": "test/test_main.cu",
+      "content": "#include \"concurrent_operations.h\"\n#include <cassert>\n#include <cstdlib>\n\nint launch()\n{\n    const int size = 1 << 20;   // 1M elements\n    int *arrayX    = new int[size];\n    int *arrayY    = new int[size];\n    int *arrayZ    = new int[size];\n    int *result    = new int[size];\n    int *expected  = new int[size];\n\n    // Generate random test data\n    for (int i = 0; i < size; ++i)\n    {\n        arrayX[i] = rand() % 100;\n        arrayY[i] = rand() % 10;\n        arrayZ[i] = rand() % 50;\n    }\n    // Perform the operations on the GPU\n    performComplexConcurrentOperations(result, arrayX, arrayY, arrayZ, size);\n\n    // Calculate the expected results on the CPU\n    calculateOnCPU(expected, arrayX, arrayY, arrayZ, size);\n\n    // Verify the results\n    for (int i = 0; i < size; ++i)\n    {\n        assert(result[i] == expected[i]);\n    }\n\n    // Clean up\n    delete[] arrayX;\n    delete[] arrayY;\n    delete[] arrayZ;\n    delete[] result;\n    delete[] expected;\n\n    return 0;\n}\n\nint main() {\n    launch();\n}"
+    }
+  ],
+  "source_references": null,
+  "build_command": "nvcc -I include -o test.out solution.cu helpers.cu test/*.cu -arch=sm_90a -arch=sm_89 -arch=sm_80",
+  "test_command": "./test.out",
+  "min_cuda_toolkit": "12.0",
+  "timeout_seconds": 30.0,
+  "metadata": {
+    "difficulty": "medium",
+    "tags": [
+      "streams",
+      "concurrency",
+      "kernels",
+      "memory-management"
+    ],
+    "releases": [
+      "2025-1",
+      "2025-2",
+      "2025-3"
+    ],
+    "do_not_release": false
+  },
+  "arch_list": [
+    "sm_80",
+    "sm_89",
+    "sm_90"
+  ]
+}

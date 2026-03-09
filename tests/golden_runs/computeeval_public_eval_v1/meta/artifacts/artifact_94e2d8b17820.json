@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "artifact_94e2d8b17820",
+  "run_id": "eval_20260309_174759_675607_86753a",
+  "kind": "determinism_report",
+  "path": "correctness/determinism.json",
+  "mime": "application/json",
+  "sha256": "cd9b4e1e05cdab0f06f5bae424340ec6c8a8c49d2bfac88e875a67caa7f06bbd",
+  "producer_event_id": "evt_000009",
+  "semantic_tags": [
+    "correctness",
+    "determinism",
+    "summary"
+  ],
+  "size_bytes": 1326
+}

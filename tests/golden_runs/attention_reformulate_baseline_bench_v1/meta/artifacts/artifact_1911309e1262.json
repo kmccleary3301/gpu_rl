@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "artifact_1911309e1262",
+  "run_id": "bench_20260309_174710_322994_669535",
+  "kind": "environment_snapshot",
+  "path": "replay/environment.json",
+  "mime": "application/json",
+  "sha256": "f0e381bc9b677c9b712fb00cba8b2632a58150dbc49fa8f6ad4fa08fb9ec5f71",
+  "producer_event_id": null,
+  "semantic_tags": [
+    "replay",
+    "environment"
+  ],
+  "size_bytes": 151
+}

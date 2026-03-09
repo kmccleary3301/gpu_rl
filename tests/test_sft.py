@@ -1,0 +1,93 @@
+from __future__ import annotations
+
+import json
+from pathlib import Path
+import shutil
+import sys
+import unittest
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from gpu_cockpit.engine.environment import run_scripted_reference_episode
+from gpu_cockpit.engine.knowledge import build_knowledge_index
+from gpu_cockpit.engine.sft import package_trajectory_dataset_as_sft, validate_sft_dataset
+from gpu_cockpit.engine.trajectory import export_episode_dataset
+
+
+class SFTPackagingTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tmp_root = ROOT / "tests" / "tmp_sft"
+        if self.tmp_root.exists():
+            shutil.rmtree(self.tmp_root, ignore_errors=True)
+        self.tmp_root.mkdir(parents=True, exist_ok=True)
+        shutil.copytree(ROOT / "workloads", self.tmp_root / "workloads")
+        shutil.copytree(ROOT / "knowledge", self.tmp_root / "knowledge")
+        build_knowledge_index(self.tmp_root)
+
+    def tearDown(self) -> None:
+        if self.tmp_root.exists():
+            shutil.rmtree(self.tmp_root, ignore_errors=True)
+
+    def test_package_and_validate_sft_dataset(self) -> None:
+        episode = run_scripted_reference_episode(
+            self.tmp_root,
+            "task/smoke/eval/v1",
+            ["python3", "-c", "print('GPU_COCKPIT_SMOKE_OK')"],
+        )
+        trajectory_dir = self.tmp_root / "trajectory_dataset"
+        export_episode_dataset([episode], trajectory_dir, policy_id="scripted_reference_v1", split="seed")
+        out_dir = self.tmp_root / "sft_dataset"
+        manifest_path = package_trajectory_dataset_as_sft(
+            self.tmp_root,
+            trajectory_dir,
+            out_dir,
+            split="train",
+        )
+        self.assertTrue(manifest_path.exists())
+        validation = validate_sft_dataset(out_dir)
+        self.assertEqual(validation["status"], "ok")
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        self.assertEqual(manifest["example_count"], 1)
+        example_path = out_dir / manifest["example_refs"][0]
+        example = json.loads(example_path.read_text(encoding="utf-8"))
+        self.assertEqual(example["task_id"], "task/smoke/eval/v1")
+        self.assertIn("knowledge_query", example["response"])
+        self.assertNotEqual(example["metadata"]["training_example_kind"], "unusable")
+
+    def test_package_filters_public_benchmark_and_verb(self) -> None:
+        smoke_episode = run_scripted_reference_episode(
+            self.tmp_root,
+            "task/smoke/eval/v1",
+            ["python3", "-c", "print('GPU_COCKPIT_SMOKE_OK')"],
+        )
+        public_episode = run_scripted_reference_episode(
+            self.tmp_root,
+            "task/kernelbench/level1/32_hardtanh/eval/v1",
+            [
+                "python3",
+                "workloads/reference/kernelbench_reference_runner.py",
+                "--case-config",
+                "workloads/public_benchmarks/kernelbench/v0_1/cases/level1_032_hardtanh.json",
+                "--benchmark-repeats",
+                "2",
+            ],
+            section="eval",
+        )
+        trajectory_dir = self.tmp_root / "filtered_trajectory_dataset"
+        export_episode_dataset([smoke_episode, public_episode], trajectory_dir, policy_id="scripted_reference_v1", split="seed")
+        out_dir = self.tmp_root / "filtered_sft_dataset"
+        public_verb = public_episode.task_verb or "optimize"
+        manifest_path = package_trajectory_dataset_as_sft(
+            self.tmp_root,
+            trajectory_dir,
+            out_dir,
+            split="train",
+            include_failures=False,
+            only_public_benchmarks=True,
+            verb_allowlist=[public_verb],
+        )
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        self.assertEqual(manifest["example_count"], 1)
+        self.assertEqual(manifest["metadata"]["verb_allowlist"], [public_verb])

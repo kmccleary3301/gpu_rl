@@ -1,0 +1,33 @@
+{
+  "case_id": "case/computeeval/2025_1/cuda_0_launch_audit/v1",
+  "adapter": "computeeval",
+  "task_ref": "task/computeeval/cuda_0_launch_audit/eval/v1",
+  "description": "Curated ComputeEval 2025-1 CUDA/0 launch-audit variant.",
+  "source_benchmark": "ComputeEval",
+  "source_case_ref": "CUDA/0",
+  "source_case_version": "2025-1",
+  "operator_family": "cuda_kernel_launch",
+  "difficulty": "easy",
+  "allowed_backends": ["cuda"],
+  "feature_requirements": [],
+  "default_command": [
+    "python3",
+    "workloads/reference/computeeval_reference_runner.py",
+    "--problem",
+    "workloads/public_benchmarks/computeeval/2025_1/problems/cuda_0.json",
+    "--benchmark-repeats",
+    "20"
+  ],
+  "tags": ["public-benchmark", "computeeval", "cuda", "kernel-launch", "correctness-heavy", "metadata-heavy", "curated-variant", "launch-audit"],
+  "metadata": {
+    "release": "2025-1",
+    "official_task_id": "CUDA/0",
+    "benchmark_name": "ComputeEval",
+    "benchmark_version": "2025-1",
+    "eval_types": ["correctness-heavy", "metadata-heavy"],
+    "curation_batch": "computeeval_2025_1_batch2",
+    "official_problem_path": "workloads/public_benchmarks/computeeval/2025_1/problems/cuda_0.json",
+    "variant_kind": "launch-audit",
+    "variant_of_case": "case/computeeval/2025_1/cuda_0/v1"
+  }
+}

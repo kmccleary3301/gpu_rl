@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "artifact_636b25dd3b49",
+  "run_id": "eval_20260309_174725_339789_92c1f3",
+  "kind": "benchmark_timings",
+  "path": "perf/raw_timings.json",
+  "mime": "application/json",
+  "sha256": "6aea6252a6e4ac1573e997d82783c4837ce5b23f09ab9bc7e8cc4676043650e8",
+  "producer_event_id": "evt_000003",
+  "semantic_tags": [
+    "perf",
+    "benchmark",
+    "raw"
+  ],
+  "size_bytes": 653
+}

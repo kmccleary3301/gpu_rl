@@ -1,0 +1,12 @@
+{
+  "baseline_id": "baseline/attention_reformulate/eval/v1",
+  "command": [
+    "python3",
+    "workloads/reference/triton_attention_score_weak_baseline.py",
+    "--benchmark-repeats",
+    "2"
+  ],
+  "notes": [
+    "Naive loop-based causal attention-score baseline used for reformulation tasks."
+  ]
+}

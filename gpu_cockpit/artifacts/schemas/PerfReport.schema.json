@@ -1,0 +1,118 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "baseline_id": {
+      "title": "Baseline Id",
+      "type": "string"
+    },
+    "timer": {
+      "title": "Timer",
+      "type": "string"
+    },
+    "warmups": {
+      "minimum": 0,
+      "title": "Warmups",
+      "type": "integer"
+    },
+    "repeats": {
+      "minimum": 1,
+      "title": "Repeats",
+      "type": "integer"
+    },
+    "cold_compile_ms": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Cold Compile Ms"
+    },
+    "steady_state_ms_p50": {
+      "minimum": 0.0,
+      "title": "Steady State Ms P50",
+      "type": "number"
+    },
+    "steady_state_ms_p95": {
+      "minimum": 0.0,
+      "title": "Steady State Ms P95",
+      "type": "number"
+    },
+    "baseline_steady_state_ms_p50": {
+      "anyOf": [
+        {
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Baseline Steady State Ms P50"
+    },
+    "baseline_steady_state_ms_p95": {
+      "anyOf": [
+        {
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Baseline Steady State Ms P95"
+    },
+    "speedup_vs_baseline": {
+      "title": "Speedup Vs Baseline",
+      "type": "number"
+    },
+    "variance_pct": {
+      "minimum": 0.0,
+      "title": "Variance Pct",
+      "type": "number"
+    },
+    "memory_peak_mb": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Memory Peak Mb"
+    },
+    "perf_notes": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Perf Notes",
+      "type": "array"
+    }
+  },
+  "required": [
+    "baseline_id",
+    "timer",
+    "warmups",
+    "repeats",
+    "steady_state_ms_p50",
+    "steady_state_ms_p95",
+    "speedup_vs_baseline",
+    "variance_pct"
+  ],
+  "title": "PerfReport",
+  "type": "object"
+}

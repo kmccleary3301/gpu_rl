@@ -1,0 +1,37 @@
+{
+  "task_id": "task/profile_diagnose/eval/v1",
+  "verb": "diagnose",
+  "operator_family": "profile_diagnose",
+  "difficulty": "medium",
+  "prompt": "Read the visible and hidden normalized profiler fixtures and print JSON with visible_diagnosis and hidden_diagnosis. Each diagnosis should identify the primary bottleneck, a reason_code, the supporting artifact ref, a confidence score, and one concrete next_action.",
+  "baseline_ref": null,
+  "reference_impl_ref": "workloads/reference/profile_diagnose_candidate.py",
+  "visible_tests_ref": "workloads/tests/profile_diagnose_visible.py",
+  "hidden_tests_ref": "workloads/tests/profile_diagnose_hidden.py",
+  "input_generator_ref": null,
+  "deterministic_mode": true,
+  "feature_requirements": [],
+  "numerical_policy": {
+    "dtype_matrix": ["metadata_only"],
+    "rtol": 0.0,
+    "atol": 0.0
+  },
+  "perf_protocol": {
+    "warmups": 1,
+    "repeats": 3,
+    "timer": "wall_clock",
+    "split_compile_from_run": true
+  },
+  "allowed_backends": ["cuda"],
+  "forbidden_patterns": [],
+  "required_artifacts": [
+    "meta/doctor_report.json",
+    "prompt/task_spec.json",
+    "correctness/correctness.json",
+    "correctness/determinism.json",
+    "eval/anti_hack_report.json",
+    "eval/eval_envelope.json",
+    "perf/benchmark.json",
+    "perf/raw_timings.json"
+  ]
+}

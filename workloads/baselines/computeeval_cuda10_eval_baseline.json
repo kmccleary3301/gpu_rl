@@ -1,0 +1,14 @@
+{
+  "baseline_id": "baseline/computeeval/cuda_10/eval/v1",
+  "command": [
+    "python3",
+    "workloads/reference/computeeval_reference_runner.py",
+    "--problem",
+    "workloads/public_benchmarks/computeeval/2025_1/problems/cuda_10.json",
+    "--benchmark-repeats",
+    "200"
+  ],
+  "notes": [
+    "Reference runner for a curated ComputeEval 2025-1 CUDA/10 dynamic-parallel reduction case."
+  ]
+}

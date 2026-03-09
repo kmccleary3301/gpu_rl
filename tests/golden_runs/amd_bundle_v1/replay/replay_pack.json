@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "run_id": "amd_bundle_v1",
+  "replay_version": "1.0.0",
+  "image_digest": null,
+  "seed_pack": {
+    "global_seed": 1234,
+    "input_seed": 5678
+  },
+  "hardware_fingerprint_ref": "meta/hardware_fingerprint.json",
+  "input_snapshot_ref": "replay/environment.json",
+  "task_ref": "task/amd/smoke/diagnose/v1",
+  "commands_ref": "replay/command.json",
+  "required_artifacts": [
+    "manifest.json",
+    "events.jsonl",
+    "summary.json",
+    "summary.md",
+    "prompt/task_spec.json",
+    "meta/doctor_report.json",
+    "meta/hardware_fingerprint.json",
+    "traces/system/summary.json",
+    "traces/system/summary.md",
+    "profiles/kernel/summary.json",
+    "profiles/kernel/summary.md",
+    "bottlenecks/primary.json",
+    "replay/command.json",
+    "replay/environment.json"
+  ]
+}

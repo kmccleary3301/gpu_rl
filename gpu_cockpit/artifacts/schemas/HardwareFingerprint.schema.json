@@ -1,0 +1,115 @@
+{
+  "$defs": {
+    "ToolVersionSet": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "versions": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Versions",
+          "type": "object"
+        }
+      },
+      "title": "ToolVersionSet",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "vendor": {
+      "title": "Vendor",
+      "type": "string"
+    },
+    "gpu_name": {
+      "title": "Gpu Name",
+      "type": "string"
+    },
+    "arch": {
+      "title": "Arch",
+      "type": "string"
+    },
+    "driver_version": {
+      "title": "Driver Version",
+      "type": "string"
+    },
+    "runtime_version": {
+      "title": "Runtime Version",
+      "type": "string"
+    },
+    "memory_gb": {
+      "minimum": 0,
+      "title": "Memory Gb",
+      "type": "integer"
+    },
+    "power_limit_w": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Power Limit W"
+    },
+    "clock_state": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Clock State"
+    },
+    "mig_mode": {
+      "default": false,
+      "title": "Mig Mode",
+      "type": "boolean"
+    },
+    "mps_mode": {
+      "default": false,
+      "title": "Mps Mode",
+      "type": "boolean"
+    },
+    "host_kernel": {
+      "title": "Host Kernel",
+      "type": "string"
+    },
+    "container_runtime": {
+      "title": "Container Runtime",
+      "type": "string"
+    },
+    "tool_versions": {
+      "$ref": "#/$defs/ToolVersionSet"
+    }
+  },
+  "required": [
+    "vendor",
+    "gpu_name",
+    "arch",
+    "driver_version",
+    "runtime_version",
+    "memory_gb",
+    "host_kernel",
+    "container_runtime",
+    "tool_versions"
+  ],
+  "title": "HardwareFingerprint",
+  "type": "object"
+}

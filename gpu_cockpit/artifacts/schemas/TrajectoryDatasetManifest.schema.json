@@ -1,0 +1,105 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "dataset_id": {
+      "title": "Dataset Id",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "policy_id": {
+      "title": "Policy Id",
+      "type": "string"
+    },
+    "split": {
+      "title": "Split",
+      "type": "string"
+    },
+    "format_version": {
+      "default": "1.1.0",
+      "title": "Format Version",
+      "type": "string"
+    },
+    "episode_count": {
+      "minimum": 0,
+      "title": "Episode Count",
+      "type": "integer"
+    },
+    "successful_episode_count": {
+      "minimum": 0,
+      "title": "Successful Episode Count",
+      "type": "integer"
+    },
+    "failed_episode_count": {
+      "minimum": 0,
+      "title": "Failed Episode Count",
+      "type": "integer"
+    },
+    "episode_refs": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Episode Refs",
+      "type": "array"
+    },
+    "task_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Task Ids",
+      "type": "array"
+    },
+    "verb_counts": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "Verb Counts",
+      "type": "object"
+    },
+    "operator_family_counts": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "Operator Family Counts",
+      "type": "object"
+    },
+    "terminal_state_counts": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "Terminal State Counts",
+      "type": "object"
+    },
+    "readiness_counts": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "Readiness Counts",
+      "type": "object"
+    },
+    "metadata": {
+      "additionalProperties": true,
+      "title": "Metadata",
+      "type": "object"
+    }
+  },
+  "required": [
+    "dataset_id",
+    "created_at",
+    "policy_id",
+    "split",
+    "episode_count",
+    "successful_episode_count",
+    "failed_episode_count"
+  ],
+  "title": "TrajectoryDatasetManifest",
+  "type": "object"
+}

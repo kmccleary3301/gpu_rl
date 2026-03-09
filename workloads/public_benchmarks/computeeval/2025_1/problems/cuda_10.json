@@ -1,0 +1,44 @@
+{
+  "type": "cuda_cpp",
+  "schema_version": 2,
+  "task_id": "CUDA/10",
+  "date": "2025-10-31",
+  "prompt": "Write a CUDA function called `gpuRecursiveReduce` that performs recursive reduction on an input\narray using dynamic parallelism and dynamic shared memory.\n\nThe function must implement the following signature from `include/gpu_recursive_reduce.h`:\n```cuda\n__global__ void gpuRecursiveReduce(int *g_idata, int *g_odata, unsigned int isize);\n```\n\nParameters:\n- `g_idata`: Input array on device\n- `g_odata`: Output array on device (partial sums per block)\n- `isize`: Size of input array\n\nThe function should:\n1. Use dynamic shared memory for partial sums within each block\n2. Perform tree-based reduction within each block\n3. Use dynamic parallelism to recursively reduce block results when multiple blocks are used",
+  "context_files": [
+    {
+      "path": "include/gpu_recursive_reduce.h",
+      "content": "#ifndef GPU_RECURSIVE_REDUCE_H\n#define GPU_RECURSIVE_REDUCE_H\n\n__global__ void gpuRecursiveReduce(int *g_idata, int *g_odata, unsigned int isize);\n\n#endif // GPU_RECURSIVE_REDUCE_H"
+    }
+  ],
+  "test_files": [
+    {
+      "path": "test/test_main.cu",
+      "content": "#include \"gpu_recursive_reduce.h\"\n#include <assert.h>\n#include <stdio.h>\n#include <stdlib.h>\n#include <time.h>\n\n#define cudaCheckErrors(msg)                                                                   \\\n    do                                                                                         \\\n    {                                                                                          \\\n        cudaError_t __err = cudaGetLastError();                                                \\\n        if (__err != cudaSuccess)                                                              \\\n        {                                                                                      \\\n            fprintf(stderr, \"Fatal error: %s (%s at %s:%d)\\n\", msg, cudaGetErrorString(__err), \\\n                    __FILE__, __LINE__);                                                       \\\n            fprintf(stderr, \"*** FAILED - ABORTING\\n\");                                        \\\n            exit(1);                                                                           \\\n        }                                                                                      \\\n    }                                                                                          \\\n    while (0)\n\nvoid initializeArray(int *data, int size)\n{\n    // set random seed once before loop\n    srand(42);\n    for (int i = 0; i < size; i++)\n    {\n        data[i] = rand() % 100;\n    }\n}\n\nint cpuReduce(int *data, int size)\n{\n    int sum = 0;\n    for (int i = 0; i < size; i++)\n    {\n        sum += data[i];\n    }\n    return sum;\n}\n\nint launch(void)\n{\n    int isize    = 1 << 20;   // 2^20 elements\n    int *h_idata = (int *)malloc(isize * sizeof(int));\n    int *h_odata = (int *)malloc(isize * sizeof(int));\n    int *d_idata, *d_odata;\n\n    initializeArray(h_idata, isize);\n\n    int cpu_sum = cpuReduce(h_idata, isize);\n\n    cudaMalloc(&d_idata, isize * sizeof(int));\n    cudaMalloc(&d_odata, isize * sizeof(int));\n\n    cudaMemcpy(d_idata, h_idata, isize * sizeof(int), cudaMemcpyHostToDevice);\n\n    int threads = 256;\n    int blocks  = (isize + threads - 1) / threads;\n    gpuRecursiveReduce<<<blocks, threads, threads * sizeof(int)>>>(d_idata, d_odata, isize);\n    cudaCheckErrors(\"Kernel launch failure\");\n\n    cudaMemcpy(h_odata, d_odata, blocks * sizeof(int), cudaMemcpyDeviceToHost);\n    cudaCheckErrors(\"Memcpy failure\");\n\n    int gpu_sum = cpuReduce(h_odata, blocks);\n\n    assert(cpu_sum == gpu_sum);\n\n    free(h_idata);\n    free(h_odata);\n    cudaFree(d_idata);\n    cudaFree(d_odata);\n\n    return 0;\n}\n\nint main() {\n    launch();\n    return 0;\n}"
+    }
+  ],
+  "source_references": null,
+  "build_command": "nvcc -I include -o test.out solution.cu test/*.cu -arch=sm_90a -arch=sm_89 -arch=sm_80 -rdc=true -lcudadevrt",
+  "test_command": "./test.out",
+  "min_cuda_toolkit": "12.0",
+  "timeout_seconds": 60.0,
+  "metadata": {
+    "difficulty": "medium",
+    "tags": [
+      "dynamic-parallelism",
+      "reduction",
+      "shared-memory",
+      "recursive-kernel"
+    ],
+    "releases": [
+      "2025-1",
+      "2025-2",
+      "2025-3"
+    ],
+    "do_not_release": false
+  },
+  "arch_list": [
+    "sm_80",
+    "sm_89",
+    "sm_90"
+  ]
+}

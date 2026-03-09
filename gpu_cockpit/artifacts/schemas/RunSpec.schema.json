@@ -1,0 +1,205 @@
+{
+  "$defs": {
+    "BudgetSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "wall_seconds": {
+          "exclusiveMinimum": 0,
+          "title": "Wall Seconds",
+          "type": "integer"
+        },
+        "compile_attempts": {
+          "minimum": 0,
+          "title": "Compile Attempts",
+          "type": "integer"
+        },
+        "bench_runs": {
+          "minimum": 0,
+          "title": "Bench Runs",
+          "type": "integer"
+        },
+        "profile_runs": {
+          "minimum": 0,
+          "title": "Profile Runs",
+          "type": "integer"
+        },
+        "artifact_mb": {
+          "exclusiveMinimum": 0,
+          "title": "Artifact Mb",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "wall_seconds",
+        "compile_attempts",
+        "bench_runs",
+        "profile_runs",
+        "artifact_mb"
+      ],
+      "title": "BudgetSpec",
+      "type": "object"
+    },
+    "SeedPack": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "global_seed": {
+          "title": "Global Seed",
+          "type": "integer"
+        },
+        "input_seed": {
+          "title": "Input Seed",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "global_seed",
+        "input_seed"
+      ],
+      "title": "SeedPack",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "run_id": {
+      "title": "Run Id",
+      "type": "string"
+    },
+    "parent_run_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Parent Run Id"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "engine_version": {
+      "default": "0.1.0",
+      "title": "Engine Version",
+      "type": "string"
+    },
+    "task_ref": {
+      "title": "Task Ref",
+      "type": "string"
+    },
+    "mode": {
+      "enum": [
+        "human",
+        "agent",
+        "replay",
+        "eval"
+      ],
+      "title": "Mode",
+      "type": "string"
+    },
+    "target_backend": {
+      "enum": [
+        "triton",
+        "cuda",
+        "cute",
+        "cutile",
+        "hip"
+      ],
+      "title": "Target Backend",
+      "type": "string"
+    },
+    "target_vendor": {
+      "enum": [
+        "nvidia",
+        "amd"
+      ],
+      "title": "Target Vendor",
+      "type": "string"
+    },
+    "executor": {
+      "title": "Executor",
+      "type": "string"
+    },
+    "image_digest": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Image Digest"
+    },
+    "tool_versions": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Tool Versions",
+      "type": "object"
+    },
+    "policy_pack": {
+      "title": "Policy Pack",
+      "type": "string"
+    },
+    "budgets": {
+      "$ref": "#/$defs/BudgetSpec"
+    },
+    "seed_pack": {
+      "$ref": "#/$defs/SeedPack"
+    },
+    "tags": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Tags",
+      "type": "array"
+    },
+    "notes": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Notes"
+    }
+  },
+  "required": [
+    "run_id",
+    "created_at",
+    "task_ref",
+    "mode",
+    "target_backend",
+    "target_vendor",
+    "executor",
+    "policy_pack",
+    "budgets",
+    "seed_pack"
+  ],
+  "title": "RunSpec",
+  "type": "object"
+}

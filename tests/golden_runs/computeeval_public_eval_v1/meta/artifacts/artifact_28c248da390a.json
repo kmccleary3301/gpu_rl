@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "artifact_28c248da390a",
+  "run_id": "eval_20260309_174759_675607_86753a",
+  "kind": "run_summary",
+  "path": "summary.json",
+  "mime": "application/json",
+  "sha256": "d3354113a96d1403a922edf9f1c38eb59eded479141cefdc2cd175b860766e71",
+  "producer_event_id": null,
+  "semantic_tags": [
+    "summary",
+    "run"
+  ],
+  "size_bytes": 811
+}

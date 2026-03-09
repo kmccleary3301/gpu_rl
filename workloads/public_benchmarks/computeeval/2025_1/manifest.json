@@ -1,0 +1,119 @@
+{
+  "benchmark_name": "ComputeEval",
+  "benchmark_version": "2025-1",
+  "source_repo": "https://github.com/NVIDIA/compute-eval",
+  "release_url": "https://raw.githubusercontent.com/NVIDIA/compute-eval/main/data/releases/2025-1-problems.tar.gz",
+  "release_format": "datapack",
+  "curation_batch": "computeeval_2025_1_batch2",
+  "case_count": 8,
+  "included_cases": [
+    {
+      "task_id": "CUDA/0",
+      "path": "workloads/public_benchmarks/computeeval/2025_1/problems/cuda_0.json",
+      "difficulty": "easy",
+      "tags": [
+        "kernel-launch",
+        "cuda-basics",
+        "grid-dimensions"
+      ],
+      "min_cuda_toolkit": "12.0",
+      "type": "cuda_cpp"
+    },
+    {
+      "task_id": "CUDA/10",
+      "path": "workloads/public_benchmarks/computeeval/2025_1/problems/cuda_10.json",
+      "difficulty": "medium",
+      "tags": [
+        "dynamic-parallelism",
+        "reduction",
+        "shared-memory",
+        "recursive-kernel"
+      ],
+      "min_cuda_toolkit": "12.0",
+      "type": "cuda_cpp"
+    },
+    {
+      "task_id": "CUDA/16",
+      "path": "workloads/public_benchmarks/computeeval/2025_1/problems/cuda_16.json",
+      "difficulty": "medium",
+      "tags": [
+        "streams",
+        "concurrency",
+        "kernels",
+        "memory-management"
+      ],
+      "min_cuda_toolkit": "12.0",
+      "type": "cuda_cpp"
+    },
+    {
+      "task_id": "CUDA/31",
+      "path": "workloads/public_benchmarks/computeeval/2025_1/problems/cuda_31.json",
+      "difficulty": "easy",
+      "tags": [
+        "cub",
+        "reduction",
+        "device-reduce"
+      ],
+      "min_cuda_toolkit": "12.8",
+      "type": "cuda_cpp"
+    },
+    {
+      "task_id": "CUDA/35",
+      "path": "workloads/public_benchmarks/computeeval/2025_1/problems/cuda_35.json",
+      "difficulty": "easy",
+      "tags": [
+        "thrust",
+        "scan",
+        "prefix-sum"
+      ],
+      "min_cuda_toolkit": "12.8",
+      "type": "cuda_cpp"
+    },
+    {
+      "task_id": "CUDA/0",
+      "path": "workloads/public_benchmarks/computeeval/2025_1/problems/cuda_0.json",
+      "curated_case_id": "cuda_0_launch_audit",
+      "difficulty": "easy",
+      "variant_kind": "launch-audit",
+      "tags": [
+        "kernel-launch",
+        "cuda-basics",
+        "grid-dimensions",
+        "metadata-heavy"
+      ],
+      "min_cuda_toolkit": "12.0",
+      "type": "cuda_cpp"
+    },
+    {
+      "task_id": "CUDA/16",
+      "path": "workloads/public_benchmarks/computeeval/2025_1/problems/cuda_16.json",
+      "curated_case_id": "cuda_16_streams_audit",
+      "difficulty": "medium",
+      "variant_kind": "streams-audit",
+      "tags": [
+        "streams",
+        "concurrency",
+        "kernels",
+        "memory-management",
+        "metadata-heavy"
+      ],
+      "min_cuda_toolkit": "12.0",
+      "type": "cuda_cpp"
+    },
+    {
+      "task_id": "CUDA/35",
+      "path": "workloads/public_benchmarks/computeeval/2025_1/problems/cuda_35.json",
+      "curated_case_id": "cuda_35_scan_provenance",
+      "difficulty": "easy",
+      "variant_kind": "scan-provenance",
+      "tags": [
+        "thrust",
+        "scan",
+        "prefix-sum",
+        "metadata-heavy"
+      ],
+      "min_cuda_toolkit": "12.8",
+      "type": "cuda_cpp"
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "schema_version": "1.0.0",
+  "dataset_id": "trajectory_dataset_public_collection_v1",
+  "created_at": "2026-03-09T17:48:00.078373Z",
+  "policy_id": "scripted_reference_v2",
+  "split": "golden",
+  "format_version": "1.1.0",
+  "episode_count": 2,
+  "successful_episode_count": 2,
+  "failed_episode_count": 0,
+  "episode_refs": [
+    "episodes/kernelbench_episode.json",
+    "episodes/computeeval_episode.json"
+  ],
+  "task_ids": [
+    "task/computeeval/cuda_0/eval/v1",
+    "task/kernelbench/level1/32_hardtanh/eval/v1"
+  ],
+  "verb_counts": {
+    "optimize": 2
+  },
+  "operator_family_counts": {
+    "activation_hardtanh": 1,
+    "cuda_kernel_launch": 1
+  },
+  "terminal_state_counts": {
+    "success": 2
+  },
+  "readiness_counts": {
+    "positive_rl_trace": 2
+  },
+  "metadata": {
+    "collection_kind": "public_benchmark_golden_fixture",
+    "benchmarks": [
+      "KernelBench",
+      "ComputeEval"
+    ]
+  }
+}

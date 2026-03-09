@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "artifact_71174f5b9bfc",
+  "run_id": "eval_20260309_174742_962645_a422a5",
+  "kind": "hook_stdout",
+  "path": "correctness/visible_tests_stdout.txt",
+  "mime": "text/plain",
+  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "producer_event_id": "evt_000005",
+  "semantic_tags": [
+    "correctness",
+    "hook",
+    "visible_tests",
+    "stdout"
+  ],
+  "size_bytes": 0
+}

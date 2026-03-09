@@ -1,0 +1,882 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "lhs_run_id": {
+      "title": "Lhs Run Id",
+      "type": "string"
+    },
+    "rhs_run_id": {
+      "title": "Rhs Run Id",
+      "type": "string"
+    },
+    "lhs_status": {
+      "title": "Lhs Status",
+      "type": "string"
+    },
+    "rhs_status": {
+      "title": "Rhs Status",
+      "type": "string"
+    },
+    "lhs_duration_ms": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Lhs Duration Ms"
+    },
+    "rhs_duration_ms": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rhs Duration Ms"
+    },
+    "duration_delta_ms": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Duration Delta Ms"
+    },
+    "lhs_exit_code": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Lhs Exit Code"
+    },
+    "rhs_exit_code": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rhs Exit Code"
+    },
+    "warnings_added": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Warnings Added",
+      "type": "array"
+    },
+    "warnings_removed": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Warnings Removed",
+      "type": "array"
+    },
+    "lhs_key_artifacts": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Lhs Key Artifacts",
+      "type": "array"
+    },
+    "rhs_key_artifacts": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Rhs Key Artifacts",
+      "type": "array"
+    },
+    "lhs_missing_required_artifacts": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Lhs Missing Required Artifacts",
+      "type": "array"
+    },
+    "rhs_missing_required_artifacts": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Rhs Missing Required Artifacts",
+      "type": "array"
+    },
+    "lhs_failed_scopes": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Lhs Failed Scopes",
+      "type": "array"
+    },
+    "rhs_failed_scopes": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Rhs Failed Scopes",
+      "type": "array"
+    },
+    "lhs_evidence_score": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Lhs Evidence Score"
+    },
+    "rhs_evidence_score": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rhs Evidence Score"
+    },
+    "evidence_score_delta": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Evidence Score Delta"
+    },
+    "lhs_benchmark_ready": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Lhs Benchmark Ready"
+    },
+    "rhs_benchmark_ready": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rhs Benchmark Ready"
+    },
+    "lhs_sft_ready": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Lhs Sft Ready"
+    },
+    "rhs_sft_ready": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rhs Sft Ready"
+    },
+    "lhs_rl_trace_ready": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Lhs Rl Trace Ready"
+    },
+    "rhs_rl_trace_ready": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rhs Rl Trace Ready"
+    },
+    "lhs_training_example_kind": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Lhs Training Example Kind"
+    },
+    "rhs_training_example_kind": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rhs Training Example Kind"
+    },
+    "trainworthiness_change": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Trainworthiness Change"
+    },
+    "correctness_recovered": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Correctness Recovered"
+    },
+    "perf_improved": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Perf Improved"
+    },
+    "lhs_final_score": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Lhs Final Score"
+    },
+    "rhs_final_score": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rhs Final Score"
+    },
+    "final_score_delta": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Final Score Delta"
+    },
+    "lhs_perf_p50_ms": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Lhs Perf P50 Ms"
+    },
+    "rhs_perf_p50_ms": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rhs Perf P50 Ms"
+    },
+    "perf_p50_delta_ms": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Perf P50 Delta Ms"
+    },
+    "lhs_determinism_passed": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Lhs Determinism Passed"
+    },
+    "rhs_determinism_passed": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rhs Determinism Passed"
+    },
+    "lhs_profile_classification": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Lhs Profile Classification"
+    },
+    "rhs_profile_classification": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rhs Profile Classification"
+    },
+    "lhs_profile_kernel": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Lhs Profile Kernel"
+    },
+    "rhs_profile_kernel": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rhs Profile Kernel"
+    },
+    "lhs_sanitizer_passed": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Lhs Sanitizer Passed"
+    },
+    "rhs_sanitizer_passed": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rhs Sanitizer Passed"
+    },
+    "lhs_sanitizer_error_count": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Lhs Sanitizer Error Count"
+    },
+    "rhs_sanitizer_error_count": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rhs Sanitizer Error Count"
+    },
+    "lhs_profile_occupancy": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Lhs Profile Occupancy"
+    },
+    "rhs_profile_occupancy": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rhs Profile Occupancy"
+    },
+    "occupancy_delta": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Occupancy Delta"
+    },
+    "lhs_profile_dram_pct_peak": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Lhs Profile Dram Pct Peak"
+    },
+    "rhs_profile_dram_pct_peak": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rhs Profile Dram Pct Peak"
+    },
+    "dram_pct_peak_delta": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Dram Pct Peak Delta"
+    },
+    "lhs_profile_sm_pct_peak": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Lhs Profile Sm Pct Peak"
+    },
+    "rhs_profile_sm_pct_peak": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rhs Profile Sm Pct Peak"
+    },
+    "sm_pct_peak_delta": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Sm Pct Peak Delta"
+    },
+    "lhs_profile_registers_per_thread": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Lhs Profile Registers Per Thread"
+    },
+    "rhs_profile_registers_per_thread": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rhs Profile Registers Per Thread"
+    },
+    "registers_per_thread_delta": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Registers Per Thread Delta"
+    },
+    "lhs_build_status": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Lhs Build Status"
+    },
+    "rhs_build_status": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rhs Build Status"
+    },
+    "lhs_build_compiler": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Lhs Build Compiler"
+    },
+    "rhs_build_compiler": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rhs Build Compiler"
+    },
+    "lhs_build_binary_hash": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Lhs Build Binary Hash"
+    },
+    "rhs_build_binary_hash": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rhs Build Binary Hash"
+    },
+    "build_binary_hash_changed": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Build Binary Hash Changed"
+    },
+    "lhs_triview_present": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Lhs Triview Present"
+    },
+    "rhs_triview_present": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rhs Triview Present"
+    },
+    "lhs_triview_correlation_method": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Lhs Triview Correlation Method"
+    },
+    "rhs_triview_correlation_method": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rhs Triview Correlation Method"
+    },
+    "lhs_triview_source_path": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Lhs Triview Source Path"
+    },
+    "rhs_triview_source_path": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rhs Triview Source Path"
+    },
+    "lhs_triview_line_count": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Lhs Triview Line Count"
+    },
+    "rhs_triview_line_count": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rhs Triview Line Count"
+    },
+    "triview_line_count_delta": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Triview Line Count Delta"
+    },
+    "lhs_triview_unique_source_lines": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Lhs Triview Unique Source Lines"
+    },
+    "rhs_triview_unique_source_lines": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rhs Triview Unique Source Lines"
+    },
+    "triview_unique_source_lines_delta": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Triview Unique Source Lines Delta"
+    }
+  },
+  "required": [
+    "lhs_run_id",
+    "rhs_run_id",
+    "lhs_status",
+    "rhs_status"
+  ],
+  "title": "RunComparison",
+  "type": "object"
+}

@@ -1,0 +1,41 @@
+{
+  "task_id": "task/smoke/eval/v1",
+  "verb": "diagnose",
+  "operator_family": "smoke_eval",
+  "difficulty": "L0",
+  "prompt": "Emit the exact line GPU_COCKPIT_SMOKE_OK and nothing else.",
+  "baseline_ref": "workloads/baselines/smoke_eval_baseline.json",
+  "reference_impl_ref": null,
+  "visible_tests_ref": "workloads/tests/smoke_visible.py",
+  "hidden_tests_ref": "workloads/tests/smoke_hidden.py",
+  "input_generator_ref": null,
+  "deterministic_mode": true,
+  "feature_requirements": [],
+  "numerical_policy": {
+    "dtype_matrix": [],
+    "rtol": 0.0,
+    "atol": 0.0
+  },
+  "perf_protocol": {
+    "warmups": 0,
+    "repeats": 1,
+    "timer": "wall_clock",
+    "split_compile_from_run": true
+  },
+  "allowed_backends": [
+    "triton",
+    "cuda"
+  ],
+  "forbidden_patterns": [
+    "CPU_FALLBACK",
+    "torch.topk"
+  ],
+  "required_artifacts": [
+    "correctness/correctness.json",
+    "correctness/determinism.json",
+    "eval/anti_hack_report.json",
+    "eval/eval_envelope.json",
+    "perf/benchmark.json",
+    "perf/raw_timings.json"
+  ]
+}

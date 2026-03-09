@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0.0",
+  "host_platform": "Linux-6.8.0-amd64-x86_64-with-glibc2.39",
+  "host_kernel": "6.8.0-amd64",
+  "python_executable": "/usr/bin/python3",
+  "python_version": "3.12.4",
+  "container_runtime": "docker",
+  "available_tools": [
+    {"schema_version":"1.0.0","name":"rocminfo","path":"/opt/rocm/bin/rocminfo","version":"ROCk module version 6.2.0","available":true},
+    {"schema_version":"1.0.0","name":"rocprof","path":"/opt/rocm/bin/rocprof","version":"rocprof version 6.2.0","available":true},
+    {"schema_version":"1.0.0","name":"rocprofv3","path":null,"version":null,"available":false},
+    {"schema_version":"1.0.0","name":"hipcc","path":"/opt/rocm/bin/hipcc","version":"HIP version: 6.2.0","available":true}
+  ],
+  "hardware_fingerprints": [
+    {
+      "schema_version":"1.0.0",
+      "vendor":"amd",
+      "gpu_name":"AMD Instinct MI250X",
+      "arch":"gfx90a",
+      "driver_version":"6.2.0",
+      "runtime_version":"6.2.0",
+      "memory_gb":64,
+      "power_limit_w":500,
+      "clock_state":"unknown",
+      "mig_mode":false,
+      "mps_mode":false,
+      "host_kernel":"6.8.0-amd64",
+      "container_runtime":"docker",
+      "tool_versions":{"schema_version":"1.0.0","versions":{"rocminfo":"ROCk module version 6.2.0","rocprof":"rocprof version 6.2.0","hipcc":"HIP version: 6.2.0"}}
+    }
+  ],
+  "warnings": []
+}

@@ -1,0 +1,749 @@
+{
+  "schema_version": "1.0.0",
+  "episode_id": "env_episode_20260309_174742_490c07",
+  "created_at": "2026-03-09T17:47:59.583025Z",
+  "policy_id": "scripted_reference_v2",
+  "task_id": "task/kernelbench/level1/32_hardtanh/eval/v1",
+  "task_verb": "optimize",
+  "operator_family": "activation_hardtanh",
+  "source_run_id": "eval_20260309_174742_962645_a422a5",
+  "source_run_ref": "../../golden_runs/kernelbench_public_eval_v1",
+  "episode_kind": "scripted_reference",
+  "steps": [
+    {
+      "schema_version": "1.0.0",
+      "step_index": 0,
+      "action": {
+        "schema_version": "1.0.0",
+        "action_type": "knowledge_query",
+        "step_kind": "tool_call",
+        "command": [],
+        "target_run_id": null,
+        "target_task_id": "task/kernelbench/level1/32_hardtanh/eval/v1",
+        "artifact_refs": [],
+        "metadata": {
+          "section": "summary"
+        }
+      },
+      "observation": {
+        "schema_version": "1.0.0",
+        "observation_type": "knowledge_results",
+        "run_id": null,
+        "task_id": "task/kernelbench/level1/32_hardtanh/eval/v1",
+        "status": null,
+        "backend": "cuda",
+        "vendor": null,
+        "summary_ref": null,
+        "artifact_refs": [],
+        "projection": {
+          "results": [
+            {
+              "score": 43,
+              "schema_version": "1.0.0",
+              "entry_id": "task:task/kernelbench/level1/32_hardtanh/eval/v1",
+              "kind": "task",
+              "title": "task/kernelbench/level1/32_hardtanh/eval/v1",
+              "path": "workloads/tasks/task_kernelbench_level1_32_hardtanh_eval_v1.json",
+              "source_type": "task_spec",
+              "summary": "Run the curated KernelBench v0.1 Level 1 HardTanh reference problem and print JSON with visible_result and hidden_result payloads using the shared KernelBench reference runner. Preserve the provenance fields and case config path in the output payload.",
+              "tags": [
+                "optimize",
+                "activation_hardtanh",
+                "cuda",
+                "torch"
+              ],
+              "keywords": [
+                "task",
+                "kernelbench",
+                "level1",
+                "32_hardtanh",
+                "eval",
+                "run",
+                "the",
+                "curated",
+                "level",
+                "hardtanh",
+                "reference",
+                "problem",
+                "and",
+                "print",
+                "json",
+                "with",
+                "visible_result",
+                "hidden_result",
+                "payloads",
+                "using",
+                "shared",
+                "runner",
+                "preserve",
+                "provenance",
+                "fields",
+                "case",
+                "config",
+                "path",
+                "output",
+                "payload",
+                "optimize",
+                "activation_hardtanh",
+                "cuda",
+                "torch"
+              ],
+              "operator_family": "activation_hardtanh",
+              "backend": "cuda",
+              "vendor": null,
+              "metadata": {
+                "difficulty": "public_benchmark_level1",
+                "reference_impl_ref": "workloads/reference/kernelbench_reference_runner.py",
+                "verb": "optimize",
+                "benchmark_name": "KernelBench"
+              }
+            }
+          ]
+        }
+      },
+      "reward_components": {
+        "tool_use_quality": 0.05
+      },
+      "reward_total": 0.05,
+      "terminal": false,
+      "terminal_state": null
+    },
+    {
+      "schema_version": "1.0.0",
+      "step_index": 1,
+      "action": {
+        "schema_version": "1.0.0",
+        "action_type": "eval",
+        "step_kind": "tool_call",
+        "command": [
+          "python3",
+          "workloads/reference/kernelbench_reference_runner.py",
+          "--case-config",
+          "workloads/public_benchmarks/kernelbench/v0_1/cases/level1_032_hardtanh.json",
+          "--benchmark-repeats",
+          "2"
+        ],
+        "target_run_id": "eval_20260309_174742_962645_a422a5",
+        "target_task_id": "task/kernelbench/level1/32_hardtanh/eval/v1",
+        "artifact_refs": [],
+        "metadata": {
+          "section": "eval"
+        }
+      },
+      "observation": {
+        "schema_version": "1.0.0",
+        "observation_type": "eval_projection",
+        "run_id": "eval_20260309_174742_962645_a422a5",
+        "task_id": "task/kernelbench/level1/32_hardtanh/eval/v1",
+        "status": "ok",
+        "backend": "cuda",
+        "vendor": "nvidia",
+        "summary_ref": "summary.json",
+        "artifact_refs": [],
+        "projection": {
+          "correctness_summary": {
+            "schema_version": "1.0.0",
+            "compile_ok": true,
+            "visible_tests_ok": true,
+            "hidden_tests_ok": true,
+            "dtype_sweep": {},
+            "shape_sweep": {},
+            "determinism": {
+              "runs": 2,
+              "passed": true,
+              "stable_exit_codes": true,
+              "stable_stdout": true,
+              "stable_stderr": true
+            },
+            "numerical_deltas_ref": null,
+            "failures": []
+          },
+          "determinism_summary": {
+            "schema_version": "1.0.0",
+            "command": [
+              "python3",
+              "workloads/reference/kernelbench_reference_runner.py",
+              "--case-config",
+              "workloads/public_benchmarks/kernelbench/v0_1/cases/level1_032_hardtanh.json",
+              "--benchmark-repeats",
+              "2"
+            ],
+            "runs": 2,
+            "passed": true,
+            "stable_exit_codes": true,
+            "stable_stdout": true,
+            "stable_stderr": true,
+            "baseline_exit_code": 0,
+            "baseline_stdout_sha256": "4119578aad3ef328c695d3199199af331af671c303ab964f9826e7178a5fbf74",
+            "baseline_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "attempts": [
+              {
+                "schema_version": "1.0.0",
+                "attempt_index": 1,
+                "exit_code": 0,
+                "duration_ms": 1388,
+                "stdout_sha256": "4119578aad3ef328c695d3199199af331af671c303ab964f9826e7178a5fbf74",
+                "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "stdout_bytes": 728,
+                "stderr_bytes": 0
+              },
+              {
+                "schema_version": "1.0.0",
+                "attempt_index": 2,
+                "exit_code": 0,
+                "duration_ms": 1419,
+                "stdout_sha256": "4119578aad3ef328c695d3199199af331af671c303ab964f9826e7178a5fbf74",
+                "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "stdout_bytes": 728,
+                "stderr_bytes": 0
+              }
+            ],
+            "warnings": []
+          },
+          "anti_hack_summary": {
+            "schema_version": "1.0.0",
+            "passed": true,
+            "forbidden_patterns": [],
+            "scanned_locations": [
+              "command",
+              "command/stdout.txt",
+              "command/stderr.txt"
+            ],
+            "hits": [],
+            "cpu_fallback_detected": false,
+            "library_shortcut_detected": false,
+            "warnings": []
+          },
+          "eval_envelope": {
+            "schema_version": "1.0.0",
+            "compile_gate": "pass",
+            "correctness_gate": "pass",
+            "anti_hack_gate": "pass",
+            "determinism_gate": "pass",
+            "perf_gate": "pass",
+            "reward_components": {
+              "binary_pass": 0.8,
+              "determinism": 0.0,
+              "perf": 0.2
+            },
+            "final_score": 1.0
+          },
+          "gate_summary": {
+            "compile_gate": "pass",
+            "correctness_gate": "pass",
+            "anti_hack_gate": "pass",
+            "determinism_gate": "pass",
+            "perf_gate": "pass",
+            "reasons": []
+          }
+        }
+      },
+      "reward_components": {
+        "binary_pass": 0.8,
+        "determinism": 0.0,
+        "perf": 0.2,
+        "evidence_quality": 0.0
+      },
+      "reward_total": 1.0,
+      "terminal": false,
+      "terminal_state": null
+    },
+    {
+      "schema_version": "1.0.0",
+      "step_index": 2,
+      "action": {
+        "schema_version": "1.0.0",
+        "action_type": "inspect",
+        "step_kind": "tool_call",
+        "command": [],
+        "target_run_id": "eval_20260309_174742_962645_a422a5",
+        "target_task_id": "task/kernelbench/level1/32_hardtanh/eval/v1",
+        "artifact_refs": [],
+        "metadata": {
+          "section": "eval"
+        }
+      },
+      "observation": {
+        "schema_version": "1.0.0",
+        "observation_type": "inspection",
+        "run_id": "eval_20260309_174742_962645_a422a5",
+        "task_id": "task/kernelbench/level1/32_hardtanh/eval/v1",
+        "status": "ok",
+        "backend": "cuda",
+        "vendor": "nvidia",
+        "summary_ref": "summary.json",
+        "artifact_refs": [],
+        "projection": {
+          "correctness_summary": {
+            "schema_version": "1.0.0",
+            "compile_ok": true,
+            "visible_tests_ok": true,
+            "hidden_tests_ok": true,
+            "dtype_sweep": {},
+            "shape_sweep": {},
+            "determinism": {
+              "runs": 2,
+              "passed": true,
+              "stable_exit_codes": true,
+              "stable_stdout": true,
+              "stable_stderr": true
+            },
+            "numerical_deltas_ref": null,
+            "failures": []
+          },
+          "determinism_summary": {
+            "schema_version": "1.0.0",
+            "command": [
+              "python3",
+              "workloads/reference/kernelbench_reference_runner.py",
+              "--case-config",
+              "workloads/public_benchmarks/kernelbench/v0_1/cases/level1_032_hardtanh.json",
+              "--benchmark-repeats",
+              "2"
+            ],
+            "runs": 2,
+            "passed": true,
+            "stable_exit_codes": true,
+            "stable_stdout": true,
+            "stable_stderr": true,
+            "baseline_exit_code": 0,
+            "baseline_stdout_sha256": "4119578aad3ef328c695d3199199af331af671c303ab964f9826e7178a5fbf74",
+            "baseline_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "attempts": [
+              {
+                "schema_version": "1.0.0",
+                "attempt_index": 1,
+                "exit_code": 0,
+                "duration_ms": 1388,
+                "stdout_sha256": "4119578aad3ef328c695d3199199af331af671c303ab964f9826e7178a5fbf74",
+                "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "stdout_bytes": 728,
+                "stderr_bytes": 0
+              },
+              {
+                "schema_version": "1.0.0",
+                "attempt_index": 2,
+                "exit_code": 0,
+                "duration_ms": 1419,
+                "stdout_sha256": "4119578aad3ef328c695d3199199af331af671c303ab964f9826e7178a5fbf74",
+                "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "stdout_bytes": 728,
+                "stderr_bytes": 0
+              }
+            ],
+            "warnings": []
+          },
+          "anti_hack_summary": {
+            "schema_version": "1.0.0",
+            "passed": true,
+            "forbidden_patterns": [],
+            "scanned_locations": [
+              "command",
+              "command/stdout.txt",
+              "command/stderr.txt"
+            ],
+            "hits": [],
+            "cpu_fallback_detected": false,
+            "library_shortcut_detected": false,
+            "warnings": []
+          },
+          "eval_envelope": {
+            "schema_version": "1.0.0",
+            "compile_gate": "pass",
+            "correctness_gate": "pass",
+            "anti_hack_gate": "pass",
+            "determinism_gate": "pass",
+            "perf_gate": "pass",
+            "reward_components": {
+              "binary_pass": 0.8,
+              "determinism": 0.0,
+              "perf": 0.2
+            },
+            "final_score": 1.0
+          },
+          "gate_summary": {
+            "compile_gate": "pass",
+            "correctness_gate": "pass",
+            "anti_hack_gate": "pass",
+            "determinism_gate": "pass",
+            "perf_gate": "pass",
+            "reasons": []
+          }
+        }
+      },
+      "reward_components": {
+        "evidence_quality": 0.0
+      },
+      "reward_total": 0.0,
+      "terminal": false,
+      "terminal_state": null
+    },
+    {
+      "schema_version": "1.0.0",
+      "step_index": 3,
+      "action": {
+        "schema_version": "1.0.0",
+        "action_type": "replay",
+        "step_kind": "tool_call",
+        "command": [],
+        "target_run_id": "eval_20260309_174742_962645_a422a5",
+        "target_task_id": "task/kernelbench/level1/32_hardtanh/eval/v1",
+        "artifact_refs": [
+          "command/stderr.txt",
+          "command/stdout.txt",
+          "command/summary.json",
+          "correctness/correctness.json",
+          "correctness/determinism.json",
+          "eval/anti_hack_report.json",
+          "eval/eval_envelope.json",
+          "eval/gate_summary.json",
+          "events.jsonl",
+          "manifest.json",
+          "meta/doctor_report.json",
+          "meta/hardware_fingerprint.json",
+          "meta/task_spec_full.json",
+          "perf/benchmark.json",
+          "perf/raw_timings.json",
+          "prompt/task_spec.json",
+          "summary.json",
+          "summary.md"
+        ],
+        "metadata": {
+          "section": "summary"
+        }
+      },
+      "observation": {
+        "schema_version": "1.0.0",
+        "observation_type": "replay_validation",
+        "run_id": "eval_20260309_174742_962645_a422a5",
+        "task_id": "task/kernelbench/level1/32_hardtanh/eval/v1",
+        "status": "ok",
+        "backend": "cuda",
+        "vendor": "nvidia",
+        "summary_ref": "replay/replay_pack.json",
+        "artifact_refs": [
+          "command/stderr.txt",
+          "command/stdout.txt",
+          "command/summary.json",
+          "correctness/correctness.json",
+          "correctness/determinism.json",
+          "eval/anti_hack_report.json",
+          "eval/eval_envelope.json",
+          "eval/gate_summary.json",
+          "events.jsonl",
+          "manifest.json",
+          "meta/doctor_report.json",
+          "meta/hardware_fingerprint.json",
+          "meta/task_spec_full.json",
+          "perf/benchmark.json",
+          "perf/raw_timings.json",
+          "prompt/task_spec.json",
+          "summary.json",
+          "summary.md"
+        ],
+        "projection": {
+          "run_dir": "/shared_folders/querylake_server/side_projects/gpu_rl/runs/eval_20260309_174742_962645_a422a5",
+          "status": "ok",
+          "checks": {
+            "manifest_present": true,
+            "events_present": true,
+            "replay_pack_present": true
+          },
+          "required_artifacts": [
+            "command/stderr.txt",
+            "command/stdout.txt",
+            "command/summary.json",
+            "correctness/correctness.json",
+            "correctness/determinism.json",
+            "eval/anti_hack_report.json",
+            "eval/eval_envelope.json",
+            "eval/gate_summary.json",
+            "events.jsonl",
+            "manifest.json",
+            "meta/doctor_report.json",
+            "meta/hardware_fingerprint.json",
+            "meta/task_spec_full.json",
+            "perf/benchmark.json",
+            "perf/raw_timings.json",
+            "prompt/task_spec.json",
+            "summary.json",
+            "summary.md"
+          ],
+          "missing_artifacts": [],
+          "replay_pack": {
+            "schema_version": "1.0.0",
+            "run_id": "eval_20260309_174742_962645_a422a5",
+            "replay_version": "1.0.0",
+            "image_digest": null,
+            "git_snapshot": null,
+            "seed_pack": {
+              "global_seed": 1234,
+              "input_seed": 5678
+            },
+            "hardware_fingerprint_ref": "meta/hardware_fingerprint.json",
+            "input_snapshot_ref": "replay/environment.json",
+            "task_ref": "task/kernelbench/level1/32_hardtanh/eval/v1",
+            "commands_ref": "replay/command.json",
+            "required_artifacts": [
+              "command/stderr.txt",
+              "command/stdout.txt",
+              "command/summary.json",
+              "correctness/correctness.json",
+              "correctness/determinism.json",
+              "eval/anti_hack_report.json",
+              "eval/eval_envelope.json",
+              "eval/gate_summary.json",
+              "events.jsonl",
+              "manifest.json",
+              "meta/doctor_report.json",
+              "meta/hardware_fingerprint.json",
+              "meta/task_spec_full.json",
+              "perf/benchmark.json",
+              "perf/raw_timings.json",
+              "prompt/task_spec.json",
+              "summary.json",
+              "summary.md"
+            ]
+          },
+          "evidence_quality": {
+            "schema_version": "1.0.0",
+            "run_id": "eval_20260309_174742_962645_a422a5",
+            "task_id": "task/kernelbench/level1/32_hardtanh/eval/v1",
+            "required_artifact_count": 8,
+            "missing_required_artifact_count": 0,
+            "required_artifact_completeness": 1.0,
+            "replay_completeness": 1.0,
+            "build_completeness": 0.0,
+            "profile_completeness": 0.0,
+            "eval_completeness": 1.0,
+            "provenance_completeness": 1.0,
+            "overall_score": 0.85,
+            "benchmark_reporting": {
+              "schema_version": "1.0.0",
+              "eligible": true,
+              "reasons": []
+            },
+            "sft_collection": {
+              "schema_version": "1.0.0",
+              "eligible": true,
+              "reasons": []
+            },
+            "rl_reward_trace": {
+              "schema_version": "1.0.0",
+              "eligible": true,
+              "reasons": []
+            },
+            "missing_provenance_fields": [],
+            "training_example_kind": "positive_rl_trace",
+            "notes": [
+              "no_build_artifacts",
+              "no_profile_artifacts"
+            ]
+          }
+        }
+      },
+      "reward_components": {
+        "evidence_quality": 0.15
+      },
+      "reward_total": 0.15,
+      "terminal": false,
+      "terminal_state": null
+    },
+    {
+      "schema_version": "1.0.0",
+      "step_index": 4,
+      "action": {
+        "schema_version": "1.0.0",
+        "action_type": "compare",
+        "step_kind": "tool_call",
+        "command": [],
+        "target_run_id": null,
+        "target_task_id": "task/kernelbench/level1/32_hardtanh/eval/v1",
+        "artifact_refs": [],
+        "metadata": {
+          "section": "summary"
+        }
+      },
+      "observation": {
+        "schema_version": "1.0.0",
+        "observation_type": "comparison",
+        "run_id": null,
+        "task_id": null,
+        "status": null,
+        "backend": null,
+        "vendor": null,
+        "summary_ref": null,
+        "artifact_refs": [],
+        "projection": {
+          "schema_version": "1.0.0",
+          "lhs_run_id": "eval_20260309_174742_962645_a422a5",
+          "rhs_run_id": "eval_20260309_174742_962645_a422a5",
+          "lhs_status": "ok",
+          "rhs_status": "ok",
+          "lhs_duration_ms": 1388,
+          "rhs_duration_ms": 1388,
+          "duration_delta_ms": 0,
+          "lhs_exit_code": 0,
+          "rhs_exit_code": 0,
+          "warnings_added": [],
+          "warnings_removed": [],
+          "lhs_key_artifacts": [
+            "manifest.json",
+            "events.jsonl",
+            "prompt/task_spec.json",
+            "meta/task_spec_full.json",
+            "meta/hardware_fingerprint.json",
+            "meta/doctor_report.json",
+            "correctness/correctness.json",
+            "correctness/determinism.json",
+            "eval/anti_hack_report.json",
+            "eval/eval_envelope.json",
+            "eval/gate_summary.json",
+            "summary.json",
+            "summary.md",
+            "perf/benchmark.json",
+            "perf/raw_timings.json",
+            "command/stdout.txt",
+            "command/stderr.txt",
+            "command/summary.json"
+          ],
+          "rhs_key_artifacts": [
+            "manifest.json",
+            "events.jsonl",
+            "prompt/task_spec.json",
+            "meta/task_spec_full.json",
+            "meta/hardware_fingerprint.json",
+            "meta/doctor_report.json",
+            "correctness/correctness.json",
+            "correctness/determinism.json",
+            "eval/anti_hack_report.json",
+            "eval/eval_envelope.json",
+            "eval/gate_summary.json",
+            "summary.json",
+            "summary.md",
+            "perf/benchmark.json",
+            "perf/raw_timings.json",
+            "command/stdout.txt",
+            "command/stderr.txt",
+            "command/summary.json"
+          ],
+          "lhs_missing_required_artifacts": [],
+          "rhs_missing_required_artifacts": [],
+          "lhs_failed_scopes": [],
+          "rhs_failed_scopes": [],
+          "lhs_evidence_score": 0.85,
+          "rhs_evidence_score": 0.85,
+          "evidence_score_delta": 0.0,
+          "lhs_benchmark_ready": true,
+          "rhs_benchmark_ready": true,
+          "lhs_sft_ready": true,
+          "rhs_sft_ready": true,
+          "lhs_rl_trace_ready": true,
+          "rhs_rl_trace_ready": true,
+          "lhs_training_example_kind": "positive_rl_trace",
+          "rhs_training_example_kind": "positive_rl_trace",
+          "lhs_final_score": 1.0,
+          "rhs_final_score": 1.0,
+          "final_score_delta": 0.0,
+          "lhs_perf_p50_ms": 1411.0,
+          "rhs_perf_p50_ms": 1411.0,
+          "perf_p50_delta_ms": 0.0,
+          "lhs_determinism_passed": true,
+          "rhs_determinism_passed": true,
+          "lhs_profile_classification": null,
+          "rhs_profile_classification": null,
+          "lhs_profile_kernel": null,
+          "rhs_profile_kernel": null,
+          "lhs_sanitizer_passed": null,
+          "rhs_sanitizer_passed": null,
+          "lhs_sanitizer_error_count": null,
+          "rhs_sanitizer_error_count": null,
+          "lhs_profile_occupancy": null,
+          "rhs_profile_occupancy": null,
+          "occupancy_delta": null,
+          "lhs_profile_dram_pct_peak": null,
+          "rhs_profile_dram_pct_peak": null,
+          "dram_pct_peak_delta": null,
+          "lhs_profile_sm_pct_peak": null,
+          "rhs_profile_sm_pct_peak": null,
+          "sm_pct_peak_delta": null,
+          "lhs_profile_registers_per_thread": null,
+          "rhs_profile_registers_per_thread": null,
+          "registers_per_thread_delta": null,
+          "lhs_build_status": null,
+          "rhs_build_status": null,
+          "lhs_build_compiler": null,
+          "rhs_build_compiler": null,
+          "lhs_build_binary_hash": null,
+          "rhs_build_binary_hash": null,
+          "build_binary_hash_changed": null,
+          "lhs_triview_present": false,
+          "rhs_triview_present": false,
+          "lhs_triview_correlation_method": null,
+          "rhs_triview_correlation_method": null,
+          "lhs_triview_source_path": null,
+          "rhs_triview_source_path": null,
+          "lhs_triview_line_count": null,
+          "rhs_triview_line_count": null,
+          "triview_line_count_delta": null,
+          "lhs_triview_unique_source_lines": null,
+          "rhs_triview_unique_source_lines": null,
+          "triview_unique_source_lines_delta": null
+        }
+      },
+      "reward_components": {
+        "tool_use_quality": 0.02
+      },
+      "reward_total": 0.02,
+      "terminal": true,
+      "terminal_state": "success"
+    }
+  ],
+  "final_reward": 1.22,
+  "terminal_state": "success",
+  "environment_hash": null,
+  "artifact_refs": [
+    "command/stderr.txt",
+    "command/stdout.txt",
+    "command/summary.json",
+    "correctness/correctness.json",
+    "correctness/determinism.json",
+    "eval/anti_hack_report.json",
+    "eval/eval_envelope.json",
+    "eval/gate_summary.json",
+    "events.jsonl",
+    "manifest.json",
+    "meta/doctor_report.json",
+    "meta/hardware_fingerprint.json",
+    "meta/task_spec_full.json",
+    "perf/benchmark.json",
+    "perf/raw_timings.json",
+    "prompt/task_spec.json",
+    "summary.json",
+    "summary.md"
+  ],
+  "metadata": {
+    "operator_family": "activation_hardtanh",
+    "verb": "optimize",
+    "difficulty": "public_benchmark_level1",
+    "allowed_backends": [
+      "cuda"
+    ],
+    "last_eval_solved": true,
+    "workflow": "standard",
+    "action_names": [
+      "knowledge_query",
+      "eval",
+      "inspect",
+      "replay",
+      "compare"
+    ],
+    "step_budget_total": 6,
+    "step_budget_remaining": 1,
+    "training_example_kind": "positive_rl_trace",
+    "evidence_score": 0.85,
+    "benchmark_ready": true,
+    "sft_ready": true,
+    "rl_trace_ready": true
+  }
+}

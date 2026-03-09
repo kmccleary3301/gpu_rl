@@ -1,0 +1,43 @@
+{
+  "candidate": {
+    "command": [
+      "python3",
+      "workloads/reference/kernelbench_reference_runner.py",
+      "--case-config",
+      "workloads/public_benchmarks/kernelbench/v0_1/cases/level1_032_hardtanh.json",
+      "--benchmark-repeats",
+      "2"
+    ],
+    "timings_ms": [
+      1411.0,
+      1431.0,
+      1397.0
+    ],
+    "exit_codes": [
+      0,
+      0,
+      0
+    ]
+  },
+  "baseline": {
+    "baseline_id": "baseline/kernelbench/level1/32_hardtanh/eval/v1",
+    "command": [
+      "python3",
+      "workloads/reference/kernelbench_reference_runner.py",
+      "--case-config",
+      "workloads/public_benchmarks/kernelbench/v0_1/cases/level1_032_hardtanh.json",
+      "--benchmark-repeats",
+      "50"
+    ],
+    "timings_ms": [
+      1429.0,
+      1428.0,
+      1451.0
+    ],
+    "exit_codes": [
+      0,
+      0,
+      0
+    ]
+  }
+}

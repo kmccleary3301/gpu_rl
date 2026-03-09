@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "artifact_137df5e83456",
+  "run_id": "bench_20260309_174710_322994_669535",
+  "kind": "task_spec",
+  "path": "prompt/task_spec.json",
+  "mime": "application/json",
+  "sha256": "e11281e17a46b23517d854a5f943c5e46cc787f00dbc4aa8360e14e6b94ebefa",
+  "producer_event_id": null,
+  "semantic_tags": [
+    "task",
+    "spec"
+  ],
+  "size_bytes": 1582
+}

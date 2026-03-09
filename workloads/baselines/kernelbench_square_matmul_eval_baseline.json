@@ -1,0 +1,14 @@
+{
+  "baseline_id": "baseline/kernelbench/level1/1_square_matmul/eval/v1",
+  "command": [
+    "python3",
+    "workloads/reference/kernelbench_reference_runner.py",
+    "--case-config",
+    "workloads/public_benchmarks/kernelbench/v0_1/cases/level1_001_square_matmul.json",
+    "--benchmark-repeats",
+    "50"
+  ],
+  "notes": [
+    "Reference runner for a curated KernelBench v0.1 Level 1 square matmul case."
+  ]
+}

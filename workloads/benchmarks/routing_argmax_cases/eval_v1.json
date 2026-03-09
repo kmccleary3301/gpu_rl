@@ -1,0 +1,28 @@
+{
+  "case_id": "case/routing_argmax/eval/v1",
+  "adapter": "routing_argmax",
+  "task_ref": "task/routing_argmax/eval/v1",
+  "description": "Triton routing argmax workload with stable tie-breaking and CPU baseline.",
+  "operator_family": "routing_argmax",
+  "difficulty": "medium",
+  "allowed_backends": [
+    "triton"
+  ],
+  "feature_requirements": [
+    "cuda",
+    "torch",
+    "triton"
+  ],
+  "default_command": [
+    "python3",
+    "workloads/reference/triton_routing_argmax_candidate.py",
+    "--benchmark-repeats",
+    "50"
+  ],
+  "tags": [
+    "routing",
+    "argmax",
+    "triton",
+    "gpu"
+  ]
+}

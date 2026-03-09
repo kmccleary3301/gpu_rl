@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "artifact_5ffc4ea88e86",
+  "run_id": "eval_20260309_174725_339789_92c1f3",
+  "kind": "perf_report",
+  "path": "perf/benchmark.json",
+  "mime": "application/json",
+  "sha256": "daa27213869bc51a5cb33c40e9d431f95af6ee7a72f51e2a613e2dd71df52dde",
+  "producer_event_id": "evt_000003",
+  "semantic_tags": [
+    "perf",
+    "benchmark",
+    "summary"
+  ],
+  "size_bytes": 539
+}

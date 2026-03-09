@@ -1,0 +1,31 @@
+{
+  "case_id": "case/computeeval/2025_1/cuda_16/v1",
+  "adapter": "computeeval",
+  "task_ref": "task/computeeval/cuda_16/eval/v1",
+  "description": "Curated ComputeEval 2025-1 CUDA/16 streams and concurrency case.",
+  "source_benchmark": "ComputeEval",
+  "source_case_ref": "CUDA/16",
+  "source_case_version": "2025-1",
+  "operator_family": "cuda_streams_concurrency",
+  "difficulty": "medium",
+  "allowed_backends": ["cuda"],
+  "feature_requirements": [],
+  "default_command": [
+    "python3",
+    "workloads/reference/computeeval_reference_runner.py",
+    "--problem",
+    "workloads/public_benchmarks/computeeval/2025_1/problems/cuda_16.json",
+    "--benchmark-repeats",
+    "20"
+  ],
+  "tags": ["public-benchmark", "computeeval", "cuda", "streams", "concurrency", "perf-heavy"],
+  "metadata": {
+    "release": "2025-1",
+    "official_task_id": "CUDA/16",
+    "benchmark_name": "ComputeEval",
+    "benchmark_version": "2025-1",
+    "eval_types": ["perf-heavy", "correctness-heavy"],
+    "curation_batch": "computeeval_2025_1_batch1",
+    "official_problem_path": "workloads/public_benchmarks/computeeval/2025_1/problems/cuda_16.json"
+  }
+}

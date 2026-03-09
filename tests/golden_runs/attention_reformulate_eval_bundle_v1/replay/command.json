@@ -1,0 +1,8 @@
+{
+  "command": [
+    "python3",
+    "workloads/reference/triton_attention_score_reformulate_candidate.py",
+    "--benchmark-repeats",
+    "2"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "case_id": "case/smoke/eval/v1",
+  "adapter": "smoke",
+  "task_ref": "task/smoke/eval/v1",
+  "description": "Deterministic evaluation case that must emit exactly GPU_COCKPIT_SMOKE_OK.",
+  "default_command": [
+    "python3",
+    "-c",
+    "print('GPU_COCKPIT_SMOKE_OK')"
+  ],
+  "tags": [
+    "smoke",
+    "eval",
+    "determinism"
+  ]
+}

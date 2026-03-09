@@ -1,0 +1,12 @@
+{
+  "baseline_id": "baseline/topk_router/eval/v1",
+  "command": [
+    "python3",
+    "workloads/reference/topk_router_baseline.py",
+    "--benchmark-repeats",
+    "120"
+  ],
+  "notes": [
+    "Pure Python full-sort baseline for routing top-k."
+  ]
+}

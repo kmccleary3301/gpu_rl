@@ -1,0 +1,8 @@
+{
+  "command": [
+    "python3",
+    "workloads/reference/triton_row_sum_debug_candidate.py",
+    "--benchmark-repeats",
+    "2"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "baseline_id": "baseline/routing_argmax/eval/v1",
+  "command": [
+    "python3",
+    "workloads/reference/triton_routing_argmax_baseline.py",
+    "--benchmark-repeats",
+    "50"
+  ],
+  "notes": [
+    "Naive CPU stable argmax baseline."
+  ]
+}

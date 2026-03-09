@@ -1,0 +1,4 @@
+{"schema_version":"1.0.0","event_id":"evt_amd_001","ts":"2026-03-09T09:40:00Z","scope":"task","kind":"info","payload":{"task_id":"task/amd/smoke/diagnose/v1","operator_family":"amd_smoke"}}
+{"schema_version":"1.0.0","event_id":"evt_amd_002","ts":"2026-03-09T09:40:01Z","scope":"tool.trace_system_amd","kind":"completed","payload":{"exit_code":0,"duration_ms":31,"report_path":"traces/system/rocprof_trace.json"}}
+{"schema_version":"1.0.0","event_id":"evt_amd_003","ts":"2026-03-09T09:40:02Z","scope":"tool.profile_kernel_amd","kind":"completed","payload":{"exit_code":0,"duration_ms":42,"kernel_name":"amd_fixture_kernel"}}
+{"schema_version":"1.0.0","event_id":"evt_amd_004","ts":"2026-03-09T09:40:03Z","scope":"run","kind":"completed","payload":{"status":"ok"}}

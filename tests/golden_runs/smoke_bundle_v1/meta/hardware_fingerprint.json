@@ -1,0 +1,10 @@
+{
+  "schema_version": "1.0.0",
+  "vendor": "nvidia",
+  "device_name": "RTX 6000 Ada Generation",
+  "device_count": 1,
+  "driver_version": "stub",
+  "runtime_version": "stub",
+  "compute_capability": "8.9",
+  "total_memory_mb": 49140
+}

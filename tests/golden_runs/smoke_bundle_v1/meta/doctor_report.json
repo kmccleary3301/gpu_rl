@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "host_platform": "linux",
+  "host_kernel": "6.8.0",
+  "python_executable": "/usr/bin/python3",
+  "python_version": "3.12.12",
+  "container_runtime": null,
+  "available_tools": [
+    {
+      "schema_version": "1.0.0",
+      "name": "python3",
+      "path": "/usr/bin/python3",
+      "version": "3.12.12",
+      "available": true
+    }
+  ],
+  "hardware_fingerprints": [
+    {
+      "schema_version": "1.0.0",
+      "vendor": "nvidia",
+      "device_name": "RTX 6000 Ada Generation",
+      "device_count": 1,
+      "driver_version": "stub",
+      "runtime_version": "stub",
+      "compute_capability": "8.9",
+      "total_memory_mb": 49140
+    }
+  ],
+  "warnings": []
+}

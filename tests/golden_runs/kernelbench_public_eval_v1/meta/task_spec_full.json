@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0.0",
+  "task_id": "task/kernelbench/level1/32_hardtanh/eval/v1",
+  "verb": "optimize",
+  "operator_family": "activation_hardtanh",
+  "difficulty": "public_benchmark_level1",
+  "prompt": "Run the curated KernelBench v0.1 Level 1 HardTanh reference problem and print JSON with visible_result and hidden_result payloads using the shared KernelBench reference runner. Preserve the provenance fields and case config path in the output payload.",
+  "baseline_ref": "workloads/baselines/kernelbench_hardtanh_eval_baseline.json",
+  "reference_impl_ref": "workloads/reference/kernelbench_reference_runner.py",
+  "visible_tests_ref": "workloads/tests/kernelbench_visible.py",
+  "hidden_tests_ref": "workloads/tests/kernelbench_hidden.py",
+  "input_generator_ref": null,
+  "deterministic_mode": true,
+  "feature_requirements": [
+    "torch"
+  ],
+  "numerical_policy": {
+    "schema_version": "1.0.0",
+    "dtype_matrix": [
+      "fp32"
+    ],
+    "rtol": 1e-05,
+    "atol": 1e-06
+  },
+  "perf_protocol": {
+    "schema_version": "1.0.0",
+    "warmups": 1,
+    "repeats": 3,
+    "timer": "wall_clock",
+    "split_compile_from_run": true
+  },
+  "allowed_backends": [
+    "cuda"
+  ],
+  "forbidden_patterns": [],
+  "required_artifacts": [
+    "meta/doctor_report.json",
+    "prompt/task_spec.json",
+    "correctness/correctness.json",
+    "correctness/determinism.json",
+    "eval/anti_hack_report.json",
+    "eval/eval_envelope.json",
+    "perf/benchmark.json",
+    "perf/raw_timings.json"
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "case_id": "case/reduction_row_sum/eval/v1",
+  "adapter": "reduction_sum",
+  "task_ref": "task/reduction_row_sum/eval/v1",
+  "description": "Triton row-sum reduction workload with visible and hidden correctness checks and a naive CPU baseline.",
+  "operator_family": "reduction_sum",
+  "difficulty": "medium",
+  "allowed_backends": [
+    "triton"
+  ],
+  "feature_requirements": [
+    "cuda",
+    "torch",
+    "triton"
+  ],
+  "default_command": [
+    "python3",
+    "workloads/reference/triton_row_sum_candidate.py",
+    "--benchmark-repeats",
+    "50"
+  ],
+  "tags": [
+    "reduction",
+    "triton",
+    "gpu"
+  ]
+}

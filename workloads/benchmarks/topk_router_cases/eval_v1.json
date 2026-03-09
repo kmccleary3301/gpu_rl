@@ -1,0 +1,25 @@
+{
+  "case_id": "case/topk_router/eval/v1",
+  "adapter": "topk_router",
+  "task_ref": "task/topk_router/eval/v1",
+  "description": "Stable top-k routing workload with visible and hidden correctness checks plus a pure-Python baseline.",
+  "operator_family": "routing_topk",
+  "difficulty": "medium",
+  "allowed_backends": [
+    "triton"
+  ],
+  "feature_requirements": [
+    "python3"
+  ],
+  "default_command": [
+    "python3",
+    "workloads/reference/topk_router_candidate.py",
+    "--benchmark-repeats",
+    "120"
+  ],
+  "tags": [
+    "routing",
+    "topk",
+    "real-workload"
+  ]
+}

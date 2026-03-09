@@ -1,0 +1,7 @@
+{
+  "command": [
+    "python3",
+    "-c",
+    "print('golden smoke fixture')"
+  ]
+}

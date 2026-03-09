@@ -1,0 +1,11 @@
+{
+  "baseline_id": "baseline/smoke/eval/v1",
+  "command": [
+    "python3",
+    "-c",
+    "import time; time.sleep(0.02); print('GPU_COCKPIT_SMOKE_OK')"
+  ],
+  "notes": [
+    "Intentional slow baseline for perf-gate smoke coverage."
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "command": [
+    "python3",
+    "workloads/reference/kernelbench_reference_runner.py",
+    "--case-config",
+    "workloads/public_benchmarks/kernelbench/v0_1/cases/level1_032_hardtanh.json",
+    "--benchmark-repeats",
+    "2"
+  ]
+}

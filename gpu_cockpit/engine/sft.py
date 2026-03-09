@@ -1,0 +1,171 @@
+from __future__ import annotations
+
+import json
+from datetime import UTC, datetime
+from pathlib import Path
+
+from gpu_cockpit.contracts import SFTDatasetManifest, SFTExample, TrajectoryEpisode
+from gpu_cockpit.engine.task_registry import TaskRegistry
+
+
+PROMPT_FAMILY_MAP = {
+    "synthesize": "synthesize",
+    "optimize": "optimize",
+    "diagnose": "diagnose",
+    "debug": "debug",
+    "reformulate": "reformulate",
+    "fuse": "reformulate",
+    "port": "reformulate",
+}
+
+
+def _load_manifest(dataset_dir: Path) -> dict[str, object]:
+    manifest_path = dataset_dir / "trajectory_dataset_manifest.json"
+    if not manifest_path.exists():
+        raise FileNotFoundError(f"Missing trajectory dataset manifest: {manifest_path}")
+    return json.loads(manifest_path.read_text(encoding="utf-8"))
+
+
+def _load_episodes(dataset_dir: Path) -> list[tuple[str, TrajectoryEpisode]]:
+    manifest = _load_manifest(dataset_dir)
+    episodes: list[tuple[str, TrajectoryEpisode]] = []
+    for relative_ref in manifest.get("episode_refs", []):
+        relative_path = str(relative_ref)
+        episode_path = dataset_dir / relative_path
+        payload = json.loads(episode_path.read_text(encoding="utf-8"))
+        episodes.append((relative_path, TrajectoryEpisode.model_validate(payload)))
+    return episodes
+
+
+def _render_prompt(task_prompt: str, prompt_family: str, episode: TrajectoryEpisode) -> str:
+    action_names = ", ".join(step.action.action_type for step in episode.steps)
+    return "\n".join(
+        [
+            f"Task family: {prompt_family}",
+            f"Task id: {episode.task_id}",
+            "",
+            task_prompt,
+            "",
+            "Produce a compact tool-using plan for the task and keep the actions consistent with the cockpit tool API.",
+            f"Observed reference episode actions: {action_names}",
+        ]
+    )
+
+
+def _render_response(episode: TrajectoryEpisode) -> str:
+    lines = []
+    for step in episode.steps:
+        reward_suffix = f" reward={step.reward_total:.3f}"
+        if step.observation.run_id:
+            lines.append(f"{step.step_index + 1}. {step.action.action_type} -> run={step.observation.run_id}{reward_suffix}")
+        else:
+            lines.append(f"{step.step_index + 1}. {step.action.action_type}{reward_suffix}")
+    lines.append(f"terminal_state={episode.terminal_state}")
+    return "\n".join(lines)
+
+
+def _is_public_benchmark(task_id: str) -> bool:
+    return task_id.startswith("task/kernelbench/") or task_id.startswith("task/computeeval/")
+
+
+def _benchmark_name(task_id: str) -> str | None:
+    if task_id.startswith("task/kernelbench/"):
+        return "KernelBench"
+    if task_id.startswith("task/computeeval/"):
+        return "ComputeEval"
+    return None
+
+
+def package_trajectory_dataset_as_sft(
+    root: Path,
+    dataset_dir: Path,
+    out_dir: Path,
+    *,
+    split: str = "train",
+    include_failures: bool = True,
+    only_public_benchmarks: bool = False,
+    verb_allowlist: list[str] | None = None,
+) -> Path:
+    registry = TaskRegistry(root)
+    episodes = _load_episodes(dataset_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    examples_dir = out_dir / "examples"
+    examples_dir.mkdir(parents=True, exist_ok=True)
+    example_refs: list[str] = []
+    task_ids: list[str] = []
+    prompt_family_counts: dict[str, int] = {}
+    verb_counts: dict[str, int] = {}
+    for relative_ref, episode in episodes:
+        if not include_failures and episode.terminal_state != "success":
+            continue
+        task = registry.get(episode.task_id)
+        if only_public_benchmarks and not _is_public_benchmark(task.task_id):
+            continue
+        if verb_allowlist and task.verb not in set(verb_allowlist):
+            continue
+        prompt_family = PROMPT_FAMILY_MAP.get(task.verb, "general")
+        readiness = str(episode.metadata.get("training_example_kind", "unusable"))
+        example = SFTExample(
+            example_id=f"sft_{episode.episode_id}",
+            created_at=datetime.now(tz=UTC),
+            split=split,
+            task_id=episode.task_id,
+            prompt_family=prompt_family,
+            prompt=_render_prompt(task.prompt, prompt_family, episode),
+            response=_render_response(episode),
+            source_episode_ref=relative_ref,
+            metadata={
+                "task_verb": task.verb,
+                "operator_family": task.operator_family,
+                "backend": task.allowed_backends[0] if task.allowed_backends else None,
+                "feature_requirements": list(task.feature_requirements),
+                "terminal_state": episode.terminal_state,
+                "episode_kind": episode.episode_kind,
+                "benchmark_name": _benchmark_name(task.task_id),
+                "evidence_score": episode.metadata.get("evidence_score"),
+                "training_example_kind": readiness,
+            },
+        )
+        example_path = examples_dir / f"{example.example_id}.json"
+        example_path.write_text(json.dumps(example.model_dump(mode="json"), indent=2) + "\n", encoding="utf-8")
+        example_refs.append(str(example_path.relative_to(out_dir)))
+        task_ids.append(example.task_id)
+        prompt_family_counts[prompt_family] = prompt_family_counts.get(prompt_family, 0) + 1
+        verb_counts[task.verb] = verb_counts.get(task.verb, 0) + 1
+    manifest = SFTDatasetManifest(
+        dataset_id=f"sft_dataset_{datetime.now(tz=UTC).strftime('%Y%m%d_%H%M%S')}",
+        created_at=datetime.now(tz=UTC),
+        split=split,
+        example_count=len(example_refs),
+        example_refs=example_refs,
+        task_ids=sorted(set(task_ids)),
+        metadata={
+            "source_dataset": str(dataset_dir),
+            "include_failures": include_failures,
+            "only_public_benchmarks": only_public_benchmarks,
+            "verb_allowlist": list(verb_allowlist or []),
+            "prompt_family_counts": prompt_family_counts,
+            "verb_counts": verb_counts,
+        },
+    )
+    manifest_path = out_dir / "sft_dataset_manifest.json"
+    manifest_path.write_text(json.dumps(manifest.model_dump(mode="json"), indent=2) + "\n", encoding="utf-8")
+    return manifest_path
+
+
+def validate_sft_dataset(out_dir: Path) -> dict[str, object]:
+    manifest_path = out_dir / "sft_dataset_manifest.json"
+    if not manifest_path.exists():
+        return {"status": "failed", "missing": ["sft_dataset_manifest.json"]}
+    payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    missing_examples = [
+        str(relative_ref)
+        for relative_ref in payload.get("example_refs", [])
+        if not (out_dir / str(relative_ref)).exists()
+    ]
+    return {
+        "status": "ok" if not missing_examples else "failed",
+        "example_count": int(payload.get("example_count", 0)),
+        "missing_examples": missing_examples,
+        "manifest": payload,
+    }

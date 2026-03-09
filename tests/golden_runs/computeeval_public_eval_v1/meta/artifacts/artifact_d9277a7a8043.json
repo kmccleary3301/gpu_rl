@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "artifact_d9277a7a8043",
+  "run_id": "eval_20260309_174759_675607_86753a",
+  "kind": "replay_pack",
+  "path": "replay/replay_pack.json",
+  "mime": "application/json",
+  "sha256": "8808885cd8af5fe5c96c1b69131258e8ca6905de1f77ed2536fefbcfdc1461e3",
+  "producer_event_id": null,
+  "semantic_tags": [
+    "replay",
+    "summary"
+  ],
+  "size_bytes": 976
+}

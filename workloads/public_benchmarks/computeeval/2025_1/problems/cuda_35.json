@@ -1,0 +1,41 @@
+{
+  "type": "cuda_cpp",
+  "schema_version": 2,
+  "task_id": "CUDA/35",
+  "date": "2025-10-31",
+  "prompt": "Write a function that computes the exclusive prefix sum of an input vector on the GPU using Thrust algorithms. The function signature is declared in `include/scan.h`.\n\nExample:\n```cpp\nthrust::device_vector<int> in{1, 4, 0};\nthrust::device_vector<int> out = scan(in);\n// out should be {0, 1, 5}\n```",
+  "context_files": [
+    {
+      "path": "include/scan.h",
+      "content": "#ifndef SCAN_H\n#define SCAN_H\n\n#include <thrust/device_vector.h>\n\nthrust::device_vector<int> scan(const thrust::device_vector<int>& vec);\n\n#endif // SCAN_H"
+    }
+  ],
+  "test_files": [
+    {
+      "path": "test/test_main.cu",
+      "content": "#include \"scan.h\"\n#include <cstdlib>\n#include <iostream>\n\nint main() {\n    const thrust::device_vector<int> in{1, 4, 0};\n    thrust::device_vector<int> out = scan(in);\n\n    if (out[0] != 0 || out[1] != 1 || out[2] != 5)\n    {\n        std::cerr << \"Test failed!\" << std::endl;\n        std::exit(1);\n    }\n\n    return 0;\n}"
+    }
+  ],
+  "source_references": [
+    "thrust::exclusive_scan"
+  ],
+  "build_command": "nvcc -I include -o test.out solution.cu test/*.cu -arch=native",
+  "test_command": "./test.out",
+  "min_cuda_toolkit": "12.8",
+  "timeout_seconds": 30.0,
+  "metadata": {
+    "difficulty": "easy",
+    "tags": [
+      "thrust",
+      "scan",
+      "prefix-sum"
+    ],
+    "releases": [
+      "2025-1",
+      "2025-2",
+      "2025-3"
+    ],
+    "do_not_release": false
+  },
+  "arch_list": []
+}

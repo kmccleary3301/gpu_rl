@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "artifact_2ef7870d9d46",
+  "run_id": "eval_20260309_174759_675607_86753a",
+  "kind": "run_summary_markdown",
+  "path": "summary.md",
+  "mime": "text/markdown",
+  "sha256": "88eda919cdda5e353105b9de1e40c9b8bc77203cb2169297747165e7bd07512a",
+  "producer_event_id": null,
+  "semantic_tags": [
+    "summary",
+    "run",
+    "markdown"
+  ],
+  "size_bytes": 694
+}

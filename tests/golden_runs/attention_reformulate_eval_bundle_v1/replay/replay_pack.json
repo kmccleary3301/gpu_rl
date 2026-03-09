@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.0.0",
+  "run_id": "eval_20260309_174725_339789_92c1f3",
+  "replay_version": "1.0.0",
+  "image_digest": null,
+  "git_snapshot": null,
+  "seed_pack": {
+    "global_seed": 1234,
+    "input_seed": 5678
+  },
+  "hardware_fingerprint_ref": "meta/hardware_fingerprint.json",
+  "input_snapshot_ref": "replay/environment.json",
+  "task_ref": "task/attention_reformulate/eval/v1",
+  "commands_ref": "replay/command.json",
+  "required_artifacts": [
+    "command/stderr.txt",
+    "command/stdout.txt",
+    "command/summary.json",
+    "correctness/correctness.json",
+    "correctness/determinism.json",
+    "eval/anti_hack_report.json",
+    "eval/eval_envelope.json",
+    "eval/gate_summary.json",
+    "events.jsonl",
+    "manifest.json",
+    "meta/doctor_report.json",
+    "meta/hardware_fingerprint.json",
+    "meta/task_spec_full.json",
+    "perf/benchmark.json",
+    "perf/raw_timings.json",
+    "prompt/task_spec.json",
+    "summary.json",
+    "summary.md"
+  ]
+}

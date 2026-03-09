@@ -1,0 +1,93 @@
+{
+  "$defs": {
+    "AntiHackHit": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "pattern": {
+          "title": "Pattern",
+          "type": "string"
+        },
+        "category": {
+          "title": "Category",
+          "type": "string"
+        },
+        "location": {
+          "title": "Location",
+          "type": "string"
+        },
+        "matched_text": {
+          "title": "Matched Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "pattern",
+        "category",
+        "location",
+        "matched_text"
+      ],
+      "title": "AntiHackHit",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "passed": {
+      "title": "Passed",
+      "type": "boolean"
+    },
+    "forbidden_patterns": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Forbidden Patterns",
+      "type": "array"
+    },
+    "scanned_locations": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Scanned Locations",
+      "type": "array"
+    },
+    "hits": {
+      "items": {
+        "$ref": "#/$defs/AntiHackHit"
+      },
+      "title": "Hits",
+      "type": "array"
+    },
+    "cpu_fallback_detected": {
+      "default": false,
+      "title": "Cpu Fallback Detected",
+      "type": "boolean"
+    },
+    "library_shortcut_detected": {
+      "default": false,
+      "title": "Library Shortcut Detected",
+      "type": "boolean"
+    },
+    "warnings": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Warnings",
+      "type": "array"
+    }
+  },
+  "required": [
+    "passed"
+  ],
+  "title": "AntiHackReport",
+  "type": "object"
+}

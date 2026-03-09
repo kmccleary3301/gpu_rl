@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "artifact_e97fa2340f74",
+  "run_id": "bench_20260309_174710_322994_669535",
+  "kind": "hardware_fingerprint",
+  "path": "meta/hardware_fingerprint.json",
+  "mime": "application/json",
+  "sha256": "953e3ab74f0e6bb52adf13c371ad4068763523f40b2f52d9ab50df55ae4ce5d9",
+  "producer_event_id": null,
+  "semantic_tags": [
+    "doctor",
+    "hardware"
+  ],
+  "size_bytes": 558
+}

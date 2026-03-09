@@ -1,0 +1,103 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "run_id": {
+      "title": "Run Id",
+      "type": "string"
+    },
+    "replay_version": {
+      "title": "Replay Version",
+      "type": "string"
+    },
+    "image_digest": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Image Digest"
+    },
+    "git_snapshot": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Git Snapshot"
+    },
+    "seed_pack": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "Seed Pack",
+      "type": "object"
+    },
+    "hardware_fingerprint_ref": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Hardware Fingerprint Ref"
+    },
+    "input_snapshot_ref": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Input Snapshot Ref"
+    },
+    "task_ref": {
+      "title": "Task Ref",
+      "type": "string"
+    },
+    "commands_ref": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Commands Ref"
+    },
+    "required_artifacts": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Required Artifacts",
+      "type": "array"
+    }
+  },
+  "required": [
+    "run_id",
+    "replay_version",
+    "task_ref"
+  ],
+  "title": "ReplayPack",
+  "type": "object"
+}

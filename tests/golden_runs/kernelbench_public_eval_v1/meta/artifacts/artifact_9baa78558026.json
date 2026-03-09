@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "artifact_9baa78558026",
+  "run_id": "eval_20260309_174742_962645_a422a5",
+  "kind": "command_stdout",
+  "path": "command/stdout.txt",
+  "mime": "text/plain",
+  "sha256": "4119578aad3ef328c695d3199199af331af671c303ab964f9826e7178a5fbf74",
+  "producer_event_id": "evt_000001",
+  "semantic_tags": [
+    "command",
+    "stdout"
+  ],
+  "size_bytes": 728
+}

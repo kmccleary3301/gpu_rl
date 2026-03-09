@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "artifact_2b117aac9d4b",
+  "run_id": "eval_20260309_174725_339789_92c1f3",
+  "kind": "command_snapshot",
+  "path": "replay/command.json",
+  "mime": "application/json",
+  "sha256": "61add7bc37a89204cfe0e10becac08ae26e5d0f88ff6fef1981c33ddd22b42ca",
+  "producer_event_id": null,
+  "semantic_tags": [
+    "replay",
+    "command"
+  ],
+  "size_bytes": 148
+}

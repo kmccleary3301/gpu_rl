@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0.0",
+  "task_id": "task/amd/smoke/diagnose/v1",
+  "verb": "diagnose",
+  "operator_family": "amd_smoke",
+  "difficulty": "smoke",
+  "prompt": "Run a minimal AMD/ROCm smoke command and preserve replay, trace, or profile artifacts when available. This task is a metadata and tooling stub for normalized AMD workflows, not a benchmark-quality workload.",
+  "baseline_ref": null,
+  "reference_impl_ref": null,
+  "visible_tests_ref": null,
+  "hidden_tests_ref": null,
+  "input_generator_ref": null,
+  "deterministic_mode": true,
+  "feature_requirements": ["amd", "rocm"],
+  "numerical_policy": {
+    "schema_version": "1.0.0",
+    "dtype_matrix": ["fp32"],
+    "rtol": 1e-05,
+    "atol": 1e-06
+  },
+  "perf_protocol": {
+    "schema_version": "1.0.0",
+    "warmups": 0,
+    "repeats": 1,
+    "timer": "hip_event",
+    "split_compile_from_run": true
+  },
+  "allowed_backends": ["hip"],
+  "forbidden_patterns": [],
+  "required_artifacts": ["meta/doctor_report.json", "prompt/task_spec.json"]
+}

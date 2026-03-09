@@ -1,0 +1,10 @@
+{
+  "query": "attention reformulate benchmark example",
+  "prefer_mixed": true,
+  "limit": 6,
+  "expected_kinds": ["knowledge_doc", "run_example"],
+  "expected_path_fragments": [
+    "knowledge/operator_families/attention_reformulate.md",
+    "tests/golden_runs/attention_reformulate_eval_bundle_v1"
+  ]
+}

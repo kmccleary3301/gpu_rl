@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "card_id": "bn_amd_bundle_v1",
+  "run_id": "amd_bundle_v1",
+  "subject": "amd_fixture_kernel",
+  "primary_bottleneck": "memory_bound",
+  "confidence": 0.8,
+  "evidence": [
+    {"schema_version":"1.0.0","type":"occupancy","value":48.0,"artifact_ref":"profiles/kernel/summary.json"},
+    {"schema_version":"1.0.0","type":"dram_pct_peak","value":72.0,"artifact_ref":"profiles/kernel/summary.json"},
+    {"schema_version":"1.0.0","type":"registers_per_thread","value":40,"artifact_ref":"profiles/kernel/summary.json"}
+  ],
+  "why": "Primary kernel `amd_fixture_kernel` classified as `memory_bound` from normalized profiler metrics.",
+  "next_actions": [
+    "Inspect memory access coalescing and L2 hit rate before changing launch geometry.",
+    "Use the raw profile CSV to identify whether DRAM throughput or cache hit rate dominates the stall picture."
+  ]
+}

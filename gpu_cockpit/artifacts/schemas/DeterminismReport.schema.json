@@ -1,0 +1,152 @@
+{
+  "$defs": {
+    "DeterminismAttempt": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "attempt_index": {
+          "minimum": 1,
+          "title": "Attempt Index",
+          "type": "integer"
+        },
+        "exit_code": {
+          "title": "Exit Code",
+          "type": "integer"
+        },
+        "duration_ms": {
+          "minimum": 0,
+          "title": "Duration Ms",
+          "type": "integer"
+        },
+        "stdout_sha256": {
+          "title": "Stdout Sha256",
+          "type": "string"
+        },
+        "stderr_sha256": {
+          "title": "Stderr Sha256",
+          "type": "string"
+        },
+        "stdout_bytes": {
+          "minimum": 0,
+          "title": "Stdout Bytes",
+          "type": "integer"
+        },
+        "stderr_bytes": {
+          "minimum": 0,
+          "title": "Stderr Bytes",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "attempt_index",
+        "exit_code",
+        "duration_ms",
+        "stdout_sha256",
+        "stderr_sha256",
+        "stdout_bytes",
+        "stderr_bytes"
+      ],
+      "title": "DeterminismAttempt",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "command": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Command",
+      "type": "array"
+    },
+    "runs": {
+      "minimum": 1,
+      "title": "Runs",
+      "type": "integer"
+    },
+    "passed": {
+      "title": "Passed",
+      "type": "boolean"
+    },
+    "stable_exit_codes": {
+      "title": "Stable Exit Codes",
+      "type": "boolean"
+    },
+    "stable_stdout": {
+      "title": "Stable Stdout",
+      "type": "boolean"
+    },
+    "stable_stderr": {
+      "title": "Stable Stderr",
+      "type": "boolean"
+    },
+    "baseline_exit_code": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Baseline Exit Code"
+    },
+    "baseline_stdout_sha256": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Baseline Stdout Sha256"
+    },
+    "baseline_stderr_sha256": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Baseline Stderr Sha256"
+    },
+    "attempts": {
+      "items": {
+        "$ref": "#/$defs/DeterminismAttempt"
+      },
+      "title": "Attempts",
+      "type": "array"
+    },
+    "warnings": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Warnings",
+      "type": "array"
+    }
+  },
+  "required": [
+    "runs",
+    "passed",
+    "stable_exit_codes",
+    "stable_stdout",
+    "stable_stderr"
+  ],
+  "title": "DeterminismReport",
+  "type": "object"
+}

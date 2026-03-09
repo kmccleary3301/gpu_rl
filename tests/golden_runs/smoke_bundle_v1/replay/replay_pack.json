@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0.0",
+  "run_id": "golden_smoke_v1",
+  "replay_version": "1.0.0",
+  "image_digest": null,
+  "git_snapshot": null,
+  "seed_pack": {
+    "global_seed": 1234,
+    "input_seed": 5678
+  },
+  "hardware_fingerprint_ref": "meta/hardware_fingerprint.json",
+  "input_snapshot_ref": "replay/environment.json",
+  "task_ref": "task/smoke/diagnose/v1",
+  "commands_ref": "replay/command.json",
+  "required_artifacts": [
+    "manifest.json",
+    "events.jsonl",
+    "prompt/task_spec.json",
+    "meta/doctor_report.json",
+    "meta/hardware_fingerprint.json",
+    "command/stdout.txt",
+    "command/stderr.txt",
+    "summary.json",
+    "summary.md"
+  ]
+}

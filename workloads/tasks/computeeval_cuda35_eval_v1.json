@@ -1,0 +1,37 @@
+{
+  "task_id": "task/computeeval/cuda_35/eval/v1",
+  "verb": "optimize",
+  "operator_family": "cuda_thrust_scan",
+  "difficulty": "public_benchmark_curated_easy",
+  "prompt": "Run the curated ComputeEval 2025-1 CUDA/35 reference problem and print JSON with visible_result and hidden_result payloads using the shared ComputeEval reference runner. Preserve the benchmark provenance fields and absolute problem path in the output payload.",
+  "baseline_ref": "workloads/baselines/computeeval_cuda35_eval_baseline.json",
+  "reference_impl_ref": "workloads/reference/computeeval_reference_runner.py",
+  "visible_tests_ref": "workloads/tests/computeeval_visible.py",
+  "hidden_tests_ref": "workloads/tests/computeeval_hidden.py",
+  "input_generator_ref": null,
+  "deterministic_mode": true,
+  "feature_requirements": [],
+  "numerical_policy": {
+    "dtype_matrix": ["metadata_only"],
+    "rtol": 0.0,
+    "atol": 0.0
+  },
+  "perf_protocol": {
+    "warmups": 1,
+    "repeats": 3,
+    "timer": "wall_clock",
+    "split_compile_from_run": true
+  },
+  "allowed_backends": ["cuda"],
+  "forbidden_patterns": [],
+  "required_artifacts": [
+    "meta/doctor_report.json",
+    "prompt/task_spec.json",
+    "correctness/correctness.json",
+    "correctness/determinism.json",
+    "eval/anti_hack_report.json",
+    "eval/eval_envelope.json",
+    "perf/benchmark.json",
+    "perf/raw_timings.json"
+  ]
+}

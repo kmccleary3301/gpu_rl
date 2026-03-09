@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "artifact_4cf72f0f224a",
+  "run_id": "eval_20260309_174759_675607_86753a",
+  "kind": "eval_envelope",
+  "path": "eval/eval_envelope.json",
+  "mime": "application/json",
+  "sha256": "abc95f49f74c9382aff4e9e0d2e755c67faa4b1e196049d69acba1c73ca51a22",
+  "producer_event_id": null,
+  "semantic_tags": [
+    "eval",
+    "summary"
+  ],
+  "size_bytes": 285
+}

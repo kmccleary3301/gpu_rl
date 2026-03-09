@@ -1,0 +1,46 @@
+{
+  "task_id": "task/topk_router/eval/v1",
+  "verb": "optimize",
+  "operator_family": "routing_topk",
+  "difficulty": "medium",
+  "prompt": "Produce JSON on stdout containing stable top-k routing outputs for the named visible and hidden cases. Use deterministic tie-breaking by lower index first for equal scores. The benchmark loop should avoid library shortcuts such as torch.topk or numpy.argpartition.",
+  "baseline_ref": "workloads/baselines/topk_router_eval_baseline.json",
+  "reference_impl_ref": "workloads/reference/topk_router_candidate.py",
+  "visible_tests_ref": "workloads/tests/topk_visible.py",
+  "hidden_tests_ref": "workloads/tests/topk_hidden.py",
+  "input_generator_ref": null,
+  "deterministic_mode": true,
+  "feature_requirements": [
+    "python3"
+  ],
+  "numerical_policy": {
+    "dtype_matrix": [
+      "fp32"
+    ],
+    "rtol": 0.0,
+    "atol": 0.0
+  },
+  "perf_protocol": {
+    "warmups": 1,
+    "repeats": 3,
+    "timer": "wall_clock",
+    "split_compile_from_run": true
+  },
+  "allowed_backends": [
+    "triton"
+  ],
+  "forbidden_patterns": [
+    "torch.topk",
+    "numpy.argpartition"
+  ],
+  "required_artifacts": [
+    "meta/doctor_report.json",
+    "prompt/task_spec.json",
+    "correctness/correctness.json",
+    "correctness/determinism.json",
+    "eval/anti_hack_report.json",
+    "eval/eval_envelope.json",
+    "perf/benchmark.json",
+    "perf/raw_timings.json"
+  ]
+}

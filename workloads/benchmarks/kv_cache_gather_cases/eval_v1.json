@@ -1,0 +1,28 @@
+{
+  "case_id": "case/kv_cache_gather/eval/v1",
+  "adapter": "kv_cache_gather",
+  "task_ref": "task/kv_cache_gather/eval/v1",
+  "description": "Paged KV-cache gather using Triton with visible and hidden row checks.",
+  "operator_family": "kv_cache_gather",
+  "difficulty": "medium",
+  "allowed_backends": [
+    "triton"
+  ],
+  "feature_requirements": [
+    "cuda",
+    "torch",
+    "triton"
+  ],
+  "default_command": [
+    "python3",
+    "workloads/reference/triton_kv_cache_gather_candidate.py",
+    "--benchmark-repeats",
+    "50"
+  ],
+  "tags": [
+    "triton",
+    "attention",
+    "kv-cache",
+    "gather"
+  ]
+}

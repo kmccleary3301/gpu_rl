@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0.0",
+  "command": [
+    "python3",
+    "workloads/reference/kernelbench_reference_runner.py",
+    "--case-config",
+    "workloads/public_benchmarks/kernelbench/v0_1/cases/level1_032_hardtanh.json",
+    "--benchmark-repeats",
+    "2"
+  ],
+  "runs": 2,
+  "passed": true,
+  "stable_exit_codes": true,
+  "stable_stdout": true,
+  "stable_stderr": true,
+  "baseline_exit_code": 0,
+  "baseline_stdout_sha256": "4119578aad3ef328c695d3199199af331af671c303ab964f9826e7178a5fbf74",
+  "baseline_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "attempts": [
+    {
+      "schema_version": "1.0.0",
+      "attempt_index": 1,
+      "exit_code": 0,
+      "duration_ms": 1388,
+      "stdout_sha256": "4119578aad3ef328c695d3199199af331af671c303ab964f9826e7178a5fbf74",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 728,
+      "stderr_bytes": 0
+    },
+    {
+      "schema_version": "1.0.0",
+      "attempt_index": 2,
+      "exit_code": 0,
+      "duration_ms": 1419,
+      "stdout_sha256": "4119578aad3ef328c695d3199199af331af671c303ab964f9826e7178a5fbf74",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 728,
+      "stderr_bytes": 0
+    }
+  ],
+  "warnings": []
+}

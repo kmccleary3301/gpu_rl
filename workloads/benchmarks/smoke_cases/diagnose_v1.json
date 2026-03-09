@@ -1,0 +1,16 @@
+{
+  "case_id": "case/smoke/diagnose/v1",
+  "adapter": "smoke",
+  "task_ref": "task/smoke/diagnose/v1",
+  "description": "Minimal command execution case for verifying bundle creation and summary emission.",
+  "default_command": [
+    "python3",
+    "-c",
+    "print('smoke diagnose case')"
+  ],
+  "tags": [
+    "smoke",
+    "diagnose",
+    "substrate"
+  ]
+}

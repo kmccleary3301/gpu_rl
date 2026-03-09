@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "artifact_7a7309ac6fc7",
+  "run_id": "eval_20260309_174148_745260_5af337",
+  "kind": "hook_stderr",
+  "path": "correctness/hidden_tests_stderr.txt",
+  "mime": "text/plain",
+  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "producer_event_id": "evt_000005",
+  "semantic_tags": [
+    "correctness",
+    "hook",
+    "hidden_tests",
+    "stderr"
+  ],
+  "size_bytes": 0
+}

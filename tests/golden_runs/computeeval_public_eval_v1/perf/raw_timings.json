@@ -1,0 +1,43 @@
+{
+  "candidate": {
+    "command": [
+      "python3",
+      "workloads/reference/computeeval_reference_runner.py",
+      "--problem",
+      "workloads/public_benchmarks/computeeval/2025_1/problems/cuda_0.json",
+      "--benchmark-repeats",
+      "2"
+    ],
+    "timings_ms": [
+      30.0,
+      31.0,
+      30.0
+    ],
+    "exit_codes": [
+      0,
+      0,
+      0
+    ]
+  },
+  "baseline": {
+    "baseline_id": "baseline/computeeval/cuda_0/eval/v1",
+    "command": [
+      "python3",
+      "workloads/reference/computeeval_reference_runner.py",
+      "--problem",
+      "workloads/public_benchmarks/computeeval/2025_1/problems/cuda_0.json",
+      "--benchmark-repeats",
+      "200"
+    ],
+    "timings_ms": [
+      32.0,
+      33.0,
+      39.0
+    ],
+    "exit_codes": [
+      0,
+      0,
+      0
+    ]
+  }
+}

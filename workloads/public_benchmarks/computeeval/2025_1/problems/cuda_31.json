@@ -1,0 +1,41 @@
+{
+  "type": "cuda_cpp",
+  "schema_version": 2,
+  "task_id": "CUDA/31",
+  "date": "2025-10-31",
+  "prompt": "Write a function `void add(int num_items, const int *in, int *out)` that adds `num_items` elements on GPU using CUB library.\n\nThe resulting sum should be stored in `out`.\n\nYour solution should include the contract header `add.h` which declares the function signature.\n\nThe following headers are available and should not be re-included in your solution:\n```cuda\n#include <cub/device/device_reduce.cuh>\n```",
+  "context_files": [
+    {
+      "path": "include/add.h",
+      "content": "#ifndef ADD_H\n#define ADD_H\n\nvoid add(int num_items, const int* in, int *out);\n\n#endif // ADD_H"
+    }
+  ],
+  "test_files": [
+    {
+      "path": "test/test_main.cu",
+      "content": "#include <cstdlib>\n#include <iostream>\n#include <thrust/device_vector.h>\n#include <cub/device/device_reduce.cuh>\n#include \"add.h\"\n\nint main() {\n  const int num_items = 1 << 14;\n  thrust::device_vector<int> in(num_items, 1);\n  thrust::device_vector<int> out(1);\n\n  add(num_items, in.data().get(), out.data().get());\n\n  if (out[0] != num_items) {\n    std::cerr << \"Test failed!\" << std::endl;\n    std::exit(1);\n  }\n\n  return 0;\n}"
+    }
+  ],
+  "source_references": [
+    "cub::DeviceReduce::Sum"
+  ],
+  "build_command": "nvcc -I include -o test.out solution.cu test/*.cu -arch=native",
+  "test_command": "./test.out",
+  "min_cuda_toolkit": "12.8",
+  "timeout_seconds": 30.0,
+  "metadata": {
+    "difficulty": "easy",
+    "tags": [
+      "cub",
+      "reduction",
+      "device-reduce"
+    ],
+    "releases": [
+      "2025-1",
+      "2025-2",
+      "2025-3"
+    ],
+    "do_not_release": false
+  },
+  "arch_list": []
+}

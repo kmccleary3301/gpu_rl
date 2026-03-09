@@ -1,0 +1,30 @@
+{
+  "case_id": "case/kernelbench/level1/40_layernorm_shifted/v0_1",
+  "adapter": "kernelbench",
+  "task_ref": "task/kernelbench/level1/40_layernorm_shifted/eval/v1",
+  "description": "Curated KernelBench v0.1 Level 1 LayerNorm shifted-distribution variant.",
+  "source_benchmark": "KernelBench",
+  "source_case_ref": "level1/40_LayerNorm.py",
+  "source_case_version": "v0.1",
+  "operator_family": "normalization_layernorm",
+  "difficulty": "level1",
+  "allowed_backends": ["cuda"],
+  "feature_requirements": ["torch"],
+  "default_command": [
+    "python3",
+    "workloads/reference/kernelbench_reference_runner.py",
+    "--case-config",
+    "workloads/public_benchmarks/kernelbench/v0_1/cases/level1_040_layernorm_shifted.json",
+    "--benchmark-repeats",
+    "20"
+  ],
+  "tags": ["public-benchmark", "kernelbench", "level1", "normalization", "memory-heavy", "correctness-heavy", "curated-variant", "shifted-distribution"],
+  "metadata": {
+    "benchmark_level": "level1",
+    "official_problem_id": 40,
+    "eval_types": ["memory-heavy", "correctness-heavy"],
+    "curation_batch": "kernelbench_v0_1_batch3",
+    "variant_kind": "shifted-distribution",
+    "variant_of_case": "case/kernelbench/level1/40_layernorm/v0_1"
+  }
+}

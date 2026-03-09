@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0.0",
+  "command": [
+    "python3",
+    "workloads/reference/computeeval_reference_runner.py",
+    "--problem",
+    "workloads/public_benchmarks/computeeval/2025_1/problems/cuda_0.json",
+    "--benchmark-repeats",
+    "2"
+  ],
+  "runs": 2,
+  "passed": true,
+  "stable_exit_codes": true,
+  "stable_stdout": true,
+  "stable_stderr": true,
+  "baseline_exit_code": 0,
+  "baseline_stdout_sha256": "98da34b18de2053a2b8bf8d6056e91da3b1721951aa5469e9bad3dcb3baf558f",
+  "baseline_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "attempts": [
+    {
+      "schema_version": "1.0.0",
+      "attempt_index": 1,
+      "exit_code": 0,
+      "duration_ms": 30,
+      "stdout_sha256": "98da34b18de2053a2b8bf8d6056e91da3b1721951aa5469e9bad3dcb3baf558f",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 1087,
+      "stderr_bytes": 0
+    },
+    {
+      "schema_version": "1.0.0",
+      "attempt_index": 2,
+      "exit_code": 0,
+      "duration_ms": 32,
+      "stdout_sha256": "98da34b18de2053a2b8bf8d6056e91da3b1721951aa5469e9bad3dcb3baf558f",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 1087,
+      "stderr_bytes": 0
+    }
+  ],
+  "warnings": []
+}

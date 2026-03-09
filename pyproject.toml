@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gpu-cockpit"
+version = "0.1.0"
+description = "Artifact-first GPU agent cockpit substrate"
+requires-python = ">=3.12"
+dependencies = [
+  "pydantic>=2.8,<3",
+]
+
+[project.scripts]
+gpc = "gpu_cockpit.cli.main:main"
+
+[tool.setuptools.packages.find]
+include = ["gpu_cockpit*"]
+
+[tool.setuptools.package-data]
+gpu_cockpit = ["py.typed"]

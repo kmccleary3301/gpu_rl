@@ -1,0 +1,14 @@
+{
+  "baseline_id": "baseline/kernelbench/level1/47_sum_reduction/eval/v1",
+  "command": [
+    "python3",
+    "workloads/reference/kernelbench_reference_runner.py",
+    "--case-config",
+    "workloads/public_benchmarks/kernelbench/v0_1/cases/level1_047_sum_reduction.json",
+    "--benchmark-repeats",
+    "50"
+  ],
+  "notes": [
+    "Reference runner for a curated KernelBench v0.1 Level 1 sum reduction case."
+  ]
+}

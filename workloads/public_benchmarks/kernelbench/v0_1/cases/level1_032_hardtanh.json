@@ -1,0 +1,27 @@
+{
+  "benchmark_case_id": "kernelbench/level1/32_hardtanh",
+  "benchmark_case_version": "v0.1",
+  "problem_relpath": "../level1/32_HardTanh.py",
+  "init_inputs": [],
+  "visible_inputs": [
+    [
+      [-2.0, -0.5, 0.25, 2.5],
+      [1.5, -1.25, 0.0, 0.9]
+    ]
+  ],
+  "hidden_inputs": [
+    [
+      [-3.0, -1.1, 0.4, 3.2],
+      [0.8, -0.2, 1.1, -1.8]
+    ]
+  ],
+  "benchmark": {
+    "init_inputs": [],
+    "inputs": [
+      [
+        [0.0, 0.1, 0.2, 0.3],
+        [0.4, 0.5, 0.6, 0.7]
+      ]
+    ]
+  }
+}

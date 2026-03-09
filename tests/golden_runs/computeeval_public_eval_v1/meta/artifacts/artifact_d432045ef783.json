@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "artifact_d432045ef783",
+  "run_id": "eval_20260309_174759_675607_86753a",
+  "kind": "command_summary",
+  "path": "command/summary.json",
+  "mime": "application/json",
+  "sha256": "0e1a213d3f41a5a354fb0332f8f0e29be63b88dd7d3a3025dbe3093b3d0dbba2",
+  "producer_event_id": "evt_000001",
+  "semantic_tags": [
+    "command",
+    "summary"
+  ],
+  "size_bytes": 487
+}

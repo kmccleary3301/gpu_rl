@@ -1,0 +1,135 @@
+{
+  "$defs": {
+    "ReadinessDecision": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "eligible": {
+          "title": "Eligible",
+          "type": "boolean"
+        },
+        "reasons": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Reasons",
+          "type": "array"
+        }
+      },
+      "required": [
+        "eligible"
+      ],
+      "title": "ReadinessDecision",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "run_id": {
+      "title": "Run Id",
+      "type": "string"
+    },
+    "task_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Task Id"
+    },
+    "required_artifact_count": {
+      "default": 0,
+      "title": "Required Artifact Count",
+      "type": "integer"
+    },
+    "missing_required_artifact_count": {
+      "default": 0,
+      "title": "Missing Required Artifact Count",
+      "type": "integer"
+    },
+    "required_artifact_completeness": {
+      "title": "Required Artifact Completeness",
+      "type": "number"
+    },
+    "replay_completeness": {
+      "title": "Replay Completeness",
+      "type": "number"
+    },
+    "build_completeness": {
+      "title": "Build Completeness",
+      "type": "number"
+    },
+    "profile_completeness": {
+      "title": "Profile Completeness",
+      "type": "number"
+    },
+    "eval_completeness": {
+      "title": "Eval Completeness",
+      "type": "number"
+    },
+    "provenance_completeness": {
+      "default": 0.0,
+      "title": "Provenance Completeness",
+      "type": "number"
+    },
+    "overall_score": {
+      "title": "Overall Score",
+      "type": "number"
+    },
+    "benchmark_reporting": {
+      "$ref": "#/$defs/ReadinessDecision"
+    },
+    "sft_collection": {
+      "$ref": "#/$defs/ReadinessDecision"
+    },
+    "rl_reward_trace": {
+      "$ref": "#/$defs/ReadinessDecision"
+    },
+    "missing_provenance_fields": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Missing Provenance Fields",
+      "type": "array"
+    },
+    "training_example_kind": {
+      "default": "unusable",
+      "title": "Training Example Kind",
+      "type": "string"
+    },
+    "notes": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Notes",
+      "type": "array"
+    }
+  },
+  "required": [
+    "run_id",
+    "required_artifact_completeness",
+    "replay_completeness",
+    "build_completeness",
+    "profile_completeness",
+    "eval_completeness",
+    "overall_score",
+    "benchmark_reporting",
+    "sft_collection",
+    "rl_reward_trace"
+  ],
+  "title": "EvidenceQualityReport",
+  "type": "object"
+}

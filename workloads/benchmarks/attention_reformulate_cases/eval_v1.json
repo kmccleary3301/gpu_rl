@@ -1,0 +1,28 @@
+{
+  "case_id": "case/attention_reformulate/eval/v1",
+  "adapter": "attention_reformulate",
+  "task_ref": "task/attention_reformulate/eval/v1",
+  "description": "Reformulate weak causal attention-score computation into a tiled Triton kernel.",
+  "operator_family": "attention_score_tile",
+  "difficulty": "medium",
+  "allowed_backends": [
+    "triton"
+  ],
+  "feature_requirements": [
+    "cuda",
+    "torch",
+    "triton"
+  ],
+  "default_command": [
+    "python3",
+    "workloads/reference/triton_attention_score_reformulate_candidate.py",
+    "--benchmark-repeats",
+    "20"
+  ],
+  "tags": [
+    "reformulate",
+    "triton",
+    "attention",
+    "tiling"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "artifact_b3e20ae92799",
+  "run_id": "eval_20260309_174148_745260_5af337",
+  "kind": "correctness_report",
+  "path": "correctness/correctness.json",
+  "mime": "application/json",
+  "sha256": "b727574e70fff293689ec9e6a279a96d6ecddfcd059dda57c1e3b29ba5c60d22",
+  "producer_event_id": null,
+  "semantic_tags": [
+    "correctness",
+    "summary"
+  ],
+  "size_bytes": 344
+}

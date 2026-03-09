@@ -1,0 +1,34 @@
+{
+  "task_id": "task/smoke/diagnose/v1",
+  "verb": "diagnose",
+  "operator_family": "smoke",
+  "difficulty": "L0",
+  "prompt": "Run a minimal command under the cockpit substrate and verify that artifacts and summaries are emitted correctly.",
+  "baseline_ref": null,
+  "reference_impl_ref": null,
+  "visible_tests_ref": null,
+  "hidden_tests_ref": null,
+  "input_generator_ref": null,
+  "deterministic_mode": true,
+  "feature_requirements": [],
+  "numerical_policy": {
+    "dtype_matrix": [],
+    "rtol": 0.0,
+    "atol": 0.0
+  },
+  "perf_protocol": {
+    "warmups": 0,
+    "repeats": 1,
+    "timer": "wall_clock",
+    "split_compile_from_run": true
+  },
+  "allowed_backends": [
+    "triton",
+    "cuda"
+  ],
+  "forbidden_patterns": [],
+  "required_artifacts": [
+    "meta/doctor_report.json",
+    "prompt/task_spec.json"
+  ]
+}

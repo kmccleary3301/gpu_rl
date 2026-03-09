@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "artifact_74628af168ba",
+  "run_id": "eval_20260309_174742_962645_a422a5",
+  "kind": "command_stderr",
+  "path": "command/stderr.txt",
+  "mime": "text/plain",
+  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "producer_event_id": "evt_000001",
+  "semantic_tags": [
+    "command",
+    "stderr"
+  ],
+  "size_bytes": 0
+}

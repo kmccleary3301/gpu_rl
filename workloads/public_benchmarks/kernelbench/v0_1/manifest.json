@@ -1,0 +1,82 @@
+{
+  "benchmark_name": "KernelBench",
+  "benchmark_version": "v0.1",
+  "source_repo": "https://github.com/ScalingIntelligence/KernelBench",
+  "source_subtree": "KernelBench/level1",
+  "curation_batch": "kernelbench_v0_1_batch3",
+  "case_count": 11,
+  "included_cases": [
+    {
+      "official_problem_id": 1,
+      "source_case_ref": "level1/1_Square_matrix_multiplication_.py",
+      "operator_family": "matmul_square",
+      "eval_types": ["perf-heavy", "correctness-heavy"]
+    },
+    {
+      "official_problem_id": 23,
+      "source_case_ref": "level1/23_Softmax.py",
+      "operator_family": "activation_softmax",
+      "eval_types": ["memory-heavy", "correctness-heavy", "attention-adjacent"]
+    },
+    {
+      "official_problem_id": 32,
+      "source_case_ref": "level1/32_HardTanh.py",
+      "operator_family": "activation_hardtanh",
+      "eval_types": ["correctness-heavy"]
+    },
+    {
+      "official_problem_id": 40,
+      "source_case_ref": "level1/40_LayerNorm.py",
+      "operator_family": "normalization_layernorm",
+      "eval_types": ["memory-heavy", "correctness-heavy"]
+    },
+    {
+      "official_problem_id": 47,
+      "source_case_ref": "level1/47_Sum_reduction_over_a_dimension.py",
+      "operator_family": "reduction_sum",
+      "eval_types": ["perf-heavy", "correctness-heavy"]
+    },
+    {
+      "official_problem_id": 51,
+      "source_case_ref": "level1/51_Argmax_over_a_dimension.py",
+      "operator_family": "indexing_argmax",
+      "eval_types": ["indexing-heavy", "correctness-heavy"]
+    },
+    {
+      "official_problem_id": 88,
+      "source_case_ref": "level1/88_MinGPTNewGelu.py",
+      "operator_family": "activation_gelu",
+      "eval_types": ["correctness-heavy"]
+    },
+    {
+      "official_problem_id": 97,
+      "source_case_ref": "level1/97_ScaledDotProductAttention.py",
+      "operator_family": "attention_sdpa",
+      "eval_types": ["attention-adjacent", "memory-heavy", "perf-heavy"]
+    },
+    {
+      "official_problem_id": 23,
+      "source_case_ref": "level1/23_Softmax.py",
+      "curated_case_id": "level1_023_softmax_wide",
+      "variant_kind": "wide-logit-mixture",
+      "operator_family": "activation_softmax",
+      "eval_types": ["memory-heavy", "correctness-heavy", "attention-adjacent"]
+    },
+    {
+      "official_problem_id": 40,
+      "source_case_ref": "level1/40_LayerNorm.py",
+      "curated_case_id": "level1_040_layernorm_shifted",
+      "variant_kind": "shifted-distribution",
+      "operator_family": "normalization_layernorm",
+      "eval_types": ["memory-heavy", "correctness-heavy"]
+    },
+    {
+      "official_problem_id": 47,
+      "source_case_ref": "level1/47_Sum_reduction_over_a_dimension.py",
+      "curated_case_id": "level1_047_sum_reduction_long_axis",
+      "variant_kind": "long-axis-reduction",
+      "operator_family": "reduction_sum",
+      "eval_types": ["perf-heavy", "correctness-heavy", "memory-heavy"]
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "artifact_16777e1606b2",
+  "run_id": "eval_20260309_174725_339789_92c1f3",
+  "kind": "eval_gate_summary",
+  "path": "eval/gate_summary.json",
+  "mime": "application/json",
+  "sha256": "9f5cd6bf10ad707b9cd043e7358be1c7dd630e72cc94a051b9b1f67f15b2e33a",
+  "producer_event_id": null,
+  "semantic_tags": [
+    "eval",
+    "gates",
+    "summary"
+  ],
+  "size_bytes": 197
+}

@@ -1,0 +1,39 @@
+{
+  "benchmark_case_id": "kernelbench/level1/1_square_matmul",
+  "benchmark_case_version": "v0.1",
+  "problem_relpath": "../level1/1_Square_matrix_multiplication_.py",
+  "init_inputs": [],
+  "visible_inputs": [
+    [
+      [1.0, 2.0],
+      [3.0, 4.0]
+    ],
+    [
+      [0.5, -1.0],
+      [1.5, 2.0]
+    ]
+  ],
+  "hidden_inputs": [
+    [
+      [2.0, -1.0],
+      [0.0, 3.0]
+    ],
+    [
+      [1.0, 2.0],
+      [-2.0, 1.0]
+    ]
+  ],
+  "benchmark": {
+    "init_inputs": [],
+    "inputs": [
+      [
+        [1.0, 0.0],
+        [0.0, 1.0]
+      ],
+      [
+        [2.0, 1.0],
+        [1.0, 2.0]
+      ]
+    ]
+  }
+}

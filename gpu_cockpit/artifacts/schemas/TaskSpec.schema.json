@@ -1,0 +1,225 @@
+{
+  "$defs": {
+    "NumericalPolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "dtype_matrix": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Dtype Matrix",
+          "type": "array"
+        },
+        "rtol": {
+          "minimum": 0.0,
+          "title": "Rtol",
+          "type": "number"
+        },
+        "atol": {
+          "minimum": 0.0,
+          "title": "Atol",
+          "type": "number"
+        }
+      },
+      "required": [
+        "rtol",
+        "atol"
+      ],
+      "title": "NumericalPolicy",
+      "type": "object"
+    },
+    "PerfProtocol": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "warmups": {
+          "minimum": 0,
+          "title": "Warmups",
+          "type": "integer"
+        },
+        "repeats": {
+          "minimum": 1,
+          "title": "Repeats",
+          "type": "integer"
+        },
+        "timer": {
+          "enum": [
+            "cuda_event",
+            "hip_event",
+            "wall_clock"
+          ],
+          "title": "Timer",
+          "type": "string"
+        },
+        "split_compile_from_run": {
+          "default": true,
+          "title": "Split Compile From Run",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "warmups",
+        "repeats",
+        "timer"
+      ],
+      "title": "PerfProtocol",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "task_id": {
+      "title": "Task Id",
+      "type": "string"
+    },
+    "verb": {
+      "enum": [
+        "synthesize",
+        "optimize",
+        "debug",
+        "fuse",
+        "port",
+        "diagnose",
+        "reformulate"
+      ],
+      "title": "Verb",
+      "type": "string"
+    },
+    "operator_family": {
+      "title": "Operator Family",
+      "type": "string"
+    },
+    "difficulty": {
+      "title": "Difficulty",
+      "type": "string"
+    },
+    "prompt": {
+      "title": "Prompt",
+      "type": "string"
+    },
+    "baseline_ref": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Baseline Ref"
+    },
+    "reference_impl_ref": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Reference Impl Ref"
+    },
+    "visible_tests_ref": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Visible Tests Ref"
+    },
+    "hidden_tests_ref": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Hidden Tests Ref"
+    },
+    "input_generator_ref": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Input Generator Ref"
+    },
+    "deterministic_mode": {
+      "default": true,
+      "title": "Deterministic Mode",
+      "type": "boolean"
+    },
+    "feature_requirements": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Feature Requirements",
+      "type": "array"
+    },
+    "numerical_policy": {
+      "$ref": "#/$defs/NumericalPolicy"
+    },
+    "perf_protocol": {
+      "$ref": "#/$defs/PerfProtocol"
+    },
+    "allowed_backends": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Allowed Backends",
+      "type": "array"
+    },
+    "forbidden_patterns": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Forbidden Patterns",
+      "type": "array"
+    },
+    "required_artifacts": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Required Artifacts",
+      "type": "array"
+    }
+  },
+  "required": [
+    "task_id",
+    "verb",
+    "operator_family",
+    "difficulty",
+    "prompt",
+    "numerical_policy",
+    "perf_protocol"
+  ],
+  "title": "TaskSpec",
+  "type": "object"
+}

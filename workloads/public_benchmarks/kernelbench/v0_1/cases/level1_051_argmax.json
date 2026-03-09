@@ -1,0 +1,27 @@
+{
+  "benchmark_case_id": "kernelbench/level1/51_argmax",
+  "benchmark_case_version": "v0.1",
+  "problem_relpath": "../level1/51_Argmax_over_a_dimension.py",
+  "init_inputs": [1],
+  "visible_inputs": [
+    [
+      [[1.0, 5.0], [3.0, 2.0], [0.0, -1.0]],
+      [[-2.0, 1.0], [4.0, 3.0], [2.0, 6.0]]
+    ]
+  ],
+  "hidden_inputs": [
+    [
+      [[0.0, 1.0], [2.0, 9.0], [8.0, 7.0]],
+      [[3.0, 2.0], [1.0, 0.0], [4.0, 5.0]]
+    ]
+  ],
+  "benchmark": {
+    "init_inputs": [1],
+    "inputs": [
+      [
+        [[1.0, 0.0], [0.5, 0.75], [2.0, 1.5]],
+        [[-1.0, 1.0], [3.0, 2.0], [1.0, 4.0]]
+      ]
+    ]
+  }
+}
