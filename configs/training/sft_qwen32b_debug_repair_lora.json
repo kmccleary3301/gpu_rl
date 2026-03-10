@@ -10,7 +10,7 @@
       "split": "train",
       "required": true,
       "notes": [
-        "Primary pre-H200 train split built from patch-bearing repair and reformulate traces."
+        "Primary train split built from patch-bearing repair and reformulate traces."
       ]
     },
     {
@@ -19,7 +19,7 @@
       "split": "dev",
       "required": true,
       "notes": [
-        "Primary pre-H200 dev split for smoke validation and held-out prompt formatting checks."
+        "Primary dev split for smoke validation and held-out prompt formatting checks."
       ]
     },
     {
@@ -60,7 +60,7 @@
   "max_steps": 250,
   "output_dir": "artifacts/training/qwen32b_debug_repair_lora_v1",
   "notes": [
-    "Intended for the 2xH200 node.",
+    "Intended for dedicated accelerator hardware.",
     "PEFT-first warm-start on patch-bearing debug/reformulate traces."
   ]
 }

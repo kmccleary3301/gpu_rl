@@ -16,6 +16,6 @@
   },
   "notes": [
     "Held-out scripted baseline for the first bounded debug/diagnose/reformulate target.",
-    "Used for pre-H200 baseline reporting before any real SFT or RL."
+    "Used for baseline reporting before any real SFT or RL."
   ]
 }

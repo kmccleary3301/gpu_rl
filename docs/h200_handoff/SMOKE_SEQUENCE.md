@@ -1,6 +1,6 @@
 # Smoke Sequence
 
-Run these in order on the future H200 node. The goal is to validate the handoff mechanically before any real training job starts.
+Run these in order on the target training environment. The goal is to validate the handoff mechanically before any real training job starts.
 
 ```bash
 python3 scripts/build_pre_h200_training_assets.py

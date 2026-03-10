@@ -1,6 +1,6 @@
 # H200 Handoff
 
-This directory defines the minimum checked-in handoff surface for moving the project from local environment work into the `2xH200` training node.
+This directory defines the minimum checked-in handoff surface for moving the project from environment work into a dedicated training environment.
 
 ## Scope
 
@@ -11,12 +11,12 @@ This directory defines the minimum checked-in handoff surface for moving the pro
 ## Files
 
 - `TRAINING_TARGET.md`: frozen first training target and stop conditions
-- `REMOTE_BOOTSTRAP.md`: ordered bootstrap checklist for the future H200 node
+- `REMOTE_BOOTSTRAP.md`: ordered bootstrap checklist for the target training environment
 - `SMOKE_SEQUENCE.md`: exact smoke commands to run before any real training
 - `handoff_manifest.json`: machine-readable inventory of configs, scripts, and required datasets
 
 ## Non-Goals
 
-- no dense training on this workstation
-- no attempt to train frontier-scale models locally
+- no requirement that one specific machine or cluster topology be used
+- no expectation that dense training is part of the default local workflow
 - no orchestration layer beyond the checked-in smoke scaffolding

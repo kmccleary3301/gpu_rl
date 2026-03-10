@@ -7,7 +7,7 @@
 [![Backends](https://img.shields.io/badge/backends-Triton%20%7C%20CUDA%20%7C%20HIP-8b5cf6)](./workloads)
 [![Benchmarks](https://img.shields.io/badge/benchmarks-KernelBench%20%2B%20ComputeEval-f59e0b)](./workloads/public_benchmarks)
 [![Training Target](https://img.shields.io/badge/training%20target-Qwen3.5--Coder--32B-eab308)](./docs/h200_handoff/TRAINING_TARGET.md)
-[![Status](https://img.shields.io/badge/status-pre--H200%20training%20handoff%20ready-0891b2)](./docs/h200_handoff/README.md)
+[![Status](https://img.shields.io/badge/status-training%20handoff%20ready-0891b2)](./docs/h200_handoff/README.md)
 
 Research and systems substrate for **artifact-first training and evaluation of LLM-powered code agents on GPU programming tasks**.
 
@@ -20,10 +20,10 @@ This repo is the resulting cockpit:
 - a local execution and evaluation surface for `run`, `bench`, `eval`, `build`, `inspect`, `compare`, `replay`, and `bundle`
 - a task and benchmark substrate spanning internal Triton/CUDA-style workloads and curated public benchmark imports
 - a transition-aware collection layer for trajectories, patch-bearing repair traces, reformulation episodes, and SFT packaging
-- a pre-H200 handoff surface for the first narrow training target on a strong sub-40B code model
+- a checked-in training handoff surface for the first narrow training target on a strong sub-40B code model
 
 > [!IMPORTANT]
-> This repository is **not** trying to train a frontier-scale model on a workstation. The local objective is to finish the environment, artifacts, datasets, and handoff package cleanly enough that real SFT and narrow RL can start later on a stronger node.
+> This repository is **not** a one-command dense-training stack. Its primary job is to make GPU-agent tasks, artifacts, datasets, and training handoff state explicit enough that later SFT and narrow RL runs can start from a clean, reproducible substrate.
 
 <details>
 <summary><strong>Table of contents</strong></summary>
@@ -53,14 +53,14 @@ This repo is the resulting cockpit:
 | Workload substrate | [`workloads/`](./workloads) contains internal task specs, baselines, public benchmark imports, reference implementations, fixtures, and evaluation hooks. |
 | Golden verification surface | [`tests/`](./tests) contains regression tests plus checked-in golden bundles, datasets, retrieval fixtures, and multistep episode fixtures. |
 | Knowledge and retrieval | [`knowledge/`](./knowledge) contains operator docs, profiler playbooks, transformation cards, benchmark notes, and hardware notes. |
-| Training handoff | [`configs/training/`](./configs/training) and [`docs/h200_handoff/`](./docs/h200_handoff) freeze the first remote training target and smoke path. |
+| Training handoff | [`configs/training/`](./configs/training) and [`docs/h200_handoff/`](./docs/h200_handoff) freeze the first training target, validation splits, and smoke path. |
 
 | It is | It is not |
 | --- | --- |
 | A GPU-agent cockpit and data factory | A generic LLM chat app |
 | A benchmark and eval normalization layer | A leaderboard-only benchmark wrapper |
 | A transition-aware trace and SFT substrate | A finished RL training stack |
-| A pre-H200 handoff package | A dense-training recipe for a local workstation |
+| A checked-in training handoff package | A hardware-specific training recipe for one developer machine |
 
 ## Current Status
 
@@ -73,7 +73,7 @@ This repo is the resulting cockpit:
 | Public benchmark imports | 🟢 | Curated [KernelBench](./knowledge/benchmark_notes/kernelbench.md) and [ComputeEval](./knowledge/benchmark_notes/computeeval.md) adapters |
 | Retrieval and knowledge | 🟢 | Docs, run examples, and patch-bearing episodes are queryable through a local index |
 | Training packaging | 🟢 | Transition-rich trajectory export, SFT packaging, rollout smoke evaluation, and frozen handoff docs |
-| Real remote training | 🔵 | Explicitly deferred until the non-H200 local work is exhausted |
+| Full training execution | 🔵 | Intentionally separated from the default local workflow and gated behind smoke validation |
 
 > [!NOTE]
 > The strongest path forward is **not** broadening every surface equally. The current priority is high-quality repair, diagnose, and reformulate traces that survive inspection, replay, and packaging cleanly.
@@ -106,24 +106,25 @@ This repo is the resulting cockpit:
 
 ```text
 gpu_rl/
-├── README.md
-├── pyproject.toml
-├── .gitignore
+├── README.md                                # top-level project overview, usage guide, and architecture map
+├── pyproject.toml                           # package metadata and the `gpc` console entrypoint
+├── .gitignore                               # runtime, dataset, and planning-artifact exclusions
 ├── configs/
 │   └── training/
-│       ├── first_target_splits_v1.json
+│       ├── first_target_splits_v1.json      # frozen train/dev split definition for the first training target
 │       ├── rollout_debug_repair_heldout_v1.json
-│       ├── rollout_debug_repair_v1.json
+│       ├── rollout_debug_repair_v1.json     # scripted rollout configs for local and held-out evaluation
 │       └── sft_qwen32b_debug_repair_lora.json
+│                                             # first checked-in SFT smoke config for the initial training target
 ├── docs/
 │   └── h200_handoff/
-│       ├── README.md
-│       ├── REMOTE_BOOTSTRAP.md
-│       ├── SMOKE_SEQUENCE.md
-│       └── TRAINING_TARGET.md
+│       ├── README.md                         # scope and non-goals of the checked-in training handoff
+│       ├── REMOTE_BOOTSTRAP.md              # ordered bootstrap checklist for the target training environment
+│       ├── SMOKE_SEQUENCE.md                # exact smoke commands before real training
+│       └── TRAINING_TARGET.md               # frozen first model/policy target and stop conditions
 ├── gpu_cockpit/
 │   ├── cli/
-│   │   └── main.py
+│   │   └── main.py                          # public `gpc` CLI surface
 │   ├── contracts/
 │   │   ├── compare.py
 │   │   ├── environment.py
@@ -132,7 +133,7 @@ gpu_rl/
 │   │   ├── replay.py
 │   │   ├── summary.py
 │   │   ├── training.py
-│   │   └── trajectory.py
+│   │   └── trajectory.py                    # schema-first contract layer for bundles, episodes, and training configs
 │   ├── engine/
 │   │   ├── benchmark.py
 │   │   ├── environment.py
@@ -146,21 +147,22 @@ gpu_rl/
 │   │   ├── runner.py
 │   │   ├── sft.py
 │   │   ├── training.py
-│   │   └── trajectory.py
+│   │   └── trajectory.py                    # execution, eval, inspection, retrieval, and data-packaging engines
 │   ├── backends/
-│   │   ├── amd/
-│   │   └── nvidia/
-│   ├── executors/
-│   ├── workloads/
+│   │   ├── amd/                             # ROCm trace/profile normalization and AMD mirrored-path logic
+│   │   └── nvidia/                          # Nsight, sanitizer, disassembly, and profile normalization
+│   ├── executors/                           # local host and docker execution backends
+│   ├── workloads/                           # adapter registration and workload-facing package helpers
 │   └── artifacts/
 │       └── schemas/
+│                                             # exported JSON schemas for the contract layer
 ├── knowledge/
 │   ├── README.md
 │   ├── benchmark_notes/
 │   ├── hardware_notes/
 │   ├── operator_families/
 │   ├── profiler_playbooks/
-│   └── transformation_cards/
+│   └── transformation_cards/                # human-written retrieval corpus for operators, bottlenecks, and transforms
 ├── scripts/
 │   ├── build_h200_handoff.py
 │   ├── build_heldout_baseline_report.py
@@ -168,7 +170,7 @@ gpu_rl/
 │   ├── export_schemas.py
 │   ├── generate_transition_goldens.py
 │   ├── smoke_rollout_eval.py
-│   └── smoke_sft_train.py
+│   └── smoke_sft_train.py                   # reproducible builders and smoke paths for schemas, datasets, and handoff assets
 ├── tests/
 │   ├── golden_datasets/
 │   ├── golden_episodes/
@@ -180,7 +182,7 @@ gpu_rl/
 │   ├── test_knowledge.py
 │   ├── test_sft.py
 │   ├── test_training.py
-│   └── test_trajectory.py
+│   └── test_trajectory.py                  # regression suite plus checked-in golden bundles and training-facing fixtures
 └── workloads/
     ├── baselines/
     ├── benchmarks/
@@ -188,7 +190,7 @@ gpu_rl/
     ├── public_benchmarks/
     ├── reference/
     ├── tasks/
-    └── tests/
+    └── tests/                              # task specs, baselines, curated imports, reference kernels, and hook scripts
 ```
 
 ## Installation and Environment
@@ -212,7 +214,7 @@ pip install -e .
 | Triton/CUDA task execution | `torch`, `triton`, working CUDA runtime |
 | Rich NVIDIA observability | `nsys`, `ncu`, `compute-sanitizer`, optional `nvcc` |
 | Narrow AMD parity checks | ROCm runtime plus `rocprof` / `rocprofv3`, `rocminfo`, `rocm-smi`, `hipcc` |
-| Full pre-H200 smoke path | The above plus enough local GPU support for the reference Triton tasks |
+| End-to-end smoke path | The above plus enough GPU support for the reference Triton tasks |
 
 > [!TIP]
 > The repository is intentionally usable in partial environments. Missing profiler or vendor tools degrade the corresponding run surfaces instead of collapsing the whole CLI.
@@ -232,7 +234,7 @@ pip install -e .
 
 ## Quick Start
 
-### 1. Inspect the local machine
+### 1. Inspect your machine
 
 ```bash
 gpc doctor
@@ -552,7 +554,7 @@ The first checked-in training target is documented in [docs/h200_handoff/TRAININ
 | File | Purpose |
 | --- | --- |
 | [`docs/h200_handoff/README.md`](./docs/h200_handoff/README.md) | Scope and non-goals of the handoff package |
-| [`docs/h200_handoff/REMOTE_BOOTSTRAP.md`](./docs/h200_handoff/REMOTE_BOOTSTRAP.md) | Ordered bootstrap checklist for the future `2xH200` node |
+| [`docs/h200_handoff/REMOTE_BOOTSTRAP.md`](./docs/h200_handoff/REMOTE_BOOTSTRAP.md) | Ordered bootstrap checklist for the target training environment |
 | [`docs/h200_handoff/SMOKE_SEQUENCE.md`](./docs/h200_handoff/SMOKE_SEQUENCE.md) | Exact smoke commands to run before real training |
 | [`configs/training/first_target_splits_v1.json`](./configs/training/first_target_splits_v1.json) | Frozen train/dev split manifest for the first target |
 | [`configs/training/rollout_debug_repair_heldout_v1.json`](./configs/training/rollout_debug_repair_heldout_v1.json) | Held-out scripted rollout config |
@@ -569,7 +571,7 @@ python3 scripts/smoke_rollout_eval.py
 ```
 
 > [!WARNING]
-> The local machine is for preparing the environment and validating the handoff path. Real SFT and narrow RL are intentionally deferred until the stronger remote node is used.
+> Treat the smoke path as a gate before any nontrivial training run. The goal is to validate datasets, configs, and rollout assumptions mechanically before spending accelerator time.
 
 ## Development Workflow
 
@@ -587,7 +589,7 @@ python3 -m unittest discover -s tests -v
 # Rebuild checked-in transition fixtures
 python3 scripts/generate_transition_goldens.py
 
-# Rebuild pre-H200 train/dev assets
+# Rebuild train/dev assets for the first training target
 python3 scripts/build_pre_h200_training_assets.py
 
 # Validate training config and rollout config
@@ -635,7 +637,7 @@ If you are here for the shortest orientation path:
 - inspect `gpc --help`
 - execute one `gpc eval` task
 - inspect a run bundle
-- build the pre-H200 assets
+- build the training assets
 
 If you are here to extend the project:
 
@@ -645,7 +647,7 @@ If you are here to extend the project:
 
 If you are here to start training:
 
-- do **not** start on this workstation
-- finish local validation
+- finish validation on the checked-in smoke path
 - use the checked-in handoff docs and configs
-- move to the stronger remote node only after the smoke sequence is boring
+- validate on the intended training environment before launching larger jobs
+- treat the smoke sequence as the gate to more expensive runs

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Bring the `2xH200` node into a known-good state before any real SFT or RL run starts.
+Bring the target training environment into a known-good state before any real SFT or RL run starts.
 
 ## Checklist
 
