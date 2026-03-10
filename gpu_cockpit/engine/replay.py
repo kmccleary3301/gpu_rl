@@ -19,8 +19,10 @@ def build_replay_pack(
     required_artifacts: list[str],
     command_ref: str | None = None,
     environment_ref: str | None = None,
+    lineage: dict[str, Any] | None = None,
 ) -> ReplayPack:
     hardware_ref = "meta/hardware_fingerprint.json" if doctor_report.hardware_fingerprints else None
+    lineage = lineage or {}
     return ReplayPack(
         run_id=run_spec.run_id,
         replay_version="1.0.0",
@@ -33,6 +35,14 @@ def build_replay_pack(
         input_snapshot_ref=environment_ref,
         task_ref=task.task_id,
         commands_ref=command_ref,
+        candidate_id=str(lineage["candidate_id"]) if lineage.get("candidate_id") is not None else None,
+        parent_candidate_id=str(lineage["parent_candidate_id"]) if lineage.get("parent_candidate_id") is not None else None,
+        source_run_ref=str(lineage["source_run_ref"]) if lineage.get("source_run_ref") is not None else None,
+        patch_ref=str(lineage["patch_ref"]) if lineage.get("patch_ref") is not None else None,
+        diff_ref=str(lineage["diff_ref"]) if lineage.get("diff_ref") is not None else None,
+        transition_ref=str(lineage["transition_ref"]) if lineage.get("transition_ref") is not None else None,
+        candidate_role=str(lineage["candidate_role"]) if lineage.get("candidate_role") is not None else None,
+        transition_kind=str(lineage["transition_kind"]) if lineage.get("transition_kind") is not None else None,
         required_artifacts=sorted(dict.fromkeys(required_artifacts)),
     )
 
@@ -44,6 +54,7 @@ def write_replay_pack(
     command: list[str],
     required_artifacts: list[str],
     environment: dict[str, Any] | None = None,
+    lineage: dict[str, Any] | None = None,
 ) -> ReplayPack:
     if writer.run_spec is None:
         raise RuntimeError("Run bundle has not been initialized.")
@@ -78,6 +89,7 @@ def write_replay_pack(
         required_artifacts=required_artifacts,
         command_ref=command_ref,
         environment_ref=environment_ref,
+        lineage=lineage,
     )
     writer.write_artifact(
         relative_path="replay/replay_pack.json",

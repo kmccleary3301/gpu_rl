@@ -95,6 +95,81 @@ def _failure_triage(run_dir: Path) -> dict[str, Any]:
     }
 
 
+def _candidate_projection(run_dir: Path) -> dict[str, Any] | None:
+    candidate_state = _load_optional_json(run_dir, "candidate/state.json")
+    transition = _load_optional_json(run_dir, "candidate/transition.json")
+    applied_patch = _load_optional_json(run_dir, "patches/applied_patch.json")
+    if candidate_state is None and transition is None and applied_patch is None:
+        return None
+    return {
+        "candidate_state": candidate_state,
+        "transition": transition,
+        "applied_patch": applied_patch,
+        "patch_present": applied_patch is not None,
+        "changed_file_count": len(applied_patch.get("metadata", {}).get("changed_files", []))
+        if isinstance(applied_patch, dict) and isinstance(applied_patch.get("metadata"), dict)
+        else len(candidate_state.get("changed_files", []))
+        if isinstance(candidate_state, dict)
+        else 0,
+    }
+
+
+def _recommended_next_actions(projection: dict[str, Any]) -> list[str]:
+    failure_triage = projection.get("failure_triage")
+    if isinstance(failure_triage, dict):
+        failure_class = str(failure_triage.get("failure_class", ""))
+        if failure_class == "correctness":
+            return ["inspect_quality", "inspect_build", "patch_candidate", "eval"]
+        if failure_class == "determinism":
+            return ["inspect_quality", "replay", "eval"]
+        if failure_class == "performance":
+            return ["inspect_profile", "compare", "patch_candidate", "bench"]
+        if failure_class == "build_or_kernel":
+            return ["inspect_build", "patch_candidate", "build", "eval"]
+    candidate_projection = projection.get("candidate_projection")
+    if isinstance(candidate_projection, dict) and candidate_projection.get("patch_present"):
+        return ["build", "eval", "compare", "replay"]
+    return ["inspect_quality", "compare", "replay"]
+
+
+def _training_trace_triage(projection: dict[str, Any]) -> dict[str, Any]:
+    evidence_quality = projection.get("evidence_quality", {})
+    failure_triage = projection.get("failure_triage", {})
+    candidate_projection = projection.get("candidate_projection") or {}
+    training_example_kind = evidence_quality.get("training_example_kind", "unusable") if isinstance(evidence_quality, dict) else "unusable"
+    reasons: list[str] = []
+    if isinstance(failure_triage, dict) and failure_triage.get("failure_class") not in {None, "ready_positive"}:
+        reasons.append(f"failure_class:{failure_triage.get('failure_class')}")
+    if isinstance(candidate_projection, dict) and candidate_projection.get("patch_present"):
+        transition = candidate_projection.get("transition") or {}
+        patch = candidate_projection.get("applied_patch") or {}
+        if isinstance(transition, dict) and transition.get("transition_kind") is not None:
+            reasons.append(f"transition:{transition.get('transition_kind')}")
+        if isinstance(patch, dict) and patch.get("patch_kind") is not None:
+            reasons.append(f"patch_kind:{patch.get('patch_kind')}")
+    if isinstance(evidence_quality, dict):
+        benchmark = evidence_quality.get("benchmark_reporting", {})
+        sft = evidence_quality.get("sft_collection", {})
+        rl = evidence_quality.get("rl_reward_trace", {})
+        if isinstance(benchmark, dict) and benchmark.get("eligible"):
+            reasons.append("benchmark_ready")
+        if isinstance(sft, dict) and sft.get("eligible"):
+            reasons.append("sft_ready")
+        if isinstance(rl, dict) and rl.get("eligible"):
+            reasons.append("rl_trace_ready")
+    return {
+        "training_example_kind": training_example_kind,
+        "summary": {
+            "positive_sft_example": "usable positive training trace",
+            "positive_rl_trace": "usable RL reward trace",
+            "negative_debug_example": "usable failed repair example",
+            "negative_reformulate_example": "usable failed transformation example",
+            "benchmark_only": "benchmark-only trace, excluded from default training",
+        }.get(str(training_example_kind), "not suitable for default training"),
+        "reasons": reasons,
+    }
+
+
 def _summarize_triview(tri_view: dict[str, Any] | None) -> dict[str, Any] | None:
     if not tri_view:
         return None
@@ -164,8 +239,10 @@ def project_run_bundle(run_dir: Path) -> dict[str, Any]:
     projection["build_record"] = _load_optional_json(run_dir, "build/build_record.json")
     projection["tri_view"] = _load_optional_json(run_dir, "build/tri_view.json")
     projection["build_projection"] = _build_projection(run_dir)
+    projection["candidate_projection"] = _candidate_projection(run_dir)
     projection["evidence_quality"] = assess_run_evidence(run_dir).model_dump(mode="json")
     projection["failure_triage"] = _failure_triage(run_dir)
+    projection["recommended_next_actions"] = _recommended_next_actions(projection)
     evidence_quality = projection["evidence_quality"]
     projection["training_readiness"] = {
         "benchmark_reporting": evidence_quality.get("benchmark_reporting"),
@@ -174,6 +251,7 @@ def project_run_bundle(run_dir: Path) -> dict[str, Any]:
         "training_example_kind": evidence_quality.get("training_example_kind"),
         "missing_provenance_fields": evidence_quality.get("missing_provenance_fields", []),
     }
+    projection["training_trace_triage"] = _training_trace_triage(projection)
     return projection
 
 
@@ -186,14 +264,33 @@ def select_inspection_section(payload: dict[str, Any], section: str) -> dict[str
     if section == "summary":
         return {
             key: payload.get(key)
-            for key in ["run_id", "task_id", "status", "trace_enabled", "backend", "vendor", "exit_code", "duration_ms", "warnings"]
+            for key in [
+                "run_id",
+                "task_id",
+                "status",
+                "trace_enabled",
+                "backend",
+                "vendor",
+                "parent_run_id",
+                "candidate_id",
+                "parent_candidate_id",
+                "patch_present",
+                "patch_kind",
+                "transition_kind",
+                "candidate_role",
+                "exit_code",
+                "duration_ms",
+                "warnings",
+                "key_artifacts",
+            ]
         }
     section_map = {
         "build": ["build_record", "tri_view", "build_projection"],
         "eval": ["correctness_summary", "determinism_summary", "anti_hack_summary", "eval_envelope", "gate_summary"],
         "profile": ["profile_summary", "sanitizer_summary", "bottleneck_card"],
         "replay": ["replay_validation", "replay_pack"],
-        "quality": ["evidence_quality", "training_readiness", "failure_triage"],
+        "quality": ["evidence_quality", "training_readiness", "training_trace_triage", "failure_triage", "recommended_next_actions"],
+        "transition": ["candidate_projection", "recommended_next_actions"],
     }
     keys = section_map.get(section)
     if keys is None:
@@ -267,8 +364,16 @@ def compare_runs(root: Path, lhs_ref: str, rhs_ref: str) -> RunComparison:
     )
     lhs_build_projection = _build_projection(lhs_run_dir) or {}
     rhs_build_projection = _build_projection(rhs_run_dir) or {}
+    lhs_candidate_projection = _candidate_projection(lhs_run_dir) or {}
+    rhs_candidate_projection = _candidate_projection(rhs_run_dir) or {}
     lhs_build_record = lhs_build_projection.get("record") or {}
     rhs_build_record = rhs_build_projection.get("record") or {}
+    lhs_candidate_state = lhs_candidate_projection.get("candidate_state") or {}
+    rhs_candidate_state = rhs_candidate_projection.get("candidate_state") or {}
+    lhs_transition = lhs_candidate_projection.get("transition") or {}
+    rhs_transition = rhs_candidate_projection.get("transition") or {}
+    lhs_patch = lhs_candidate_projection.get("applied_patch") or {}
+    rhs_patch = rhs_candidate_projection.get("applied_patch") or {}
     lhs_triview = lhs_build_projection.get("tri_view") or {}
     rhs_triview = rhs_build_projection.get("tri_view") or {}
     lhs_final_score = lhs_eval.get("final_score")
@@ -291,6 +396,10 @@ def compare_runs(root: Path, lhs_ref: str, rhs_ref: str) -> RunComparison:
     rhs_unique_source_lines = rhs_triview.get("unique_source_lines")
     lhs_build_binary_hash = lhs_build_record.get("binary_hash")
     rhs_build_binary_hash = rhs_build_record.get("binary_hash")
+    lhs_patch_hash = lhs_patch.get("patch_hash")
+    rhs_patch_hash = rhs_patch.get("patch_hash")
+    lhs_changed_file_count = len(lhs_candidate_state.get("changed_files", [])) if isinstance(lhs_candidate_state.get("changed_files"), list) else 0
+    rhs_changed_file_count = len(rhs_candidate_state.get("changed_files", [])) if isinstance(rhs_candidate_state.get("changed_files"), list) else 0
     lhs_correctness_gate = lhs_eval.get("correctness_gate")
     rhs_correctness_gate = rhs_eval.get("correctness_gate")
     trainworthiness_change = None
@@ -388,6 +497,22 @@ def compare_runs(root: Path, lhs_ref: str, rhs_ref: str) -> RunComparison:
         build_binary_hash_changed=(lhs_build_binary_hash != rhs_build_binary_hash)
         if lhs_build_binary_hash is not None and rhs_build_binary_hash is not None
         else None,
+        lhs_patch_present=bool(lhs_candidate_projection.get("patch_present")),
+        rhs_patch_present=bool(rhs_candidate_projection.get("patch_present")),
+        lhs_patch_kind=str(lhs_patch["patch_kind"]) if lhs_patch.get("patch_kind") is not None else None,
+        rhs_patch_kind=str(rhs_patch["patch_kind"]) if rhs_patch.get("patch_kind") is not None else None,
+        lhs_patch_hash=str(lhs_patch_hash) if lhs_patch_hash is not None else None,
+        rhs_patch_hash=str(rhs_patch_hash) if rhs_patch_hash is not None else None,
+        patch_hash_changed=(lhs_patch_hash != rhs_patch_hash)
+        if lhs_patch_hash is not None and rhs_patch_hash is not None
+        else None,
+        lhs_changed_file_count=lhs_changed_file_count,
+        rhs_changed_file_count=rhs_changed_file_count,
+        changed_file_count_delta=rhs_changed_file_count - lhs_changed_file_count,
+        lhs_transition_kind=str(lhs_transition["transition_kind"]) if lhs_transition.get("transition_kind") is not None else None,
+        rhs_transition_kind=str(rhs_transition["transition_kind"]) if rhs_transition.get("transition_kind") is not None else None,
+        lhs_candidate_id=str(lhs_candidate_state["candidate_id"]) if lhs_candidate_state.get("candidate_id") is not None else None,
+        rhs_candidate_id=str(rhs_candidate_state["candidate_id"]) if rhs_candidate_state.get("candidate_id") is not None else None,
         lhs_triview_present=(lhs_run_dir / "build" / "tri_view.json").exists(),
         rhs_triview_present=(rhs_run_dir / "build" / "tri_view.json").exists(),
         lhs_triview_correlation_method=str(lhs_triview["correlation_method"])

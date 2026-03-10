@@ -1,0 +1,7 @@
+{
+  "executor": "local_host",
+  "policy_pack": "balanced",
+  "target_backend": "triton",
+  "target_vendor": "nvidia",
+  "patch_target_file": "workloads/reference/triton_attention_score_weak_baseline.py"
+}

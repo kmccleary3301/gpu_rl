@@ -506,7 +506,7 @@
               "reasons": []
             },
             "missing_provenance_fields": [],
-            "training_example_kind": "positive_rl_trace",
+            "training_example_kind": "benchmark_only",
             "notes": [
               "no_build_artifacts",
               "no_profile_artifacts"
@@ -528,7 +528,7 @@
               "eligible": true,
               "reasons": []
             },
-            "training_example_kind": "positive_rl_trace",
+            "training_example_kind": "benchmark_only",
             "missing_provenance_fields": []
           }
         }
@@ -696,7 +696,7 @@
               "reasons": []
             },
             "missing_provenance_fields": [],
-            "training_example_kind": "positive_rl_trace",
+            "training_example_kind": "benchmark_only",
             "notes": [
               "no_build_artifacts",
               "no_profile_artifacts"
@@ -796,11 +796,11 @@
           "lhs_benchmark_ready": false,
           "rhs_benchmark_ready": true,
           "lhs_sft_ready": false,
-          "rhs_sft_ready": true,
+          "rhs_sft_ready": false,
           "lhs_rl_trace_ready": false,
-          "rhs_rl_trace_ready": true,
+          "rhs_rl_trace_ready": false,
           "lhs_training_example_kind": "unusable",
-          "rhs_training_example_kind": "positive_rl_trace",
+          "rhs_training_example_kind": "benchmark_only",
           "lhs_final_score": null,
           "rhs_final_score": 0.8,
           "final_score_delta": null,
@@ -900,10 +900,10 @@
     ],
     "step_budget_total": 6,
     "step_budget_remaining": 0,
-    "training_example_kind": "positive_rl_trace",
+    "training_example_kind": "benchmark_only",
     "evidence_score": 0.85,
     "benchmark_ready": true,
-    "sft_ready": true,
-    "rl_trace_ready": true
+    "sft_ready": false,
+    "rl_trace_ready": false
   }
 }

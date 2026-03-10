@@ -1,0 +1,97 @@
+{
+  "backend": "triton_nvidia",
+  "correlation_method": "ptx_loc_source_map_v1",
+  "source_path": "/shared_folders/querylake_server/side_projects/gpu_rl/tests/tmp_rewrite_check/workloads/reference/triton_row_sum_repaired_kernel.py",
+  "line_count": 27,
+  "unique_source_lines": 9,
+  "mapped_ptx_lines": 27,
+  "mapped_sass_lines": 27,
+  "source_spans": [
+    {
+      "start_line": 9,
+      "end_line": 14,
+      "row_count": 9
+    },
+    {
+      "start_line": 286,
+      "end_line": 286,
+      "row_count": 1
+    },
+    {
+      "start_line": 256,
+      "end_line": 256,
+      "row_count": 1
+    },
+    {
+      "start_line": 286,
+      "end_line": 286,
+      "row_count": 1
+    },
+    {
+      "start_line": 256,
+      "end_line": 256,
+      "row_count": 1
+    },
+    {
+      "start_line": 286,
+      "end_line": 286,
+      "row_count": 1
+    },
+    {
+      "start_line": 256,
+      "end_line": 256,
+      "row_count": 1
+    },
+    {
+      "start_line": 286,
+      "end_line": 286,
+      "row_count": 1
+    },
+    {
+      "start_line": 256,
+      "end_line": 256,
+      "row_count": 1
+    },
+    {
+      "start_line": 286,
+      "end_line": 286,
+      "row_count": 1
+    },
+    {
+      "start_line": 256,
+      "end_line": 256,
+      "row_count": 1
+    },
+    {
+      "start_line": 286,
+      "end_line": 286,
+      "row_count": 1
+    },
+    {
+      "start_line": 256,
+      "end_line": 256,
+      "row_count": 1
+    },
+    {
+      "start_line": 286,
+      "end_line": 286,
+      "row_count": 1
+    },
+    {
+      "start_line": 256,
+      "end_line": 256,
+      "row_count": 1
+    },
+    {
+      "start_line": 286,
+      "end_line": 286,
+      "row_count": 1
+    },
+    {
+      "start_line": 16,
+      "end_line": 16,
+      "row_count": 3
+    }
+  ],
+  "warnings": []
+}

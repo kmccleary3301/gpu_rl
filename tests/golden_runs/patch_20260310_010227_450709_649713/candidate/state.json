@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "candidate_id": "cand_f2e631409452",
+  "task_id": "task/reduction_debug/eval/v1",
+  "workspace_root": "/shared_folders/querylake_server/side_projects/gpu_rl/tests/tmp_transition_goldens",
+  "source_run_ref": "/shared_folders/querylake_server/side_projects/gpu_rl/tests/tmp_transition_goldens/runs/eval_20260310_010224_022215_4af5ec",
+  "source_run_id": "eval_20260310_010224_022215_4af5ec",
+  "parent_candidate_id": null,
+  "parent_run_ref": "/shared_folders/querylake_server/side_projects/gpu_rl/tests/tmp_transition_goldens/runs/eval_20260310_010224_022215_4af5ec",
+  "patch_id": "patch_0952692e61f1",
+  "patch_hash": "77099f08b4d42da18941658e695a8c82a598906726075948d0bca874e0900ca7",
+  "patch_kind": "no_op",
+  "changed_files": [
+    "workloads/reference/triton_row_sum_patchable_candidate.py"
+  ],
+  "candidate_role": "patched_candidate",
+  "lineage_depth": 0,
+  "metadata": {
+    "intent": "attempt a reduction repair but leave the broken last-column mask behavior in place",
+    "expected_effect": "keep the candidate reproducibly broken so the episode becomes a usable failed repair trace"
+  }
+}

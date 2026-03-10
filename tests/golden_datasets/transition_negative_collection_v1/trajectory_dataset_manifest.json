@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.0.0",
+  "dataset_id": "trajectory_dataset_20260310_010330",
+  "created_at": "2026-03-10T01:03:30.035114Z",
+  "policy_id": "scripted_reference_v1",
+  "split": "seed",
+  "format_version": "1.1.0",
+  "episode_count": 2,
+  "successful_episode_count": 1,
+  "failed_episode_count": 1,
+  "patch_bearing_episode_count": 2,
+  "patch_bearing_negative_episode_count": 2,
+  "lineage_safe_episode_count": 2,
+  "usable_positive_episode_count": 0,
+  "usable_negative_episode_count": 2,
+  "episode_refs": [
+    "episodes/env_episode_20260310_010223_1ac103.json",
+    "episodes/env_episode_20260310_010231_30d37c.json"
+  ],
+  "task_ids": [
+    "task/attention_reformulate/eval/v1",
+    "task/reduction_debug/eval/v1"
+  ],
+  "verb_counts": {
+    "debug": 1,
+    "reformulate": 1
+  },
+  "operator_family_counts": {
+    "reduction_sum": 1,
+    "attention_score_tile": 1
+  },
+  "terminal_state_counts": {
+    "failure": 1,
+    "success": 1
+  },
+  "readiness_counts": {
+    "negative_debug_example": 1,
+    "negative_reformulate_example": 1
+  },
+  "episode_governance_counts": {
+    "usable_negative_debug": 1,
+    "usable_negative_transition": 1
+  },
+  "transition_kind_counts": {
+    "patch_applied": 2
+  },
+  "patch_kind_counts": {
+    "no_op": 2
+  },
+  "metadata": {
+    "fixture": "transition_negative_collection_v1"
+  }
+}

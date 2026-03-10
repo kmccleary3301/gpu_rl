@@ -89,6 +89,13 @@
       "title": "Artifact Refs",
       "type": "array"
     },
+    "salient_artifact_refs": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Salient Artifact Refs",
+      "type": "array"
+    },
     "projection": {
       "additionalProperties": true,
       "title": "Projection",

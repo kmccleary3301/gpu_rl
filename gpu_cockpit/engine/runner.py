@@ -105,6 +105,13 @@ def write_run_summary(writer: RunBundleWriter, summary: RunSummary) -> None:
             f"- trace_enabled: `{summary.trace_enabled}`",
             f"- backend: `{summary.backend}`",
             f"- vendor: `{summary.vendor}`",
+            f"- parent_run_id: `{summary.parent_run_id}`",
+            f"- candidate_id: `{summary.candidate_id}`",
+            f"- parent_candidate_id: `{summary.parent_candidate_id}`",
+            f"- patch_present: `{summary.patch_present}`",
+            f"- patch_kind: `{summary.patch_kind}`",
+            f"- transition_kind: `{summary.transition_kind}`",
+            f"- candidate_role: `{summary.candidate_role}`",
             f"- exit_code: `{summary.exit_code}`",
             f"- duration_ms: `{summary.duration_ms}`",
             "",
@@ -143,6 +150,7 @@ def run_task(
     vendor: str | None = None,
     executor: str = "local_host",
     policy_pack: str = "balanced",
+    lineage: dict[str, object] | None = None,
 ) -> Path:
     registry = TaskRegistry(root)
     task = registry.get(task_ref)
@@ -157,6 +165,9 @@ def run_task(
         policy_pack=policy_pack,
         tool_versions={tool.name: tool.version for tool in doctor_report.available_tools if tool.available and tool.version},
     )
+    lineage = lineage or {}
+    if lineage.get("parent_run_id") is not None:
+        run_spec.parent_run_id = str(lineage["parent_run_id"])
     writer = RunBundleWriter(root=root)
     run_dir = writer.initialize(run_spec)
     write_task_artifacts(writer, task, doctor_report)
@@ -346,6 +357,13 @@ def run_task(
         trace_enabled=bool(command_summary and command_summary.trace_enabled),
         backend=selected_backend,
         vendor=selected_vendor,
+        parent_run_id=run_spec.parent_run_id,
+        candidate_id=str(lineage["candidate_id"]) if lineage.get("candidate_id") is not None else None,
+        parent_candidate_id=str(lineage["parent_candidate_id"]) if lineage.get("parent_candidate_id") is not None else None,
+        patch_present=bool(lineage.get("patch_present", False)),
+        patch_kind=str(lineage["patch_kind"]) if lineage.get("patch_kind") is not None else None,
+        transition_kind=str(lineage["transition_kind"]) if lineage.get("transition_kind") is not None else None,
+        candidate_role=str(lineage["candidate_role"]) if lineage.get("candidate_role") is not None else None,
         exit_code=command_summary.exit_code if command_summary else None,
         duration_ms=command_summary.duration_ms if command_summary else None,
         key_artifacts=key_artifacts,
@@ -391,6 +409,16 @@ def run_task(
                 }.items()
                 if value is not None
             },
+        },
+        lineage={
+            "candidate_id": lineage.get("candidate_id"),
+            "parent_candidate_id": lineage.get("parent_candidate_id"),
+            "source_run_ref": lineage.get("source_run_ref"),
+            "patch_ref": lineage.get("patch_ref"),
+            "diff_ref": lineage.get("diff_ref"),
+            "transition_ref": lineage.get("transition_ref"),
+            "candidate_role": lineage.get("candidate_role"),
+            "transition_kind": lineage.get("transition_kind"),
         },
     )
     writer.append_event(scope="run", kind="completed", payload={"status": "ok"})

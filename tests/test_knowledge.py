@@ -10,7 +10,9 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from gpu_cockpit.engine.environment import run_scripted_reference_episode
 from gpu_cockpit.engine.knowledge import build_knowledge_index, query_knowledge, retrieve_similar_for_task
+from gpu_cockpit.engine.trajectory import export_episode_dataset
 
 
 class KnowledgeTests(unittest.TestCase):
@@ -67,3 +69,26 @@ class KnowledgeTests(unittest.TestCase):
         paths = [row["path"] for row in rows]
         for fragment in fixture["expected_path_fragments"]:
             self.assertTrue(any(fragment in path for path in paths))
+
+    def test_query_prefers_patch_bearing_repair_examples(self) -> None:
+        repo_root = self.out_dir / "repo_root"
+        shutil.copytree(ROOT / "workloads", repo_root / "workloads")
+        shutil.copytree(ROOT / "knowledge", repo_root / "knowledge")
+        episode = run_scripted_reference_episode(
+            repo_root,
+            "task/reduction_debug/eval/v1",
+            ["python3", "workloads/reference/triton_row_sum_debug_candidate.py", "--benchmark-repeats", "2"],
+            section="quality",
+            include_build=True,
+            triton_build_spec="workloads/reference/triton_row_sum_repaired_kernel.py:get_build_spec",
+        )
+        export_episode_dataset([episode], repo_root / "datasets" / "patch_examples", policy_id="scripted_reference_v1", split="seed")
+        build_knowledge_index(repo_root, out_dir=self.out_dir)
+        rows = query_knowledge(repo_root, query="repair patch reduction bug fix", verb="debug", limit=10, index_dir=self.out_dir, prefer_mixed=True)
+        self.assertGreaterEqual(len(rows), 1)
+        self.assertTrue(
+            any(
+                row["kind"] in {"run_example", "episode_example"} and row.get("metadata", {}).get("patch_present") is True
+                for row in rows
+            )
+        )

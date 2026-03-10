@@ -5,6 +5,6 @@
   "expected_kinds": ["knowledge_doc", "run_example"],
   "expected_path_fragments": [
     "knowledge/operator_families/attention_reformulate.md",
-    "tests/golden_runs/attention_reformulate_eval_bundle_v1"
+    "tests/golden_runs/"
   ]
 }

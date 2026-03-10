@@ -15,7 +15,7 @@ def run_command(
 ) -> SystemTraceSummary:
     executor = executor or LocalHostToolExecutor()
     completed = writer.append_event(scope=scope, kind="started", payload={"command": command})
-    result = executor.run(command)
+    result = executor.run(command, cwd=writer.root)
     stdout_artifact = writer.write_artifact(
         relative_path="command/stdout.txt",
         kind="command_stdout",

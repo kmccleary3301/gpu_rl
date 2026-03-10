@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from gpu_cockpit.contracts import KnowledgeEntry, KnowledgeIndexManifest
+from gpu_cockpit.contracts import KnowledgeEntry, KnowledgeIndexManifest, TrajectoryEpisode
 from gpu_cockpit.engine.evidence import assess_run_evidence
 from gpu_cockpit.engine.indexer import list_runs
 from gpu_cockpit.engine.inspector import inspect_run, resolve_run_dir
@@ -137,6 +137,10 @@ def _build_run_entry(root: Path, run_dir: Path, *, entry_prefix: str) -> Knowled
         summary_parts.append(f"Primary bottleneck {primary_bottleneck}.")
     if benchmark_name is not None:
         summary_parts.append(f"Benchmark family {benchmark_name}.")
+    patch_kind = summary_payload.get("patch_kind")
+    transition_kind = summary_payload.get("transition_kind")
+    if summary_payload.get("patch_present"):
+        summary_parts.append(f"Patch-bearing candidate transition {transition_kind or 'applied'} using {patch_kind or 'unspecified patch'} change.")
     summary = " ".join(summary_parts)
 
     tags = [status, "run-example"]
@@ -150,6 +154,12 @@ def _build_run_entry(root: Path, run_dir: Path, *, entry_prefix: str) -> Knowled
         tags.append(task_verb)
     if benchmark_name is not None:
         tags.append(benchmark_name.lower())
+    if summary_payload.get("patch_present"):
+        tags.extend(["patch-bearing", "repair-example" if task_verb == "debug" else "transform-example"])
+    if isinstance(patch_kind, str) and patch_kind:
+        tags.append(patch_kind)
+    if isinstance(transition_kind, str) and transition_kind:
+        tags.append(transition_kind)
     if evidence.benchmark_reporting.eligible:
         tags.append("benchmark-ready")
     if evidence.sft_collection.eligible:
@@ -179,6 +189,10 @@ def _build_run_entry(root: Path, run_dir: Path, *, entry_prefix: str) -> Knowled
             "sft_ready": evidence.sft_collection.eligible,
             "rl_trace_ready": evidence.rl_reward_trace.eligible,
             "training_example_kind": evidence.training_example_kind,
+            "patch_present": bool(summary_payload.get("patch_present", False)),
+            "patch_kind": patch_kind,
+            "transition_kind": transition_kind,
+            "candidate_role": summary_payload.get("candidate_role"),
         },
     )
 
@@ -213,10 +227,105 @@ def _build_run_entries(root: Path, limit: int = 6) -> list[KnowledgeEntry]:
     return entries
 
 
+def _build_episode_entry(root: Path, episode_path: Path, *, entry_prefix: str) -> KnowledgeEntry | None:
+    payload = json.loads(episode_path.read_text(encoding="utf-8"))
+    episode = TrajectoryEpisode.model_validate(payload)
+    governance = episode.governance
+    patch_present = any(step.action.action_type == "patch_candidate" for step in episode.steps)
+    patch_kinds = sorted(
+        {
+            str(step.action.metadata["patch_kind"])
+            for step in episode.steps
+            if isinstance(step.action.metadata.get("patch_kind"), str)
+        }
+    )
+    patch_intents = [
+        str(step.action.metadata["patch_intent"])
+        for step in episode.steps
+        if isinstance(step.action.metadata.get("patch_intent"), str)
+    ]
+    transition_kinds = sorted({step.transition_kind for step in episode.steps if isinstance(step.transition_kind, str)})
+    summary_parts = [
+        f"Episode {episode.episode_id} for {episode.task_id} ended in {episode.terminal_state}.",
+        f"Policy {episode.policy_id}.",
+    ]
+    if governance is not None:
+        summary_parts.append(f"Governance {governance.episode_governance_kind}.")
+    if patch_present:
+        summary_parts.append("Patch-bearing repair or transformation example.")
+    if patch_kinds:
+        summary_parts.append(f"Patch kinds: {', '.join(patch_kinds)}.")
+    if transition_kinds:
+        summary_parts.append(f"Transitions: {', '.join(transition_kinds)}.")
+    summary = " ".join(summary_parts)
+    tags = ["episode-example", episode.terminal_state]
+    if episode.operator_family:
+        tags.append(episode.operator_family)
+    if episode.task_verb:
+        tags.append(episode.task_verb)
+    if patch_present:
+        tags.append("patch-bearing")
+    tags.extend(transition_kinds)
+    if governance is not None:
+        tags.append(governance.episode_governance_kind)
+    return KnowledgeEntry(
+        entry_id=f"{entry_prefix}:{episode.episode_id}",
+        kind="episode_example",
+        title=episode.episode_id,
+        path=str(episode_path.relative_to(root)),
+        source_type="trajectory_episode",
+        summary=summary,
+        tags=list(dict.fromkeys(tags)),
+        keywords=list(dict.fromkeys(_tokenize(f"{summary} {' '.join(tags)} {episode.task_id}"))),
+        operator_family=episode.operator_family,
+        metadata={
+            "task_id": episode.task_id,
+            "task_verb": episode.task_verb,
+            "terminal_state": episode.terminal_state,
+            "patch_present": patch_present,
+            "patch_kinds": patch_kinds,
+            "patch_intents": patch_intents,
+            "transition_kinds": transition_kinds,
+            "episode_governance_kind": governance.episode_governance_kind if governance is not None else None,
+            "training_example_kind": governance.training_example_kind if governance is not None else episode.metadata.get("training_example_kind"),
+        },
+    )
+
+
+def _build_episode_entries(root: Path) -> list[KnowledgeEntry]:
+    episode_paths: list[tuple[str, Path]] = []
+    golden_episode_root = root / "tests" / "golden_episodes"
+    if golden_episode_root.exists():
+        for path in sorted(golden_episode_root.glob("*.json")):
+            episode_paths.append(("golden_episode", path))
+    golden_dataset_root = root / "tests" / "golden_datasets"
+    if golden_dataset_root.exists():
+        for dataset_dir in sorted(golden_dataset_root.iterdir()):
+            episodes_dir = dataset_dir / "episodes"
+            if not episodes_dir.exists():
+                continue
+            for path in sorted(episodes_dir.glob("*.json")):
+                episode_paths.append(("golden_dataset_episode", path))
+    dataset_root = root / "datasets"
+    if dataset_root.exists():
+        for dataset_dir in sorted(dataset_root.iterdir()):
+            episodes_dir = dataset_dir / "episodes"
+            if not episodes_dir.exists():
+                continue
+            for path in sorted(episodes_dir.glob("*.json")):
+                episode_paths.append(("dataset_episode", path))
+    entries: list[KnowledgeEntry] = []
+    for entry_prefix, episode_path in episode_paths:
+        entry = _build_episode_entry(root, episode_path, entry_prefix=entry_prefix)
+        if entry is not None:
+            entries.append(entry)
+    return entries
+
+
 def build_knowledge_index(root: Path, *, out_dir: Path | None = None) -> Path:
     destination = out_dir or (root / "knowledge" / "index")
     destination.mkdir(parents=True, exist_ok=True)
-    entries = _build_markdown_entries(root) + _build_task_entries(root) + _build_run_entries(root)
+    entries = _build_markdown_entries(root) + _build_task_entries(root) + _build_run_entries(root) + _build_episode_entries(root)
     entries_payload = [entry.model_dump(mode="json") for entry in entries]
     entries_path = destination / "entries.json"
     entries_path.write_text(json.dumps(entries_payload, indent=2) + "\n", encoding="utf-8")
@@ -294,10 +403,24 @@ def query_knowledge(
             score += 3
         if vendor and entry.vendor == vendor:
             score += 3
-        if entry.kind == "run_example" and isinstance(entry.metadata, dict):
+        if entry.kind in {"run_example", "episode_example"} and isinstance(entry.metadata, dict):
             evidence_score = entry.metadata.get("evidence_score")
             if isinstance(evidence_score, (int, float)):
                 score += min(5, int(float(evidence_score) * 5))
+            patch_query_tokens = {"patch", "repair", "fix", "reformulate", "transform"}
+            if entry.metadata.get("patch_present") is True and query_tokens & patch_query_tokens:
+                score += 6
+            if verb and entry_verb == verb and entry.metadata.get("patch_present") is True:
+                score += 4
+            patch_kinds = entry.metadata.get("patch_kinds")
+            if isinstance(patch_kinds, list):
+                score += len(query_tokens & {str(kind) for kind in patch_kinds}) * 3
+            patch_intents = entry.metadata.get("patch_intents")
+            if isinstance(patch_intents, list):
+                intent_tokens = set()
+                for intent in patch_intents:
+                    intent_tokens |= set(_tokenize(str(intent)))
+                score += len(query_tokens & intent_tokens) * 2
             if entry.metadata.get("rl_trace_ready") is True:
                 score += 4
             elif entry.metadata.get("sft_ready") is True:

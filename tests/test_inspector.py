@@ -11,6 +11,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from gpu_cockpit.engine.indexer import list_runs
+from gpu_cockpit.engine.patching import apply_patch_candidate
 from gpu_cockpit.engine.inspector import compare_runs, inspect_run
 from gpu_cockpit.engine.runner import run_task
 
@@ -219,6 +220,7 @@ class InspectorTests(unittest.TestCase):
         self.assertIn("evidence_quality", section)
         self.assertIn("benchmark_reporting", section["evidence_quality"])
         self.assertIn("training_readiness", section)
+        self.assertIn("training_trace_triage", section)
         self.assertEqual(section["training_readiness"]["training_example_kind"], "unusable")
 
     def test_compare_golden_reformulate_pair_surfaces_training_transition(self) -> None:
@@ -227,8 +229,10 @@ class InspectorTests(unittest.TestCase):
             str(ROOT / "tests" / "golden_runs" / "attention_reformulate_baseline_bench_v1"),
             str(ROOT / "tests" / "golden_runs" / "attention_reformulate_eval_bundle_v1"),
         )
-        self.assertEqual(comparison.trainworthiness_change, "unusable->positive_rl_trace")
-        self.assertEqual(comparison.rhs_training_example_kind, "positive_rl_trace")
+        self.assertEqual(comparison.trainworthiness_change, "unusable->benchmark_only")
+        self.assertEqual(comparison.rhs_training_example_kind, "benchmark_only")
+        self.assertTrue(comparison.rhs_benchmark_ready)
+        self.assertFalse(comparison.rhs_rl_trace_ready)
 
     def test_inspect_golden_debug_bundle_surfaces_failure_triage(self) -> None:
         section = inspect_run(ROOT, str(ROOT / "tests" / "golden_runs" / "reduction_debug_bundle_v1"), section="quality")
@@ -243,8 +247,54 @@ class InspectorTests(unittest.TestCase):
         )
         self.assertEqual(comparison.lhs_status, "ok")
         self.assertEqual(comparison.rhs_status, "ok")
-        self.assertTrue(comparison.lhs_rl_trace_ready)
-        self.assertTrue(comparison.rhs_rl_trace_ready)
+        self.assertTrue(comparison.lhs_benchmark_ready)
+        self.assertTrue(comparison.rhs_benchmark_ready)
+        self.assertEqual(comparison.lhs_training_example_kind, "benchmark_only")
+        self.assertEqual(comparison.rhs_training_example_kind, "benchmark_only")
+        self.assertFalse(comparison.lhs_rl_trace_ready)
+        self.assertFalse(comparison.rhs_rl_trace_ready)
+
+    def test_inspect_and_compare_patch_bundles_surface_candidate_fields(self) -> None:
+        broken_path = self.tmp_root / "workloads" / "reference" / "triton_row_sum_broken_kernel.py"
+        original_text = broken_path.read_text(encoding="utf-8")
+        repaired_text = (self.tmp_root / "workloads" / "reference" / "triton_row_sum_repaired_kernel.py").read_text(encoding="utf-8")
+
+        lhs_run_dir, _, lhs_candidate, _ = apply_patch_candidate(
+            self.tmp_root,
+            task_ref="task/reduction_debug/eval/v1",
+            target_file="workloads/reference/triton_row_sum_broken_kernel.py",
+            replacement_text=repaired_text,
+            intent="repair the broken row-sum kernel mask",
+            expected_effect="restore full-column coverage",
+            patch_kind="bug_fix",
+            transition_kind="repaired",
+        )
+        rhs_run_dir, _, rhs_candidate, _ = apply_patch_candidate(
+            self.tmp_root,
+            task_ref="task/reduction_debug/eval/v1",
+            target_file="workloads/reference/triton_row_sum_broken_kernel.py",
+            replacement_text=original_text,
+            intent="revert the patch to recover the original broken kernel",
+            expected_effect="return to the previous state",
+            patch_kind="refactor",
+            transition_kind="reverted",
+            parent_run_ref=str(lhs_run_dir),
+            parent_run_id=lhs_run_dir.name,
+            parent_candidate_id=lhs_candidate.candidate_id,
+        )
+
+        section = inspect_run(self.tmp_root, str(lhs_run_dir), section="transition")
+        self.assertTrue(section["candidate_projection"]["patch_present"])
+        self.assertEqual(section["candidate_projection"]["candidate_state"]["candidate_id"], lhs_candidate.candidate_id)
+
+        comparison = compare_runs(self.tmp_root, str(lhs_run_dir), str(rhs_run_dir))
+        self.assertTrue(comparison.lhs_patch_present)
+        self.assertTrue(comparison.rhs_patch_present)
+        self.assertEqual(comparison.lhs_candidate_id, lhs_candidate.candidate_id)
+        self.assertEqual(comparison.rhs_candidate_id, rhs_candidate.candidate_id)
+        self.assertEqual(comparison.lhs_transition_kind, "repaired")
+        self.assertEqual(comparison.rhs_transition_kind, "reverted")
+        self.assertTrue(comparison.patch_hash_changed)
 
 
 if __name__ == "__main__":

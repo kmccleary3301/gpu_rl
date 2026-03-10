@@ -1,0 +1,1 @@
+{"debug_summary": {"attempt_status": "still_broken", "broken_ref": "workloads/reference/triton_row_sum_broken_kernel.py", "bug_class": "mask_excludes_last_column", "fixed_ref": "workloads/reference/triton_row_sum_repaired_kernel.py", "reason_code": "last_column_omitted"}, "hidden_row_sum": [6.0, 2.5, 7.0], "visible_row_sum": [6.0, 1.5]}

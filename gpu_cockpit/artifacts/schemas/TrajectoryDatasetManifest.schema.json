@@ -43,6 +43,34 @@
       "title": "Failed Episode Count",
       "type": "integer"
     },
+    "patch_bearing_episode_count": {
+      "minimum": 0,
+      "title": "Patch Bearing Episode Count",
+      "type": "integer"
+    },
+    "patch_bearing_negative_episode_count": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Patch Bearing Negative Episode Count",
+      "type": "integer"
+    },
+    "lineage_safe_episode_count": {
+      "minimum": 0,
+      "title": "Lineage Safe Episode Count",
+      "type": "integer"
+    },
+    "usable_positive_episode_count": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Usable Positive Episode Count",
+      "type": "integer"
+    },
+    "usable_negative_episode_count": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Usable Negative Episode Count",
+      "type": "integer"
+    },
     "episode_refs": {
       "items": {
         "type": "string"
@@ -85,6 +113,27 @@
       "title": "Readiness Counts",
       "type": "object"
     },
+    "episode_governance_counts": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "Episode Governance Counts",
+      "type": "object"
+    },
+    "transition_kind_counts": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "Transition Kind Counts",
+      "type": "object"
+    },
+    "patch_kind_counts": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "Patch Kind Counts",
+      "type": "object"
+    },
     "metadata": {
       "additionalProperties": true,
       "title": "Metadata",
@@ -98,7 +147,9 @@
     "split",
     "episode_count",
     "successful_episode_count",
-    "failed_episode_count"
+    "failed_episode_count",
+    "patch_bearing_episode_count",
+    "lineage_safe_episode_count"
   ],
   "title": "TrajectoryDatasetManifest",
   "type": "object"

@@ -1,0 +1,1956 @@
+{
+  "schema_version": "1.0.0",
+  "episode_id": "env_episode_20260310_010231_30d37c",
+  "created_at": "2026-03-10T01:03:29.947811Z",
+  "policy_id": "scripted_reference_v1",
+  "task_id": "task/attention_reformulate/eval/v1",
+  "task_verb": "reformulate",
+  "operator_family": "attention_score_tile",
+  "source_run_id": "eval_20260310_010311_217990_74570e",
+  "source_run_ref": "../../golden_runs/attention_reformulate_negative_eval_v1",
+  "episode_kind": "scripted_reference",
+  "steps": [
+    {
+      "schema_version": "1.0.0",
+      "step_index": 0,
+      "step_label": "diagnostic_action",
+      "action": {
+        "schema_version": "1.0.0",
+        "action_type": "knowledge_query",
+        "step_kind": "tool_call",
+        "command": [],
+        "target_run_id": null,
+        "target_task_id": "task/attention_reformulate/eval/v1",
+        "artifact_refs": [],
+        "metadata": {
+          "section": "summary"
+        }
+      },
+      "observation": {
+        "schema_version": "1.0.0",
+        "observation_type": "knowledge_results",
+        "run_id": null,
+        "task_id": "task/attention_reformulate/eval/v1",
+        "status": null,
+        "backend": "triton",
+        "vendor": null,
+        "summary_ref": null,
+        "artifact_refs": [],
+        "salient_artifact_refs": [],
+        "projection": {
+          "results": [
+            {
+              "score": 63,
+              "schema_version": "1.0.0",
+              "entry_id": "task:task/attention_reformulate/eval/v1",
+              "kind": "task",
+              "title": "task/attention_reformulate/eval/v1",
+              "path": "workloads/tasks/task_attention_reformulate_eval_v1.json",
+              "source_type": "task_spec",
+              "summary": "Reformulate the weak naive causal attention-score implementation into a tiled Triton kernel while preserving the visible and hidden score matrices. Print JSON with visible_attention_scores, hidden_attention_scores, and a reformulation_summary describing the strategy change.",
+              "tags": [
+                "reformulate",
+                "attention_score_tile",
+                "triton",
+                "cuda",
+                "torch"
+              ],
+              "keywords": [
+                "task",
+                "attention_reformulate",
+                "eval",
+                "reformulate",
+                "the",
+                "weak",
+                "naive",
+                "causal",
+                "attention-score",
+                "implementation",
+                "into",
+                "tiled",
+                "triton",
+                "kernel",
+                "while",
+                "preserving",
+                "visible",
+                "and",
+                "hidden",
+                "score",
+                "matrices",
+                "print",
+                "json",
+                "with",
+                "visible_attention_scores",
+                "hidden_attention_scores",
+                "reformulation_summary",
+                "describing",
+                "strategy",
+                "change",
+                "attention_score_tile",
+                "cuda",
+                "torch"
+              ],
+              "operator_family": "attention_score_tile",
+              "backend": "triton",
+              "vendor": "nvidia",
+              "metadata": {
+                "difficulty": "medium",
+                "reference_impl_ref": "workloads/reference/triton_attention_score_reformulate_candidate.py",
+                "verb": "reformulate",
+                "benchmark_name": null
+              }
+            }
+          ]
+        }
+      },
+      "reward_components": {
+        "tool_cost": -0.02
+      },
+      "reward_total": -0.02,
+      "transition_kind": null,
+      "input_candidate_id": null,
+      "output_candidate_id": null,
+      "patch_hash": null,
+      "recommended_next_actions": [],
+      "terminal": false,
+      "terminal_state": null
+    },
+    {
+      "schema_version": "1.0.0",
+      "step_index": 1,
+      "step_label": "verification_action",
+      "action": {
+        "schema_version": "1.0.0",
+        "action_type": "bench",
+        "step_kind": "tool_call",
+        "command": [
+          "python3",
+          "workloads/reference/triton_attention_score_weak_baseline.py",
+          "--benchmark-repeats",
+          "12"
+        ],
+        "target_run_id": "bench_20260310_010231_093110_76152b",
+        "target_task_id": "task/attention_reformulate/eval/v1",
+        "artifact_refs": [],
+        "metadata": {
+          "section": "summary",
+          "run_ref": "/shared_folders/querylake_server/side_projects/gpu_rl/tests/tmp_transition_goldens/runs/bench_20260310_010231_093110_76152b"
+        }
+      },
+      "observation": {
+        "schema_version": "1.0.0",
+        "observation_type": "bench_projection",
+        "run_id": "bench_20260310_010231_093110_76152b",
+        "task_id": "task/attention_reformulate/eval/v1",
+        "status": "ok",
+        "backend": "triton",
+        "vendor": "nvidia",
+        "summary_ref": "summary.json",
+        "artifact_refs": [
+          "manifest.json",
+          "events.jsonl",
+          "prompt/task_spec.json",
+          "meta/task_spec_full.json",
+          "meta/hardware_fingerprint.json",
+          "meta/doctor_report.json",
+          "perf/benchmark.json",
+          "perf/raw_timings.json",
+          "summary.json",
+          "summary.md"
+        ],
+        "salient_artifact_refs": [
+          "manifest.json",
+          "events.jsonl",
+          "prompt/task_spec.json"
+        ],
+        "projection": {
+          "schema_version": "1.0.0",
+          "run_id": "bench_20260310_010231_093110_76152b",
+          "task_id": "task/attention_reformulate/eval/v1",
+          "status": "ok",
+          "trace_enabled": false,
+          "backend": "triton",
+          "vendor": "nvidia",
+          "parent_run_id": null,
+          "candidate_id": null,
+          "parent_candidate_id": null,
+          "patch_present": false,
+          "patch_kind": null,
+          "transition_kind": null,
+          "candidate_role": null,
+          "exit_code": 0,
+          "duration_ms": 1669,
+          "key_artifacts": [
+            "manifest.json",
+            "events.jsonl",
+            "prompt/task_spec.json",
+            "meta/task_spec_full.json",
+            "meta/hardware_fingerprint.json",
+            "meta/doctor_report.json",
+            "perf/benchmark.json",
+            "perf/raw_timings.json",
+            "summary.json",
+            "summary.md"
+          ],
+          "warnings": [],
+          "projection": {
+            "required_artifacts": [
+              "meta/doctor_report.json",
+              "prompt/task_spec.json",
+              "correctness/correctness.json",
+              "correctness/determinism.json",
+              "eval/anti_hack_report.json",
+              "eval/eval_envelope.json",
+              "perf/benchmark.json",
+              "perf/raw_timings.json"
+            ],
+            "missing_required_artifacts": [
+              "correctness/correctness.json",
+              "correctness/determinism.json",
+              "eval/anti_hack_report.json",
+              "eval/eval_envelope.json"
+            ],
+            "failed_scopes": [],
+            "replay_validation": {
+              "present": true
+            },
+            "profile_summary": null,
+            "sanitizer_summary": null,
+            "bottleneck_card": null,
+            "correctness_summary": null,
+            "determinism_summary": null,
+            "anti_hack_summary": null,
+            "eval_envelope": null,
+            "gate_summary": null,
+            "replay_pack": {
+              "schema_version": "1.0.0",
+              "run_id": "bench_20260310_010231_093110_76152b",
+              "replay_version": "1.0.0",
+              "image_digest": null,
+              "git_snapshot": null,
+              "seed_pack": {
+                "global_seed": 1234,
+                "input_seed": 5678
+              },
+              "hardware_fingerprint_ref": "meta/hardware_fingerprint.json",
+              "input_snapshot_ref": "replay/environment.json",
+              "task_ref": "task/attention_reformulate/eval/v1",
+              "commands_ref": "replay/command.json",
+              "candidate_id": null,
+              "parent_candidate_id": null,
+              "source_run_ref": null,
+              "patch_ref": null,
+              "diff_ref": null,
+              "transition_ref": null,
+              "candidate_role": null,
+              "transition_kind": null,
+              "required_artifacts": [
+                "events.jsonl",
+                "manifest.json",
+                "meta/doctor_report.json",
+                "meta/hardware_fingerprint.json",
+                "meta/task_spec_full.json",
+                "perf/benchmark.json",
+                "perf/raw_timings.json",
+                "prompt/task_spec.json",
+                "summary.json",
+                "summary.md"
+              ]
+            },
+            "build_record": null,
+            "tri_view": null,
+            "build_projection": null,
+            "candidate_projection": null,
+            "evidence_quality": {
+              "schema_version": "1.0.0",
+              "run_id": "bench_20260310_010231_093110_76152b",
+              "task_id": "task/attention_reformulate/eval/v1",
+              "required_artifact_count": 8,
+              "missing_required_artifact_count": 4,
+              "required_artifact_completeness": 0.5,
+              "replay_completeness": 1.0,
+              "build_completeness": 0.0,
+              "profile_completeness": 0.0,
+              "eval_completeness": 0.1667,
+              "provenance_completeness": 1.0,
+              "overall_score": 0.4667,
+              "benchmark_reporting": {
+                "schema_version": "1.0.0",
+                "eligible": false,
+                "reasons": [
+                  "required_artifacts_missing",
+                  "eval_artifacts_incomplete",
+                  "perf_gate:not_run"
+                ]
+              },
+              "sft_collection": {
+                "schema_version": "1.0.0",
+                "eligible": false,
+                "reasons": [
+                  "build_evidence_missing"
+                ]
+              },
+              "rl_reward_trace": {
+                "schema_version": "1.0.0",
+                "eligible": false,
+                "reasons": [
+                  "eval_artifacts_incomplete",
+                  "required_artifacts_missing",
+                  "correctness_gate:not_run",
+                  "determinism_gate:not_run",
+                  "anti_hack_gate:not_run",
+                  "build_evidence_incomplete",
+                  "profile_evidence_incomplete",
+                  "perf_gate:not_run"
+                ]
+              },
+              "missing_provenance_fields": [],
+              "training_example_kind": "unusable",
+              "notes": [
+                "missing_required:correctness/correctness.json,correctness/determinism.json,eval/anti_hack_report.json,eval/eval_envelope.json",
+                "no_build_artifacts",
+                "no_profile_artifacts"
+              ]
+            },
+            "failure_triage": {
+              "task_verb": "reformulate",
+              "failure_class": "ready_positive",
+              "likely_artifacts": []
+            },
+            "recommended_next_actions": [
+              "inspect_quality",
+              "compare",
+              "replay"
+            ],
+            "training_readiness": {
+              "benchmark_reporting": {
+                "schema_version": "1.0.0",
+                "eligible": false,
+                "reasons": [
+                  "required_artifacts_missing",
+                  "eval_artifacts_incomplete",
+                  "perf_gate:not_run"
+                ]
+              },
+              "sft_collection": {
+                "schema_version": "1.0.0",
+                "eligible": false,
+                "reasons": [
+                  "build_evidence_missing"
+                ]
+              },
+              "rl_reward_trace": {
+                "schema_version": "1.0.0",
+                "eligible": false,
+                "reasons": [
+                  "eval_artifacts_incomplete",
+                  "required_artifacts_missing",
+                  "correctness_gate:not_run",
+                  "determinism_gate:not_run",
+                  "anti_hack_gate:not_run",
+                  "build_evidence_incomplete",
+                  "profile_evidence_incomplete",
+                  "perf_gate:not_run"
+                ]
+              },
+              "training_example_kind": "unusable",
+              "missing_provenance_fields": []
+            },
+            "training_trace_triage": {
+              "training_example_kind": "unusable",
+              "summary": "not suitable for default training",
+              "reasons": []
+            }
+          }
+        }
+      },
+      "reward_components": {
+        "tool_cost": -0.03
+      },
+      "reward_total": -0.03,
+      "transition_kind": null,
+      "input_candidate_id": null,
+      "output_candidate_id": null,
+      "patch_hash": null,
+      "recommended_next_actions": [],
+      "terminal": false,
+      "terminal_state": null
+    },
+    {
+      "schema_version": "1.0.0",
+      "step_index": 2,
+      "step_label": "diagnostic_action",
+      "action": {
+        "schema_version": "1.0.0",
+        "action_type": "inspect_quality",
+        "step_kind": "tool_call",
+        "command": [],
+        "target_run_id": "bench_20260310_010231_093110_76152b",
+        "target_task_id": "task/attention_reformulate/eval/v1",
+        "artifact_refs": [],
+        "metadata": {
+          "section": "quality",
+          "requested_action": "inspect_quality"
+        }
+      },
+      "observation": {
+        "schema_version": "1.0.0",
+        "observation_type": "inspection",
+        "run_id": "bench_20260310_010231_093110_76152b",
+        "task_id": "task/attention_reformulate/eval/v1",
+        "status": "ok",
+        "backend": "triton",
+        "vendor": "nvidia",
+        "summary_ref": "summary.json",
+        "artifact_refs": [
+          "manifest.json",
+          "events.jsonl",
+          "prompt/task_spec.json",
+          "meta/task_spec_full.json",
+          "meta/hardware_fingerprint.json",
+          "meta/doctor_report.json",
+          "perf/benchmark.json",
+          "perf/raw_timings.json",
+          "summary.json",
+          "summary.md"
+        ],
+        "salient_artifact_refs": [],
+        "projection": {
+          "evidence_quality": {
+            "schema_version": "1.0.0",
+            "run_id": "bench_20260310_010231_093110_76152b",
+            "task_id": "task/attention_reformulate/eval/v1",
+            "required_artifact_count": 8,
+            "missing_required_artifact_count": 4,
+            "required_artifact_completeness": 0.5,
+            "replay_completeness": 1.0,
+            "build_completeness": 0.0,
+            "profile_completeness": 0.0,
+            "eval_completeness": 0.1667,
+            "provenance_completeness": 1.0,
+            "overall_score": 0.4667,
+            "benchmark_reporting": {
+              "schema_version": "1.0.0",
+              "eligible": false,
+              "reasons": [
+                "required_artifacts_missing",
+                "eval_artifacts_incomplete",
+                "perf_gate:not_run"
+              ]
+            },
+            "sft_collection": {
+              "schema_version": "1.0.0",
+              "eligible": false,
+              "reasons": [
+                "build_evidence_missing"
+              ]
+            },
+            "rl_reward_trace": {
+              "schema_version": "1.0.0",
+              "eligible": false,
+              "reasons": [
+                "eval_artifacts_incomplete",
+                "required_artifacts_missing",
+                "correctness_gate:not_run",
+                "determinism_gate:not_run",
+                "anti_hack_gate:not_run",
+                "build_evidence_incomplete",
+                "profile_evidence_incomplete",
+                "perf_gate:not_run"
+              ]
+            },
+            "missing_provenance_fields": [],
+            "training_example_kind": "unusable",
+            "notes": [
+              "missing_required:correctness/correctness.json,correctness/determinism.json,eval/anti_hack_report.json,eval/eval_envelope.json",
+              "no_build_artifacts",
+              "no_profile_artifacts"
+            ]
+          },
+          "training_readiness": {
+            "benchmark_reporting": {
+              "schema_version": "1.0.0",
+              "eligible": false,
+              "reasons": [
+                "required_artifacts_missing",
+                "eval_artifacts_incomplete",
+                "perf_gate:not_run"
+              ]
+            },
+            "sft_collection": {
+              "schema_version": "1.0.0",
+              "eligible": false,
+              "reasons": [
+                "build_evidence_missing"
+              ]
+            },
+            "rl_reward_trace": {
+              "schema_version": "1.0.0",
+              "eligible": false,
+              "reasons": [
+                "eval_artifacts_incomplete",
+                "required_artifacts_missing",
+                "correctness_gate:not_run",
+                "determinism_gate:not_run",
+                "anti_hack_gate:not_run",
+                "build_evidence_incomplete",
+                "profile_evidence_incomplete",
+                "perf_gate:not_run"
+              ]
+            },
+            "training_example_kind": "unusable",
+            "missing_provenance_fields": []
+          },
+          "training_trace_triage": {
+            "training_example_kind": "unusable",
+            "summary": "not suitable for default training",
+            "reasons": []
+          },
+          "failure_triage": {
+            "task_verb": "reformulate",
+            "failure_class": "ready_positive",
+            "likely_artifacts": []
+          },
+          "recommended_next_actions": [
+            "inspect_quality",
+            "compare",
+            "replay"
+          ]
+        }
+      },
+      "reward_components": {
+        "tool_cost": -0.01
+      },
+      "reward_total": -0.01,
+      "transition_kind": null,
+      "input_candidate_id": null,
+      "output_candidate_id": null,
+      "patch_hash": null,
+      "recommended_next_actions": [
+        "inspect_quality",
+        "compare",
+        "replay"
+      ],
+      "terminal": false,
+      "terminal_state": null
+    },
+    {
+      "schema_version": "1.0.0",
+      "step_index": 3,
+      "step_label": "patch_action",
+      "action": {
+        "schema_version": "1.0.0",
+        "action_type": "patch_candidate",
+        "step_kind": "tool_call",
+        "command": [],
+        "target_run_id": "patch_20260310_010251_148675_4c9633",
+        "target_task_id": "task/attention_reformulate/eval/v1",
+        "artifact_refs": [
+          "manifest.json",
+          "events.jsonl",
+          "prompt/task_spec.json",
+          "meta/task_spec_full.json",
+          "meta/hardware_fingerprint.json",
+          "meta/doctor_report.json",
+          "patches/request.json",
+          "patches/applied_patch.json",
+          "patches/unified_diff.patch",
+          "patches/before.txt",
+          "patches/after.txt",
+          "candidate/state.json",
+          "candidate/transition.json",
+          "summary.json",
+          "summary.md"
+        ],
+        "metadata": {
+          "section": "summary",
+          "patch_target_file": "workloads/reference/triton_attention_score_weak_baseline.py",
+          "patch_kind": "no_op",
+          "patch_intent": "attempt a reformulation without changing the weak causal attention-score implementation",
+          "patch_expected_effect": "preserve the baseline implementation so the perf gate still fails and the episode remains a useful negative transform example",
+          "input_candidate_id": null,
+          "output_candidate_id": "cand_10d8561a0f1e",
+          "transition_kind": "patch_applied",
+          "patch_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "run_ref": "/shared_folders/querylake_server/side_projects/gpu_rl/tests/tmp_transition_goldens/runs/patch_20260310_010251_148675_4c9633"
+        }
+      },
+      "observation": {
+        "schema_version": "1.0.0",
+        "observation_type": "candidate_patch",
+        "run_id": "patch_20260310_010251_148675_4c9633",
+        "task_id": "task/attention_reformulate/eval/v1",
+        "status": "ok",
+        "backend": "triton",
+        "vendor": "nvidia",
+        "summary_ref": "candidate/transition.json",
+        "artifact_refs": [
+          "manifest.json",
+          "events.jsonl",
+          "prompt/task_spec.json",
+          "meta/task_spec_full.json",
+          "meta/hardware_fingerprint.json",
+          "meta/doctor_report.json",
+          "patches/request.json",
+          "patches/applied_patch.json",
+          "patches/unified_diff.patch",
+          "patches/before.txt",
+          "patches/after.txt",
+          "candidate/state.json",
+          "candidate/transition.json",
+          "summary.json",
+          "summary.md"
+        ],
+        "salient_artifact_refs": [
+          "patches/request.json",
+          "patches/applied_patch.json",
+          "patches/unified_diff.patch",
+          "patches/before.txt",
+          "patches/after.txt",
+          "candidate/state.json",
+          "candidate/transition.json"
+        ],
+        "projection": {
+          "candidate_projection": {
+            "candidate_state": {
+              "schema_version": "1.0.0",
+              "candidate_id": "cand_10d8561a0f1e",
+              "task_id": "task/attention_reformulate/eval/v1",
+              "workspace_root": "/shared_folders/querylake_server/side_projects/gpu_rl/tests/tmp_transition_goldens",
+              "source_run_ref": "/shared_folders/querylake_server/side_projects/gpu_rl/tests/tmp_transition_goldens/runs/bench_20260310_010231_093110_76152b",
+              "source_run_id": "bench_20260310_010231_093110_76152b",
+              "parent_candidate_id": null,
+              "parent_run_ref": "/shared_folders/querylake_server/side_projects/gpu_rl/tests/tmp_transition_goldens/runs/bench_20260310_010231_093110_76152b",
+              "patch_id": "patch_6cb82af3c1d5",
+              "patch_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "patch_kind": "no_op",
+              "changed_files": [
+                "workloads/reference/triton_attention_score_weak_baseline.py"
+              ],
+              "candidate_role": "patched_candidate",
+              "lineage_depth": 0,
+              "metadata": {
+                "intent": "attempt a reformulation without changing the weak causal attention-score implementation",
+                "expected_effect": "preserve the baseline implementation so the perf gate still fails and the episode remains a useful negative transform example"
+              }
+            },
+            "transition": {
+              "schema_version": "1.0.0",
+              "transition_id": "transition_40a9e8000f6d",
+              "transition_kind": "patch_applied",
+              "task_id": "task/attention_reformulate/eval/v1",
+              "input_candidate_id": null,
+              "output_candidate_id": "cand_10d8561a0f1e",
+              "source_run_ref": "/shared_folders/querylake_server/side_projects/gpu_rl/tests/tmp_transition_goldens/runs/bench_20260310_010231_093110_76152b",
+              "target_run_ref": "/shared_folders/querylake_server/side_projects/gpu_rl/tests/tmp_transition_goldens/runs/patch_20260310_010251_148675_4c9633",
+              "patch_id": "patch_6cb82af3c1d5",
+              "patch_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "patch_kind": "no_op",
+              "changed_files": [
+                "workloads/reference/triton_attention_score_weak_baseline.py"
+              ],
+              "status": "ok",
+              "summary": "attempt a reformulation without changing the weak causal attention-score implementation",
+              "metadata": {
+                "expected_effect": "preserve the baseline implementation so the perf gate still fails and the episode remains a useful negative transform example"
+              }
+            },
+            "applied_patch": {
+              "schema_version": "1.0.0",
+              "patch_id": "patch_6cb82af3c1d5",
+              "target_file": "workloads/reference/triton_attention_score_weak_baseline.py",
+              "patch_kind": "no_op",
+              "intent": "attempt a reformulation without changing the weak causal attention-score implementation",
+              "expected_effect": "preserve the baseline implementation so the perf gate still fails and the episode remains a useful negative transform example",
+              "content_mode": "replace",
+              "accepted": true,
+              "patch_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "changed_line_count": 0,
+              "before_ref": "patches/before.txt",
+              "after_ref": "patches/after.txt",
+              "diff_ref": "patches/unified_diff.patch",
+              "error_message": null,
+              "metadata": {
+                "applied_at": "2026-03-10T01:02:51.151396+00:00",
+                "workspace_target": "/shared_folders/querylake_server/side_projects/gpu_rl/tests/tmp_transition_goldens/workloads/reference/triton_attention_score_weak_baseline.py"
+              }
+            },
+            "patch_present": true,
+            "changed_file_count": 0
+          },
+          "recommended_next_actions": [
+            "build",
+            "eval",
+            "compare",
+            "replay"
+          ]
+        }
+      },
+      "reward_components": {
+        "tool_cost": -0.04
+      },
+      "reward_total": -0.04,
+      "transition_kind": "patch_applied",
+      "input_candidate_id": null,
+      "output_candidate_id": "cand_10d8561a0f1e",
+      "patch_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "recommended_next_actions": [
+        "build",
+        "eval",
+        "compare",
+        "replay"
+      ],
+      "terminal": false,
+      "terminal_state": null
+    },
+    {
+      "schema_version": "1.0.0",
+      "step_index": 4,
+      "step_label": "verification_action",
+      "action": {
+        "schema_version": "1.0.0",
+        "action_type": "bench",
+        "step_kind": "tool_call",
+        "command": [
+          "python3",
+          "workloads/reference/triton_attention_score_weak_baseline.py",
+          "--benchmark-repeats",
+          "2"
+        ],
+        "target_run_id": "bench_20260310_010251_248072_f29725",
+        "target_task_id": "task/attention_reformulate/eval/v1",
+        "artifact_refs": [],
+        "metadata": {
+          "section": "summary",
+          "run_ref": "/shared_folders/querylake_server/side_projects/gpu_rl/tests/tmp_transition_goldens/runs/bench_20260310_010251_248072_f29725"
+        }
+      },
+      "observation": {
+        "schema_version": "1.0.0",
+        "observation_type": "bench_projection",
+        "run_id": "bench_20260310_010251_248072_f29725",
+        "task_id": "task/attention_reformulate/eval/v1",
+        "status": "ok",
+        "backend": "triton",
+        "vendor": "nvidia",
+        "summary_ref": "summary.json",
+        "artifact_refs": [
+          "manifest.json",
+          "events.jsonl",
+          "prompt/task_spec.json",
+          "meta/task_spec_full.json",
+          "meta/hardware_fingerprint.json",
+          "meta/doctor_report.json",
+          "perf/benchmark.json",
+          "perf/raw_timings.json",
+          "summary.json",
+          "summary.md"
+        ],
+        "salient_artifact_refs": [
+          "manifest.json",
+          "events.jsonl",
+          "prompt/task_spec.json"
+        ],
+        "projection": {
+          "schema_version": "1.0.0",
+          "run_id": "bench_20260310_010251_248072_f29725",
+          "task_id": "task/attention_reformulate/eval/v1",
+          "status": "ok",
+          "trace_enabled": false,
+          "backend": "triton",
+          "vendor": "nvidia",
+          "parent_run_id": "patch_20260310_010251_148675_4c9633",
+          "candidate_id": "cand_10d8561a0f1e",
+          "parent_candidate_id": null,
+          "patch_present": true,
+          "patch_kind": "no_op",
+          "transition_kind": "patch_applied",
+          "candidate_role": "patched_candidate",
+          "exit_code": 0,
+          "duration_ms": 1651,
+          "key_artifacts": [
+            "manifest.json",
+            "events.jsonl",
+            "prompt/task_spec.json",
+            "meta/task_spec_full.json",
+            "meta/hardware_fingerprint.json",
+            "meta/doctor_report.json",
+            "perf/benchmark.json",
+            "perf/raw_timings.json",
+            "summary.json",
+            "summary.md"
+          ],
+          "warnings": [],
+          "projection": {
+            "required_artifacts": [
+              "meta/doctor_report.json",
+              "prompt/task_spec.json",
+              "correctness/correctness.json",
+              "correctness/determinism.json",
+              "eval/anti_hack_report.json",
+              "eval/eval_envelope.json",
+              "perf/benchmark.json",
+              "perf/raw_timings.json"
+            ],
+            "missing_required_artifacts": [
+              "correctness/correctness.json",
+              "correctness/determinism.json",
+              "eval/anti_hack_report.json",
+              "eval/eval_envelope.json"
+            ],
+            "failed_scopes": [],
+            "replay_validation": {
+              "present": true
+            },
+            "profile_summary": null,
+            "sanitizer_summary": null,
+            "bottleneck_card": null,
+            "correctness_summary": null,
+            "determinism_summary": null,
+            "anti_hack_summary": null,
+            "eval_envelope": null,
+            "gate_summary": null,
+            "replay_pack": {
+              "schema_version": "1.0.0",
+              "run_id": "bench_20260310_010251_248072_f29725",
+              "replay_version": "1.0.0",
+              "image_digest": null,
+              "git_snapshot": null,
+              "seed_pack": {
+                "global_seed": 1234,
+                "input_seed": 5678
+              },
+              "hardware_fingerprint_ref": "meta/hardware_fingerprint.json",
+              "input_snapshot_ref": "replay/environment.json",
+              "task_ref": "task/attention_reformulate/eval/v1",
+              "commands_ref": "replay/command.json",
+              "candidate_id": "cand_10d8561a0f1e",
+              "parent_candidate_id": null,
+              "source_run_ref": "/shared_folders/querylake_server/side_projects/gpu_rl/tests/tmp_transition_goldens/runs/patch_20260310_010251_148675_4c9633",
+              "patch_ref": "patches/applied_patch.json",
+              "diff_ref": "patches/unified_diff.patch",
+              "transition_ref": "candidate/transition.json",
+              "candidate_role": "patched_candidate",
+              "transition_kind": "patch_applied",
+              "required_artifacts": [
+                "events.jsonl",
+                "manifest.json",
+                "meta/doctor_report.json",
+                "meta/hardware_fingerprint.json",
+                "meta/task_spec_full.json",
+                "perf/benchmark.json",
+                "perf/raw_timings.json",
+                "prompt/task_spec.json",
+                "summary.json",
+                "summary.md"
+              ]
+            },
+            "build_record": null,
+            "tri_view": null,
+            "build_projection": null,
+            "candidate_projection": null,
+            "evidence_quality": {
+              "schema_version": "1.0.0",
+              "run_id": "bench_20260310_010251_248072_f29725",
+              "task_id": "task/attention_reformulate/eval/v1",
+              "required_artifact_count": 8,
+              "missing_required_artifact_count": 4,
+              "required_artifact_completeness": 0.5,
+              "replay_completeness": 1.0,
+              "build_completeness": 0.0,
+              "profile_completeness": 0.0,
+              "eval_completeness": 0.1667,
+              "provenance_completeness": 1.0,
+              "overall_score": 0.4667,
+              "benchmark_reporting": {
+                "schema_version": "1.0.0",
+                "eligible": false,
+                "reasons": [
+                  "required_artifacts_missing",
+                  "eval_artifacts_incomplete",
+                  "perf_gate:not_run"
+                ]
+              },
+              "sft_collection": {
+                "schema_version": "1.0.0",
+                "eligible": false,
+                "reasons": [
+                  "build_evidence_missing"
+                ]
+              },
+              "rl_reward_trace": {
+                "schema_version": "1.0.0",
+                "eligible": false,
+                "reasons": [
+                  "eval_artifacts_incomplete",
+                  "required_artifacts_missing",
+                  "correctness_gate:not_run",
+                  "determinism_gate:not_run",
+                  "anti_hack_gate:not_run",
+                  "build_evidence_incomplete",
+                  "profile_evidence_incomplete",
+                  "perf_gate:not_run"
+                ]
+              },
+              "missing_provenance_fields": [],
+              "training_example_kind": "unusable",
+              "notes": [
+                "missing_required:correctness/correctness.json,correctness/determinism.json,eval/anti_hack_report.json,eval/eval_envelope.json",
+                "no_build_artifacts",
+                "no_profile_artifacts"
+              ]
+            },
+            "failure_triage": {
+              "task_verb": "reformulate",
+              "failure_class": "ready_positive",
+              "likely_artifacts": []
+            },
+            "recommended_next_actions": [
+              "inspect_quality",
+              "compare",
+              "replay"
+            ],
+            "training_readiness": {
+              "benchmark_reporting": {
+                "schema_version": "1.0.0",
+                "eligible": false,
+                "reasons": [
+                  "required_artifacts_missing",
+                  "eval_artifacts_incomplete",
+                  "perf_gate:not_run"
+                ]
+              },
+              "sft_collection": {
+                "schema_version": "1.0.0",
+                "eligible": false,
+                "reasons": [
+                  "build_evidence_missing"
+                ]
+              },
+              "rl_reward_trace": {
+                "schema_version": "1.0.0",
+                "eligible": false,
+                "reasons": [
+                  "eval_artifacts_incomplete",
+                  "required_artifacts_missing",
+                  "correctness_gate:not_run",
+                  "determinism_gate:not_run",
+                  "anti_hack_gate:not_run",
+                  "build_evidence_incomplete",
+                  "profile_evidence_incomplete",
+                  "perf_gate:not_run"
+                ]
+              },
+              "training_example_kind": "unusable",
+              "missing_provenance_fields": []
+            },
+            "training_trace_triage": {
+              "training_example_kind": "unusable",
+              "summary": "not suitable for default training",
+              "reasons": []
+            }
+          }
+        }
+      },
+      "reward_components": {
+        "tool_cost": -0.03
+      },
+      "reward_total": -0.03,
+      "transition_kind": null,
+      "input_candidate_id": "cand_10d8561a0f1e",
+      "output_candidate_id": "cand_10d8561a0f1e",
+      "patch_hash": null,
+      "recommended_next_actions": [],
+      "terminal": false,
+      "terminal_state": null
+    },
+    {
+      "schema_version": "1.0.0",
+      "step_index": 5,
+      "step_label": "diagnostic_action",
+      "action": {
+        "schema_version": "1.0.0",
+        "action_type": "inspect_quality",
+        "step_kind": "tool_call",
+        "command": [],
+        "target_run_id": "bench_20260310_010251_248072_f29725",
+        "target_task_id": "task/attention_reformulate/eval/v1",
+        "artifact_refs": [],
+        "metadata": {
+          "section": "quality",
+          "requested_action": "inspect_quality"
+        }
+      },
+      "observation": {
+        "schema_version": "1.0.0",
+        "observation_type": "inspection",
+        "run_id": "bench_20260310_010251_248072_f29725",
+        "task_id": "task/attention_reformulate/eval/v1",
+        "status": "ok",
+        "backend": "triton",
+        "vendor": "nvidia",
+        "summary_ref": "summary.json",
+        "artifact_refs": [
+          "manifest.json",
+          "events.jsonl",
+          "prompt/task_spec.json",
+          "meta/task_spec_full.json",
+          "meta/hardware_fingerprint.json",
+          "meta/doctor_report.json",
+          "perf/benchmark.json",
+          "perf/raw_timings.json",
+          "summary.json",
+          "summary.md"
+        ],
+        "salient_artifact_refs": [],
+        "projection": {
+          "evidence_quality": {
+            "schema_version": "1.0.0",
+            "run_id": "bench_20260310_010251_248072_f29725",
+            "task_id": "task/attention_reformulate/eval/v1",
+            "required_artifact_count": 8,
+            "missing_required_artifact_count": 4,
+            "required_artifact_completeness": 0.5,
+            "replay_completeness": 1.0,
+            "build_completeness": 0.0,
+            "profile_completeness": 0.0,
+            "eval_completeness": 0.1667,
+            "provenance_completeness": 1.0,
+            "overall_score": 0.4667,
+            "benchmark_reporting": {
+              "schema_version": "1.0.0",
+              "eligible": false,
+              "reasons": [
+                "required_artifacts_missing",
+                "eval_artifacts_incomplete",
+                "perf_gate:not_run"
+              ]
+            },
+            "sft_collection": {
+              "schema_version": "1.0.0",
+              "eligible": false,
+              "reasons": [
+                "build_evidence_missing"
+              ]
+            },
+            "rl_reward_trace": {
+              "schema_version": "1.0.0",
+              "eligible": false,
+              "reasons": [
+                "eval_artifacts_incomplete",
+                "required_artifacts_missing",
+                "correctness_gate:not_run",
+                "determinism_gate:not_run",
+                "anti_hack_gate:not_run",
+                "build_evidence_incomplete",
+                "profile_evidence_incomplete",
+                "perf_gate:not_run"
+              ]
+            },
+            "missing_provenance_fields": [],
+            "training_example_kind": "unusable",
+            "notes": [
+              "missing_required:correctness/correctness.json,correctness/determinism.json,eval/anti_hack_report.json,eval/eval_envelope.json",
+              "no_build_artifacts",
+              "no_profile_artifacts"
+            ]
+          },
+          "training_readiness": {
+            "benchmark_reporting": {
+              "schema_version": "1.0.0",
+              "eligible": false,
+              "reasons": [
+                "required_artifacts_missing",
+                "eval_artifacts_incomplete",
+                "perf_gate:not_run"
+              ]
+            },
+            "sft_collection": {
+              "schema_version": "1.0.0",
+              "eligible": false,
+              "reasons": [
+                "build_evidence_missing"
+              ]
+            },
+            "rl_reward_trace": {
+              "schema_version": "1.0.0",
+              "eligible": false,
+              "reasons": [
+                "eval_artifacts_incomplete",
+                "required_artifacts_missing",
+                "correctness_gate:not_run",
+                "determinism_gate:not_run",
+                "anti_hack_gate:not_run",
+                "build_evidence_incomplete",
+                "profile_evidence_incomplete",
+                "perf_gate:not_run"
+              ]
+            },
+            "training_example_kind": "unusable",
+            "missing_provenance_fields": []
+          },
+          "training_trace_triage": {
+            "training_example_kind": "unusable",
+            "summary": "not suitable for default training",
+            "reasons": []
+          },
+          "failure_triage": {
+            "task_verb": "reformulate",
+            "failure_class": "ready_positive",
+            "likely_artifacts": []
+          },
+          "recommended_next_actions": [
+            "inspect_quality",
+            "compare",
+            "replay"
+          ]
+        }
+      },
+      "reward_components": {
+        "tool_cost": -0.01
+      },
+      "reward_total": -0.01,
+      "transition_kind": null,
+      "input_candidate_id": "cand_10d8561a0f1e",
+      "output_candidate_id": "cand_10d8561a0f1e",
+      "patch_hash": null,
+      "recommended_next_actions": [
+        "inspect_quality",
+        "compare",
+        "replay"
+      ],
+      "terminal": false,
+      "terminal_state": null
+    },
+    {
+      "schema_version": "1.0.0",
+      "step_index": 6,
+      "step_label": "verification_action",
+      "action": {
+        "schema_version": "1.0.0",
+        "action_type": "eval",
+        "step_kind": "tool_call",
+        "command": [
+          "python3",
+          "workloads/reference/triton_attention_score_weak_baseline.py",
+          "--benchmark-repeats",
+          "2"
+        ],
+        "target_run_id": "eval_20260310_010311_217990_74570e",
+        "target_task_id": "task/attention_reformulate/eval/v1",
+        "artifact_refs": [],
+        "metadata": {
+          "section": "eval",
+          "run_ref": "/shared_folders/querylake_server/side_projects/gpu_rl/tests/tmp_transition_goldens/runs/eval_20260310_010311_217990_74570e"
+        }
+      },
+      "observation": {
+        "schema_version": "1.0.0",
+        "observation_type": "eval_projection",
+        "run_id": "eval_20260310_010311_217990_74570e",
+        "task_id": "task/attention_reformulate/eval/v1",
+        "status": "ok",
+        "backend": "triton",
+        "vendor": "nvidia",
+        "summary_ref": "summary.json",
+        "artifact_refs": [
+          "manifest.json",
+          "events.jsonl",
+          "prompt/task_spec.json",
+          "meta/task_spec_full.json",
+          "meta/hardware_fingerprint.json",
+          "meta/doctor_report.json",
+          "correctness/correctness.json",
+          "correctness/determinism.json",
+          "eval/anti_hack_report.json",
+          "eval/eval_envelope.json",
+          "eval/gate_summary.json",
+          "summary.json",
+          "summary.md",
+          "perf/benchmark.json",
+          "perf/raw_timings.json",
+          "command/stdout.txt",
+          "command/stderr.txt",
+          "command/summary.json"
+        ],
+        "salient_artifact_refs": [
+          "manifest.json",
+          "events.jsonl",
+          "prompt/task_spec.json"
+        ],
+        "projection": {
+          "correctness_summary": {
+            "schema_version": "1.0.0",
+            "compile_ok": true,
+            "visible_tests_ok": true,
+            "hidden_tests_ok": true,
+            "dtype_sweep": {},
+            "shape_sweep": {},
+            "determinism": {
+              "runs": 2,
+              "passed": true,
+              "stable_exit_codes": true,
+              "stable_stdout": true,
+              "stable_stderr": true
+            },
+            "numerical_deltas_ref": null,
+            "failures": []
+          },
+          "determinism_summary": {
+            "schema_version": "1.0.0",
+            "command": [
+              "python3",
+              "workloads/reference/triton_attention_score_weak_baseline.py",
+              "--benchmark-repeats",
+              "2"
+            ],
+            "runs": 2,
+            "passed": true,
+            "stable_exit_codes": true,
+            "stable_stdout": true,
+            "stable_stderr": true,
+            "baseline_exit_code": 0,
+            "baseline_stdout_sha256": "494fcca33e22201115de0845de95ef6516c9f71aa73f652ba41a6ee32ad0001a",
+            "baseline_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "attempts": [
+              {
+                "schema_version": "1.0.0",
+                "attempt_index": 1,
+                "exit_code": 0,
+                "duration_ms": 1669,
+                "stdout_sha256": "494fcca33e22201115de0845de95ef6516c9f71aa73f652ba41a6ee32ad0001a",
+                "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "stdout_bytes": 597,
+                "stderr_bytes": 0
+              },
+              {
+                "schema_version": "1.0.0",
+                "attempt_index": 2,
+                "exit_code": 0,
+                "duration_ms": 1649,
+                "stdout_sha256": "494fcca33e22201115de0845de95ef6516c9f71aa73f652ba41a6ee32ad0001a",
+                "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "stdout_bytes": 597,
+                "stderr_bytes": 0
+              }
+            ],
+            "warnings": []
+          },
+          "anti_hack_summary": {
+            "schema_version": "1.0.0",
+            "passed": true,
+            "forbidden_patterns": [
+              "torch.matmul(",
+              "scaled_dot_product_attention("
+            ],
+            "scanned_locations": [
+              "command",
+              "command/stdout.txt",
+              "command/stderr.txt"
+            ],
+            "hits": [],
+            "cpu_fallback_detected": false,
+            "library_shortcut_detected": false,
+            "warnings": []
+          },
+          "eval_envelope": {
+            "schema_version": "1.0.0",
+            "compile_gate": "pass",
+            "correctness_gate": "pass",
+            "anti_hack_gate": "pass",
+            "determinism_gate": "pass",
+            "perf_gate": "fail",
+            "reward_components": {
+              "binary_pass": 0.8,
+              "determinism": 0.0,
+              "perf": 0.0
+            },
+            "final_score": 0.8
+          },
+          "gate_summary": {
+            "compile_gate": "pass",
+            "correctness_gate": "pass",
+            "anti_hack_gate": "pass",
+            "determinism_gate": "pass",
+            "perf_gate": "fail",
+            "reasons": [
+              "candidate slower than baseline"
+            ]
+          }
+        }
+      },
+      "reward_components": {
+        "binary_pass": 0.8,
+        "determinism": 0.0,
+        "perf": 0.0,
+        "tool_cost": -0.05
+      },
+      "reward_total": 0.75,
+      "transition_kind": null,
+      "input_candidate_id": "cand_10d8561a0f1e",
+      "output_candidate_id": "cand_10d8561a0f1e",
+      "patch_hash": null,
+      "recommended_next_actions": [],
+      "terminal": false,
+      "terminal_state": null
+    },
+    {
+      "schema_version": "1.0.0",
+      "step_index": 7,
+      "step_label": "diagnostic_action",
+      "action": {
+        "schema_version": "1.0.0",
+        "action_type": "inspect_quality",
+        "step_kind": "tool_call",
+        "command": [],
+        "target_run_id": "eval_20260310_010311_217990_74570e",
+        "target_task_id": "task/attention_reformulate/eval/v1",
+        "artifact_refs": [],
+        "metadata": {
+          "section": "quality",
+          "requested_action": "inspect_quality"
+        }
+      },
+      "observation": {
+        "schema_version": "1.0.0",
+        "observation_type": "inspection",
+        "run_id": "eval_20260310_010311_217990_74570e",
+        "task_id": "task/attention_reformulate/eval/v1",
+        "status": "ok",
+        "backend": "triton",
+        "vendor": "nvidia",
+        "summary_ref": "summary.json",
+        "artifact_refs": [
+          "manifest.json",
+          "events.jsonl",
+          "prompt/task_spec.json",
+          "meta/task_spec_full.json",
+          "meta/hardware_fingerprint.json",
+          "meta/doctor_report.json",
+          "correctness/correctness.json",
+          "correctness/determinism.json",
+          "eval/anti_hack_report.json",
+          "eval/eval_envelope.json",
+          "eval/gate_summary.json",
+          "summary.json",
+          "summary.md",
+          "perf/benchmark.json",
+          "perf/raw_timings.json",
+          "command/stdout.txt",
+          "command/stderr.txt",
+          "command/summary.json"
+        ],
+        "salient_artifact_refs": [
+          "perf/benchmark.json",
+          "eval/gate_summary.json"
+        ],
+        "projection": {
+          "evidence_quality": {
+            "schema_version": "1.0.0",
+            "run_id": "eval_20260310_010311_217990_74570e",
+            "task_id": "task/attention_reformulate/eval/v1",
+            "required_artifact_count": 8,
+            "missing_required_artifact_count": 0,
+            "required_artifact_completeness": 1.0,
+            "replay_completeness": 1.0,
+            "build_completeness": 0.0,
+            "profile_completeness": 0.0,
+            "eval_completeness": 1.0,
+            "provenance_completeness": 1.0,
+            "overall_score": 0.85,
+            "benchmark_reporting": {
+              "schema_version": "1.0.0",
+              "eligible": true,
+              "reasons": []
+            },
+            "sft_collection": {
+              "schema_version": "1.0.0",
+              "eligible": false,
+              "reasons": [
+                "build_evidence_missing"
+              ]
+            },
+            "rl_reward_trace": {
+              "schema_version": "1.0.0",
+              "eligible": false,
+              "reasons": [
+                "build_evidence_incomplete",
+                "profile_evidence_incomplete",
+                "perf_gate:fail"
+              ]
+            },
+            "missing_provenance_fields": [],
+            "training_example_kind": "benchmark_only",
+            "notes": [
+              "no_build_artifacts",
+              "no_profile_artifacts"
+            ]
+          },
+          "training_readiness": {
+            "benchmark_reporting": {
+              "schema_version": "1.0.0",
+              "eligible": true,
+              "reasons": []
+            },
+            "sft_collection": {
+              "schema_version": "1.0.0",
+              "eligible": false,
+              "reasons": [
+                "build_evidence_missing"
+              ]
+            },
+            "rl_reward_trace": {
+              "schema_version": "1.0.0",
+              "eligible": false,
+              "reasons": [
+                "build_evidence_incomplete",
+                "profile_evidence_incomplete",
+                "perf_gate:fail"
+              ]
+            },
+            "training_example_kind": "benchmark_only",
+            "missing_provenance_fields": []
+          },
+          "training_trace_triage": {
+            "training_example_kind": "benchmark_only",
+            "summary": "benchmark-only trace, excluded from default training",
+            "reasons": [
+              "failure_class:performance",
+              "benchmark_ready"
+            ]
+          },
+          "failure_triage": {
+            "task_verb": "reformulate",
+            "failure_class": "performance",
+            "likely_artifacts": [
+              "perf/benchmark.json",
+              "eval/gate_summary.json"
+            ]
+          },
+          "recommended_next_actions": [
+            "inspect_profile",
+            "compare",
+            "patch_candidate",
+            "bench"
+          ]
+        }
+      },
+      "reward_components": {
+        "tool_cost": -0.01
+      },
+      "reward_total": -0.01,
+      "transition_kind": null,
+      "input_candidate_id": "cand_10d8561a0f1e",
+      "output_candidate_id": "cand_10d8561a0f1e",
+      "patch_hash": null,
+      "recommended_next_actions": [
+        "inspect_profile",
+        "compare",
+        "patch_candidate",
+        "bench"
+      ],
+      "terminal": false,
+      "terminal_state": null
+    },
+    {
+      "schema_version": "1.0.0",
+      "step_index": 8,
+      "step_label": "verification_action",
+      "action": {
+        "schema_version": "1.0.0",
+        "action_type": "replay",
+        "step_kind": "tool_call",
+        "command": [],
+        "target_run_id": "eval_20260310_010311_217990_74570e",
+        "target_task_id": "task/attention_reformulate/eval/v1",
+        "artifact_refs": [
+          "command/stderr.txt",
+          "command/stdout.txt",
+          "command/summary.json",
+          "correctness/correctness.json",
+          "correctness/determinism.json",
+          "eval/anti_hack_report.json",
+          "eval/eval_envelope.json",
+          "eval/gate_summary.json",
+          "events.jsonl",
+          "manifest.json",
+          "meta/doctor_report.json",
+          "meta/hardware_fingerprint.json",
+          "meta/task_spec_full.json",
+          "perf/benchmark.json",
+          "perf/raw_timings.json",
+          "prompt/task_spec.json",
+          "summary.json",
+          "summary.md"
+        ],
+        "metadata": {
+          "section": "summary"
+        }
+      },
+      "observation": {
+        "schema_version": "1.0.0",
+        "observation_type": "replay_validation",
+        "run_id": "eval_20260310_010311_217990_74570e",
+        "task_id": "task/attention_reformulate/eval/v1",
+        "status": "ok",
+        "backend": "triton",
+        "vendor": "nvidia",
+        "summary_ref": "replay/replay_pack.json",
+        "artifact_refs": [
+          "command/stderr.txt",
+          "command/stdout.txt",
+          "command/summary.json",
+          "correctness/correctness.json",
+          "correctness/determinism.json",
+          "eval/anti_hack_report.json",
+          "eval/eval_envelope.json",
+          "eval/gate_summary.json",
+          "events.jsonl",
+          "manifest.json",
+          "meta/doctor_report.json",
+          "meta/hardware_fingerprint.json",
+          "meta/task_spec_full.json",
+          "perf/benchmark.json",
+          "perf/raw_timings.json",
+          "prompt/task_spec.json",
+          "summary.json",
+          "summary.md"
+        ],
+        "salient_artifact_refs": [
+          "command/stderr.txt",
+          "command/stdout.txt",
+          "command/summary.json"
+        ],
+        "projection": {
+          "run_dir": "/shared_folders/querylake_server/side_projects/gpu_rl/tests/tmp_transition_goldens/runs/eval_20260310_010311_217990_74570e",
+          "status": "ok",
+          "checks": {
+            "manifest_present": true,
+            "events_present": true,
+            "replay_pack_present": true
+          },
+          "required_artifacts": [
+            "command/stderr.txt",
+            "command/stdout.txt",
+            "command/summary.json",
+            "correctness/correctness.json",
+            "correctness/determinism.json",
+            "eval/anti_hack_report.json",
+            "eval/eval_envelope.json",
+            "eval/gate_summary.json",
+            "events.jsonl",
+            "manifest.json",
+            "meta/doctor_report.json",
+            "meta/hardware_fingerprint.json",
+            "meta/task_spec_full.json",
+            "perf/benchmark.json",
+            "perf/raw_timings.json",
+            "prompt/task_spec.json",
+            "summary.json",
+            "summary.md"
+          ],
+          "missing_artifacts": [],
+          "replay_pack": {
+            "schema_version": "1.0.0",
+            "run_id": "eval_20260310_010311_217990_74570e",
+            "replay_version": "1.0.0",
+            "image_digest": null,
+            "git_snapshot": null,
+            "seed_pack": {
+              "global_seed": 1234,
+              "input_seed": 5678
+            },
+            "hardware_fingerprint_ref": "meta/hardware_fingerprint.json",
+            "input_snapshot_ref": "replay/environment.json",
+            "task_ref": "task/attention_reformulate/eval/v1",
+            "commands_ref": "replay/command.json",
+            "candidate_id": "cand_10d8561a0f1e",
+            "parent_candidate_id": null,
+            "source_run_ref": "/shared_folders/querylake_server/side_projects/gpu_rl/tests/tmp_transition_goldens/runs/patch_20260310_010251_148675_4c9633",
+            "patch_ref": "patches/applied_patch.json",
+            "diff_ref": "patches/unified_diff.patch",
+            "transition_ref": "candidate/transition.json",
+            "candidate_role": "patched_candidate",
+            "transition_kind": "patch_applied",
+            "required_artifacts": [
+              "command/stderr.txt",
+              "command/stdout.txt",
+              "command/summary.json",
+              "correctness/correctness.json",
+              "correctness/determinism.json",
+              "eval/anti_hack_report.json",
+              "eval/eval_envelope.json",
+              "eval/gate_summary.json",
+              "events.jsonl",
+              "manifest.json",
+              "meta/doctor_report.json",
+              "meta/hardware_fingerprint.json",
+              "meta/task_spec_full.json",
+              "perf/benchmark.json",
+              "perf/raw_timings.json",
+              "prompt/task_spec.json",
+              "summary.json",
+              "summary.md"
+            ]
+          },
+          "evidence_quality": {
+            "schema_version": "1.0.0",
+            "run_id": "eval_20260310_010311_217990_74570e",
+            "task_id": "task/attention_reformulate/eval/v1",
+            "required_artifact_count": 8,
+            "missing_required_artifact_count": 0,
+            "required_artifact_completeness": 1.0,
+            "replay_completeness": 1.0,
+            "build_completeness": 0.0,
+            "profile_completeness": 0.0,
+            "eval_completeness": 1.0,
+            "provenance_completeness": 1.0,
+            "overall_score": 0.85,
+            "benchmark_reporting": {
+              "schema_version": "1.0.0",
+              "eligible": true,
+              "reasons": []
+            },
+            "sft_collection": {
+              "schema_version": "1.0.0",
+              "eligible": false,
+              "reasons": [
+                "build_evidence_missing"
+              ]
+            },
+            "rl_reward_trace": {
+              "schema_version": "1.0.0",
+              "eligible": false,
+              "reasons": [
+                "build_evidence_incomplete",
+                "profile_evidence_incomplete",
+                "perf_gate:fail"
+              ]
+            },
+            "missing_provenance_fields": [],
+            "training_example_kind": "benchmark_only",
+            "notes": [
+              "no_build_artifacts",
+              "no_profile_artifacts"
+            ]
+          }
+        }
+      },
+      "reward_components": {
+        "tool_cost": -0.01
+      },
+      "reward_total": -0.01,
+      "transition_kind": null,
+      "input_candidate_id": "cand_10d8561a0f1e",
+      "output_candidate_id": "cand_10d8561a0f1e",
+      "patch_hash": null,
+      "recommended_next_actions": [],
+      "terminal": false,
+      "terminal_state": null
+    },
+    {
+      "schema_version": "1.0.0",
+      "step_index": 9,
+      "step_label": "compare_action",
+      "action": {
+        "schema_version": "1.0.0",
+        "action_type": "compare",
+        "step_kind": "tool_call",
+        "command": [],
+        "target_run_id": "/shared_folders/querylake_server/side_projects/gpu_rl/tests/tmp_transition_goldens/runs/eval_20260310_010311_217990_74570e",
+        "target_task_id": "task/attention_reformulate/eval/v1",
+        "artifact_refs": [],
+        "metadata": {
+          "section": "summary",
+          "lhs_run_ref": "/shared_folders/querylake_server/side_projects/gpu_rl/tests/tmp_transition_goldens/runs/bench_20260310_010231_093110_76152b",
+          "rhs_run_ref": "/shared_folders/querylake_server/side_projects/gpu_rl/tests/tmp_transition_goldens/runs/eval_20260310_010311_217990_74570e"
+        }
+      },
+      "observation": {
+        "schema_version": "1.0.0",
+        "observation_type": "comparison",
+        "run_id": "/shared_folders/querylake_server/side_projects/gpu_rl/tests/tmp_transition_goldens/runs/eval_20260310_010311_217990_74570e",
+        "task_id": "task/attention_reformulate/eval/v1",
+        "status": null,
+        "backend": null,
+        "vendor": null,
+        "summary_ref": null,
+        "artifact_refs": [],
+        "salient_artifact_refs": [],
+        "projection": {
+          "schema_version": "1.0.0",
+          "lhs_run_id": "bench_20260310_010231_093110_76152b",
+          "rhs_run_id": "eval_20260310_010311_217990_74570e",
+          "lhs_status": "ok",
+          "rhs_status": "ok",
+          "lhs_duration_ms": 1669,
+          "rhs_duration_ms": 1669,
+          "duration_delta_ms": 0,
+          "lhs_exit_code": 0,
+          "rhs_exit_code": 0,
+          "warnings_added": [],
+          "warnings_removed": [],
+          "lhs_key_artifacts": [
+            "manifest.json",
+            "events.jsonl",
+            "prompt/task_spec.json",
+            "meta/task_spec_full.json",
+            "meta/hardware_fingerprint.json",
+            "meta/doctor_report.json",
+            "perf/benchmark.json",
+            "perf/raw_timings.json",
+            "summary.json",
+            "summary.md"
+          ],
+          "rhs_key_artifacts": [
+            "manifest.json",
+            "events.jsonl",
+            "prompt/task_spec.json",
+            "meta/task_spec_full.json",
+            "meta/hardware_fingerprint.json",
+            "meta/doctor_report.json",
+            "correctness/correctness.json",
+            "correctness/determinism.json",
+            "eval/anti_hack_report.json",
+            "eval/eval_envelope.json",
+            "eval/gate_summary.json",
+            "summary.json",
+            "summary.md",
+            "perf/benchmark.json",
+            "perf/raw_timings.json",
+            "command/stdout.txt",
+            "command/stderr.txt",
+            "command/summary.json"
+          ],
+          "lhs_missing_required_artifacts": [
+            "correctness/correctness.json",
+            "correctness/determinism.json",
+            "eval/anti_hack_report.json",
+            "eval/eval_envelope.json"
+          ],
+          "rhs_missing_required_artifacts": [],
+          "lhs_failed_scopes": [],
+          "rhs_failed_scopes": [],
+          "lhs_evidence_score": 0.4667,
+          "rhs_evidence_score": 0.85,
+          "evidence_score_delta": 0.3833,
+          "lhs_benchmark_ready": false,
+          "rhs_benchmark_ready": true,
+          "lhs_sft_ready": false,
+          "rhs_sft_ready": false,
+          "lhs_rl_trace_ready": false,
+          "rhs_rl_trace_ready": false,
+          "lhs_training_example_kind": "unusable",
+          "rhs_training_example_kind": "benchmark_only",
+          "trainworthiness_change": "unusable->benchmark_only",
+          "correctness_recovered": null,
+          "perf_improved": true,
+          "lhs_final_score": null,
+          "rhs_final_score": 0.8,
+          "final_score_delta": null,
+          "lhs_perf_p50_ms": 1669.0,
+          "rhs_perf_p50_ms": 1661.0,
+          "perf_p50_delta_ms": -8.0,
+          "lhs_determinism_passed": null,
+          "rhs_determinism_passed": true,
+          "lhs_profile_classification": null,
+          "rhs_profile_classification": null,
+          "lhs_profile_kernel": null,
+          "rhs_profile_kernel": null,
+          "lhs_sanitizer_passed": null,
+          "rhs_sanitizer_passed": null,
+          "lhs_sanitizer_error_count": null,
+          "rhs_sanitizer_error_count": null,
+          "lhs_profile_occupancy": null,
+          "rhs_profile_occupancy": null,
+          "occupancy_delta": null,
+          "lhs_profile_dram_pct_peak": null,
+          "rhs_profile_dram_pct_peak": null,
+          "dram_pct_peak_delta": null,
+          "lhs_profile_sm_pct_peak": null,
+          "rhs_profile_sm_pct_peak": null,
+          "sm_pct_peak_delta": null,
+          "lhs_profile_registers_per_thread": null,
+          "rhs_profile_registers_per_thread": null,
+          "registers_per_thread_delta": null,
+          "lhs_build_status": null,
+          "rhs_build_status": null,
+          "lhs_build_compiler": null,
+          "rhs_build_compiler": null,
+          "lhs_build_binary_hash": null,
+          "rhs_build_binary_hash": null,
+          "build_binary_hash_changed": null,
+          "lhs_patch_present": false,
+          "rhs_patch_present": false,
+          "lhs_patch_kind": null,
+          "rhs_patch_kind": null,
+          "lhs_patch_hash": null,
+          "rhs_patch_hash": null,
+          "patch_hash_changed": null,
+          "lhs_changed_file_count": 0,
+          "rhs_changed_file_count": 0,
+          "changed_file_count_delta": 0,
+          "lhs_transition_kind": null,
+          "rhs_transition_kind": null,
+          "lhs_candidate_id": null,
+          "rhs_candidate_id": null,
+          "lhs_triview_present": false,
+          "rhs_triview_present": false,
+          "lhs_triview_correlation_method": null,
+          "rhs_triview_correlation_method": null,
+          "lhs_triview_source_path": null,
+          "rhs_triview_source_path": null,
+          "lhs_triview_line_count": null,
+          "rhs_triview_line_count": null,
+          "triview_line_count_delta": null,
+          "lhs_triview_unique_source_lines": null,
+          "rhs_triview_unique_source_lines": null,
+          "triview_unique_source_lines_delta": null
+        }
+      },
+      "reward_components": {
+        "tool_cost": -0.01
+      },
+      "reward_total": -0.01,
+      "transition_kind": null,
+      "input_candidate_id": "cand_10d8561a0f1e",
+      "output_candidate_id": "cand_10d8561a0f1e",
+      "patch_hash": null,
+      "recommended_next_actions": [
+        "inspect_quality",
+        "patch_candidate",
+        "eval"
+      ],
+      "terminal": true,
+      "terminal_state": "success"
+    }
+  ],
+  "final_reward": 0.58,
+  "terminal_state": "success",
+  "environment_hash": null,
+  "artifact_refs": [
+    "manifest.json",
+    "events.jsonl",
+    "prompt/task_spec.json",
+    "meta/task_spec_full.json",
+    "meta/hardware_fingerprint.json",
+    "meta/doctor_report.json",
+    "perf/benchmark.json",
+    "perf/raw_timings.json",
+    "summary.json",
+    "summary.md",
+    "patches/request.json",
+    "patches/applied_patch.json",
+    "patches/unified_diff.patch",
+    "patches/before.txt",
+    "patches/after.txt",
+    "candidate/state.json",
+    "candidate/transition.json",
+    "correctness/correctness.json",
+    "correctness/determinism.json",
+    "eval/anti_hack_report.json",
+    "eval/eval_envelope.json",
+    "eval/gate_summary.json",
+    "command/stdout.txt",
+    "command/stderr.txt",
+    "command/summary.json"
+  ],
+  "governance": {
+    "schema_version": "1.0.0",
+    "episode_governance_kind": "usable_negative_transition",
+    "training_example_kind": "negative_reformulate_example",
+    "benchmark_collection": {
+      "schema_version": "1.0.0",
+      "eligible": true,
+      "reasons": []
+    },
+    "sft_collection": {
+      "schema_version": "1.0.0",
+      "eligible": true,
+      "reasons": [
+        "perf_gate_failed_or_build_evidence_missing",
+        "reformulate_episode_contains_transition_evidence"
+      ]
+    },
+    "rl_reward_trace": {
+      "schema_version": "1.0.0",
+      "eligible": false,
+      "reasons": [
+        "build_evidence_incomplete",
+        "profile_evidence_incomplete",
+        "perf_gate:fail"
+      ]
+    },
+    "has_build_evidence": false,
+    "has_profile_evidence": false,
+    "patch_bearing": true,
+    "reasons": [
+      "build_evidence_incomplete",
+      "patch_bearing",
+      "perf_gate:fail",
+      "perf_gate_failed_or_build_evidence_missing",
+      "profile_evidence_incomplete",
+      "reformulate_episode_contains_transition_evidence"
+    ],
+    "notes": [
+      "episode_promoted_as_negative_reformulate_example"
+    ]
+  },
+  "metadata": {
+    "operator_family": "attention_score_tile",
+    "verb": "reformulate",
+    "difficulty": "medium",
+    "allowed_backends": [
+      "triton"
+    ],
+    "last_patch_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "last_patch_kind": "no_op",
+    "last_eval_solved": true,
+    "workflow": "reformulate_negative",
+    "action_names": [
+      "knowledge_query",
+      "bench",
+      "inspect_quality",
+      "patch_candidate",
+      "bench",
+      "inspect_quality",
+      "eval",
+      "inspect_quality",
+      "replay",
+      "compare"
+    ],
+    "step_budget_total": 12,
+    "step_budget_remaining": 2,
+    "current_candidate_id": "cand_10d8561a0f1e",
+    "current_candidate_run_ref": "/shared_folders/querylake_server/side_projects/gpu_rl/tests/tmp_transition_goldens/runs/patch_20260310_010251_148675_4c9633",
+    "candidate_lineage_depth": 1,
+    "patch_attempt_count": 1,
+    "compare_step_count": 1,
+    "verification_step_count": 4,
+    "action_cost_total": 0.22,
+    "negative_transition_trace": true,
+    "run_ref_map": {
+      "bench_20260310_010231_093110_76152b": "../../golden_runs/bench_20260310_010231_093110_76152b",
+      "patch_20260310_010251_148675_4c9633": "../../golden_runs/patch_20260310_010251_148675_4c9633",
+      "bench_20260310_010251_248072_f29725": "../../golden_runs/bench_20260310_010251_248072_f29725",
+      "eval_20260310_010311_217990_74570e": "../../golden_runs/eval_20260310_010311_217990_74570e"
+    },
+    "training_example_kind": "negative_reformulate_example",
+    "episode_governance_kind": "usable_negative_transition",
+    "episode_governance_reasons": [
+      "build_evidence_incomplete",
+      "patch_bearing",
+      "perf_gate:fail",
+      "perf_gate_failed_or_build_evidence_missing",
+      "profile_evidence_incomplete",
+      "reformulate_episode_contains_transition_evidence"
+    ],
+    "evidence_score": 0.85,
+    "benchmark_ready": true,
+    "sft_ready": true,
+    "rl_trace_ready": false,
+    "episode_build_evidence": false,
+    "episode_profile_evidence": false,
+    "episode_patch_bearing": true
+  }
+}

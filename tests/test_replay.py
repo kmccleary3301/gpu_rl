@@ -12,6 +12,7 @@ if str(ROOT) not in sys.path:
 
 from gpu_cockpit.engine.replay import export_proof_bundle, validate_run_bundle
 from gpu_cockpit.engine.runner import run_task
+from gpu_cockpit.engine.patching import apply_patch_candidate
 
 
 class ReplayTests(unittest.TestCase):
@@ -65,8 +66,35 @@ class ReplayTests(unittest.TestCase):
         reformulate_payload = validate_run_bundle(ROOT, str(ROOT / "tests" / "golden_runs" / "attention_reformulate_eval_bundle_v1"))
         self.assertEqual(debug_payload["status"], "ok")
         self.assertEqual(reformulate_payload["status"], "ok")
-        self.assertEqual(debug_payload["evidence_quality"]["training_example_kind"], "positive_sft_example")
-        self.assertIn(reformulate_payload["evidence_quality"]["training_example_kind"], {"positive_sft_example", "positive_rl_trace"})
+        self.assertEqual(debug_payload["evidence_quality"]["training_example_kind"], "unusable")
+        self.assertEqual(reformulate_payload["evidence_quality"]["training_example_kind"], "benchmark_only")
+
+    def test_patch_run_replay_pack_persists_candidate_lineage(self) -> None:
+        _, applied_patch, candidate_state, _ = apply_patch_candidate(
+            self.tmp_root,
+            task_ref="task/reduction_debug/eval/v1",
+            target_file="workloads/reference/triton_row_sum_broken_kernel.py",
+            replacement_text=(self.tmp_root / "workloads" / "reference" / "triton_row_sum_repaired_kernel.py").read_text(encoding="utf-8"),
+            intent="repair the row-sum kernel mask",
+            expected_effect="restore the omitted column",
+            patch_kind="bug_fix",
+            transition_kind="repaired",
+        )
+        run_dir = self.tmp_root / "runs"
+        patch_runs = sorted(run_dir.glob("patch_*"))
+        self.assertTrue(patch_runs)
+        payload = validate_run_bundle(self.tmp_root, str(patch_runs[-1]))
+        replay_pack = payload["replay_pack"]
+        self.assertEqual(replay_pack["candidate_id"], candidate_state.candidate_id)
+        self.assertEqual(replay_pack["transition_kind"], "repaired")
+        self.assertEqual(replay_pack["patch_ref"], "patches/applied_patch.json")
+        self.assertEqual(replay_pack["diff_ref"], "patches/unified_diff.patch")
+
+    def test_validate_checked_in_patch_transition_fixture(self) -> None:
+        payload = validate_run_bundle(ROOT, str(ROOT / "tests" / "golden_runs" / "reduction_debug_patch_transition_v1"))
+        self.assertEqual(payload["status"], "ok")
+        self.assertEqual(payload["replay_pack"]["transition_kind"], "repaired")
+        self.assertEqual(payload["replay_pack"]["patch_ref"], "patches/applied_patch.json")
 
 
 if __name__ == "__main__":

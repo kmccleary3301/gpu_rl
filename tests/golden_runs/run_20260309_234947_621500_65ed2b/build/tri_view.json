@@ -1,0 +1,441 @@
+{
+  "schema_version": "1.0.0",
+  "backend": "triton_nvidia",
+  "correlation_method": "ptx_loc_source_map_v1",
+  "source_path": "/shared_folders/querylake_server/side_projects/gpu_rl/tests/tmp_transition_goldens/workloads/reference/triton_row_sum_repaired_kernel.py",
+  "source_ref": "build/source.txt",
+  "ttir_ref": "build/ttir.mlir",
+  "ttgir_ref": "build/ttgir.mlir",
+  "llir_ref": "build/llir.ll",
+  "ptx_ref": "build/ptx.txt",
+  "sass_ref": "build/sass.txt",
+  "line_map_ref": "build/source_ptx_sass_map.json",
+  "lines": [
+    {
+      "schema_version": "1.0.0",
+      "source_line": 9,
+      "ptx_line": 26,
+      "sass_line": 2,
+      "source_text": "def row_sum_repaired_kernel(x_ptr, out_ptr, stride_row, n_cols, BLOCK_SIZE: tl.constexpr):",
+      "ptx_text": "$L__func_begin0:",
+      "sass_text": "--:-:-:-:2\tMOV R1, c[0x0][0x28];",
+      "anchors": [
+        "row_sum_repaired_kernel",
+        "x_ptr",
+        "out_ptr",
+        "$L__func_begin0:",
+        "c[0x0][0x28]"
+      ]
+    },
+    {
+      "schema_version": "1.0.0",
+      "source_line": 9,
+      "ptx_line": 30,
+      "sass_line": 3,
+      "source_text": "def row_sum_repaired_kernel(x_ptr, out_ptr, stride_row, n_cols, BLOCK_SIZE: tl.constexpr):",
+      "ptx_text": "\tld.param.u64 \t%rd3, [row_sum_repaired_kernel_param_0];",
+      "sass_text": "--:-:0:-:1\tS2R R9, SR_TID.X;",
+      "anchors": [
+        "row_sum_repaired_kernel",
+        "x_ptr",
+        "out_ptr",
+        "ld.param.u64",
+        "%rd3",
+        "[row_sum_repaired_kernel_param_0]"
+      ]
+    },
+    {
+      "schema_version": "1.0.0",
+      "source_line": 10,
+      "ptx_line": 34,
+      "sass_line": 4,
+      "source_text": "    row = tl.program_id(0)",
+      "ptx_text": "\tmov.u32 \t%r10, %ctaid.x;",
+      "sass_text": "--:-:-:-:1\tMOV R11, 0x4;",
+      "anchors": [
+        "tl.program_id",
+        "mov.u32",
+        "%r10",
+        "%ctaid.x"
+      ]
+    },
+    {
+      "schema_version": "1.0.0",
+      "source_line": 11,
+      "ptx_line": 37,
+      "sass_line": 5,
+      "source_text": "    cols = tl.arange(0, BLOCK_SIZE)",
+      "ptx_text": "\tmov.u32 \t%r12, %tid.x;",
+      "sass_text": "--:-:-:-:1\tULDC.64 UR4, c[0x0][0x118];",
+      "anchors": [
+        "cols",
+        "tl.arange",
+        "BLOCK_SIZE",
+        "mov.u32",
+        "%r12",
+        "%tid.x"
+      ]
+    },
+    {
+      "schema_version": "1.0.0",
+      "source_line": 12,
+      "ptx_line": 42,
+      "sass_line": 6,
+      "source_text": "    mask = cols < n_cols",
+      "ptx_text": "\tsetp.lt.s32 \t%p1, %r15, %r14;",
+      "sass_text": "--:-:-:-:1\tBSSY B0, 0xf0;",
+      "anchors": [
+        "mask",
+        "cols",
+        "n_cols",
+        "setp.lt.s32",
+        "%r15",
+        "%r14"
+      ]
+    },
+    {
+      "schema_version": "1.0.0",
+      "source_line": 13,
+      "ptx_line": 44,
+      "sass_line": 7,
+      "source_text": "    row_ptr = x_ptr + row * stride_row + cols",
+      "ptx_text": "\tmul.lo.s32 \t%r16, %r11, %r10;",
+      "sass_text": "--:-:1:-:1\tS2R R8, SR_CTAID.X;",
+      "anchors": [
+        "row_ptr",
+        "x_ptr",
+        "stride_row",
+        "mul.lo.s32",
+        "%r16",
+        "%r11"
+      ]
+    },
+    {
+      "schema_version": "1.0.0",
+      "source_line": 13,
+      "ptx_line": 46,
+      "sass_line": 8,
+      "source_text": "    row_ptr = x_ptr + row * stride_row + cols",
+      "ptx_text": "\tmul.wide.s32 \t%rd5, %r16, 4;",
+      "sass_text": "--:-:-:-:2\tMOV R0, RZ;",
+      "anchors": [
+        "row_ptr",
+        "x_ptr",
+        "stride_row",
+        "mul.wide.s32",
+        "%rd5",
+        "%r16"
+      ]
+    },
+    {
+      "schema_version": "1.0.0",
+      "source_line": 13,
+      "ptx_line": 49,
+      "sass_line": 9,
+      "source_text": "    row_ptr = x_ptr + row * stride_row + cols",
+      "ptx_text": "\tmul.wide.u32 \t%rd7, %r15, 4;",
+      "sass_text": "01:-:-:Y:4\tLOP3.LUT R5, R9, 0x7f, RZ, 0xc0, !PT;",
+      "anchors": [
+        "row_ptr",
+        "x_ptr",
+        "stride_row",
+        "mul.wide.u32",
+        "%rd7",
+        "%r15"
+      ]
+    },
+    {
+      "schema_version": "1.0.0",
+      "source_line": 14,
+      "ptx_line": 54,
+      "sass_line": 10,
+      "source_text": "    values = tl.load(row_ptr, mask=mask, other=0.0)",
+      "ptx_text": "\tmov.u32 %r1, %r2;",
+      "sass_text": "--:-:-:-:1\tISETP.GE.AND P0, PT, R5, c[0x0][0x174], PT;",
+      "anchors": [
+        "values",
+        "tl.load",
+        "row_ptr",
+        "mov.u32",
+        "ISETP.GE.AND",
+        "c[0x0][0x174]"
+      ]
+    },
+    {
+      "schema_version": "1.0.0",
+      "source_line": 286,
+      "ptx_line": 60,
+      "sass_line": 11,
+      "source_text": null,
+      "ptx_text": "\tshfl.sync.bfly.b32\t%r17, %r1, 16, 31, -1;",
+      "sass_text": "02:-:-:Y:4\tIMAD R2, R8, c[0x0][0x170], RZ;",
+      "anchors": [
+        "shfl.sync.bfly.b32",
+        "%r17",
+        "02:-:-:Y:4",
+        "IMAD",
+        "c[0x0][0x170]"
+      ]
+    },
+    {
+      "schema_version": "1.0.0",
+      "source_line": 256,
+      "ptx_line": 63,
+      "sass_line": 12,
+      "source_text": null,
+      "ptx_text": "\tadd.f32 \t%f3, %f1, %f2;",
+      "sass_text": "--:-:-:Y:6\tIMAD.WIDE R2, R2, R11, c[0x0][0x160];",
+      "anchors": [
+        "add.f32",
+        "--:-:-:Y:6",
+        "IMAD.WIDE",
+        "c[0x0][0x160]"
+      ]
+    },
+    {
+      "schema_version": "1.0.0",
+      "source_line": 286,
+      "ptx_line": 65,
+      "sass_line": 13,
+      "source_text": null,
+      "ptx_text": "\tmov.b32 \t%r18, %f3;",
+      "sass_text": "--:-:-:-:2\tIMAD.WIDE.U32 R2, R5, 0x4, R2;",
+      "anchors": [
+        "mov.b32",
+        "%r18",
+        "IMAD.WIDE.U32"
+      ]
+    },
+    {
+      "schema_version": "1.0.0",
+      "source_line": 256,
+      "ptx_line": 69,
+      "sass_line": 14,
+      "source_text": null,
+      "ptx_text": "\tadd.f32 \t%f5, %f3, %f4;",
+      "sass_text": "--:-:-:-:5\t@P0 BRA LBB0;",
+      "anchors": [
+        "add.f32",
+        "LBB0"
+      ]
+    },
+    {
+      "schema_version": "1.0.0",
+      "source_line": 286,
+      "ptx_line": 71,
+      "sass_line": 15,
+      "source_text": null,
+      "ptx_text": "\tmov.b32 \t%r20, %f5;",
+      "sass_text": "--:0:5:-:2\tLDG.E R0, [R2.64];",
+      "anchors": [
+        "mov.b32",
+        "%r20",
+        "LDG.E",
+        "[R2.64]"
+      ]
+    },
+    {
+      "schema_version": "1.0.0",
+      "source_line": 256,
+      "ptx_line": 75,
+      "sass_line": 17,
+      "source_text": null,
+      "ptx_text": "\tadd.f32 \t%f7, %f5, %f6;",
+      "sass_text": "--:-:-:-:5\tBSYNC B0;",
+      "anchors": [
+        "add.f32",
+        "BSYNC"
+      ]
+    },
+    {
+      "schema_version": "1.0.0",
+      "source_line": 286,
+      "ptx_line": 77,
+      "sass_line": 18,
+      "source_text": null,
+      "ptx_text": "\tmov.b32 \t%r22, %f7;",
+      "sass_text": "33:-:0:-:1\tSHFL.BFLY PT, R3, R0, 0x10, 0x1f;",
+      "anchors": [
+        "mov.b32",
+        "%r22",
+        "SHFL.BFLY",
+        "0x10",
+        "0x1f"
+      ]
+    },
+    {
+      "schema_version": "1.0.0",
+      "source_line": 256,
+      "ptx_line": 81,
+      "sass_line": 19,
+      "source_text": null,
+      "ptx_text": "\tadd.f32 \t%f9, %f7, %f8;",
+      "sass_text": "--:-:-:-:2\tLOP3.LUT P0, RZ, R9.reuse, 0x1f, RZ, 0xc0, !PT;",
+      "anchors": [
+        "add.f32",
+        "LOP3.LUT",
+        "R9.reuse",
+        "0x1f"
+      ]
+    },
+    {
+      "schema_version": "1.0.0",
+      "source_line": 286,
+      "ptx_line": 83,
+      "sass_line": 20,
+      "source_text": null,
+      "ptx_text": "\tmov.b32 \t%r24, %f9;",
+      "sass_text": "--:-:-:-:1\tISETP.GE.AND P1, PT, R9, 0x4, PT;",
+      "anchors": [
+        "mov.b32",
+        "%r24",
+        "ISETP.GE.AND"
+      ]
+    },
+    {
+      "schema_version": "1.0.0",
+      "source_line": 256,
+      "ptx_line": 87,
+      "sass_line": 21,
+      "source_text": null,
+      "ptx_text": "\tadd.f32 \t%f11, %f9, %f10;",
+      "sass_text": "01:-:-:-:1\tFADD R3, R3, R0;",
+      "anchors": [
+        "add.f32",
+        "%f11",
+        "%f10",
+        "FADD"
+      ]
+    },
+    {
+      "schema_version": "1.0.0",
+      "source_line": 286,
+      "ptx_line": 89,
+      "sass_line": 22,
+      "source_text": null,
+      "ptx_text": "\tsetp.eq.s32 \t%p2, %r13, 0;",
+      "sass_text": "--:-:-:Y:4\tSHF.R.U32.HI R0, RZ, 0x3, R9;",
+      "anchors": [
+        "setp.eq.s32",
+        "%r13",
+        "--:-:-:Y:4",
+        "SHF.R.U32.HI"
+      ]
+    },
+    {
+      "schema_version": "1.0.0",
+      "source_line": 256,
+      "ptx_line": 109,
+      "sass_line": 23,
+      "source_text": null,
+      "ptx_text": "\tadd.f32 \t%f14, %f12, %f13;",
+      "sass_text": "--:-:0:-:1\tSHFL.BFLY PT, R2, R3, 0x8, 0x1f;",
+      "anchors": [
+        "add.f32",
+        "%f14",
+        "%f12",
+        "SHFL.BFLY",
+        "0x1f"
+      ]
+    },
+    {
+      "schema_version": "1.0.0",
+      "source_line": 286,
+      "ptx_line": 111,
+      "sass_line": 24,
+      "source_text": null,
+      "ptx_text": "\tmov.b32 \t%r31, %f14;",
+      "sass_text": "--:-:-:-:1\tLOP3.LUT R0, R0, 0xc, RZ, 0xc0, !PT;",
+      "anchors": [
+        "mov.b32",
+        "%r31",
+        "%f14",
+        "LOP3.LUT",
+        "0xc0"
+      ]
+    },
+    {
+      "schema_version": "1.0.0",
+      "source_line": 256,
+      "ptx_line": 115,
+      "sass_line": 25,
+      "source_text": null,
+      "ptx_text": "\tadd.f32 \t%f16, %f14, %f15;",
+      "sass_text": "01:-:-:Y:5\tFADD R2, R3, R2;",
+      "anchors": [
+        "add.f32",
+        "%f16",
+        "%f14",
+        "01:-:-:Y:5",
+        "FADD"
+      ]
+    },
+    {
+      "schema_version": "1.0.0",
+      "source_line": 286,
+      "ptx_line": 117,
+      "sass_line": 26,
+      "source_text": null,
+      "ptx_text": "\tand.b32  \t%r33, %r12, 3;",
+      "sass_text": "--:-:0:-:2\tSHFL.BFLY PT, R5, R2, 0x4, 0x1f;",
+      "anchors": [
+        "and.b32",
+        "%r33",
+        "%r12",
+        "SHFL.BFLY",
+        "0x1f"
+      ]
+    },
+    {
+      "schema_version": "1.0.0",
+      "source_line": 16,
+      "ptx_line": 128,
+      "sass_line": 27,
+      "source_text": "    tl.store(out_ptr + row, total)",
+      "ptx_text": "\tmul.wide.s32 \t%rd8, %r10, 4;",
+      "sass_text": "01:-:-:Y:5\tFADD R5, R2, R5;",
+      "anchors": [
+        "tl.store",
+        "out_ptr",
+        "total",
+        "mul.wide.s32",
+        "%rd8",
+        "%r10"
+      ]
+    },
+    {
+      "schema_version": "1.0.0",
+      "source_line": 16,
+      "ptx_line": 131,
+      "sass_line": 28,
+      "source_text": "    tl.store(out_ptr + row, total)",
+      "ptx_text": "\tsetp.eq.s32 \t%p5, %r12, 0;",
+      "sass_text": "--:-:0:-:2\tSHFL.BFLY PT, R4, R5, 0x2, 0x1f;",
+      "anchors": [
+        "tl.store",
+        "out_ptr",
+        "total",
+        "setp.eq.s32",
+        "%r12",
+        "SHFL.BFLY"
+      ]
+    },
+    {
+      "schema_version": "1.0.0",
+      "source_line": 16,
+      "ptx_line": 136,
+      "sass_line": 29,
+      "source_text": "    tl.store(out_ptr + row, total)",
+      "ptx_text": "\tret;",
+      "sass_text": "01:-:-:Y:5\tFADD R4, R5, R4;",
+      "anchors": [
+        "tl.store",
+        "out_ptr",
+        "total",
+        "01:-:-:Y:5",
+        "FADD"
+      ]
+    }
+  ],
+  "warnings": []
+}

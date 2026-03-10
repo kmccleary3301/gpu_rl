@@ -1,0 +1,93 @@
+{
+  "config_id": "cfg/training/first_target_splits/v1",
+  "notes": [
+    "Pre-H200 split plan for the first bounded tool-use policy.",
+    "Train focuses on patch-bearing debug and reformulate traces, including usable negatives.",
+    "Dev stays lightweight and diagnostic-heavy.",
+    "Held-out scripted rollout stays separate from SFT packaging."
+  ],
+  "train_episodes": [
+    {
+      "task": "task/reduction_debug/eval/v1",
+      "command": [
+        "python3",
+        "workloads/reference/triton_row_sum_debug_candidate.py",
+        "--benchmark-repeats",
+        "2"
+      ],
+      "workflow": "debug",
+      "section": "quality",
+      "include_build": true,
+      "triton_build_spec": "workloads/reference/triton_row_sum_repaired_kernel.py:get_build_spec"
+    },
+    {
+      "task": "task/reduction_debug/eval/v1",
+      "command": [
+        "python3",
+        "workloads/reference/triton_row_sum_debug_candidate.py",
+        "--benchmark-repeats",
+        "2"
+      ],
+      "workflow": "debug_negative",
+      "section": "quality",
+      "include_build": true,
+      "triton_build_spec": "workloads/reference/triton_row_sum_broken_kernel.py:get_build_spec"
+    },
+    {
+      "task": "task/attention_reformulate/eval/v1",
+      "command": [
+        "python3",
+        "workloads/reference/triton_attention_score_reformulate_candidate.py",
+        "--benchmark-repeats",
+        "2"
+      ],
+      "workflow": "reformulate",
+      "section": "quality",
+      "step_budget": 10
+    },
+    {
+      "task": "task/attention_reformulate/eval/v1",
+      "command": [
+        "python3",
+        "workloads/reference/triton_attention_score_reformulate_candidate.py",
+        "--benchmark-repeats",
+        "2"
+      ],
+      "workflow": "reformulate_negative",
+      "section": "quality",
+      "step_budget": 10
+    }
+  ],
+  "dev_episodes": [
+    {
+      "task": "task/profile_diagnose/eval/v1",
+      "command": [
+        "python3",
+        "workloads/reference/profile_diagnose_candidate.py"
+      ],
+      "workflow": "diagnose_first",
+      "section": "quality"
+    },
+    {
+      "task": "task/reduction_row_sum/eval/v1",
+      "command": [
+        "python3",
+        "workloads/reference/triton_row_sum_candidate.py",
+        "--benchmark-repeats",
+        "3"
+      ],
+      "workflow": "standard",
+      "section": "eval",
+      "include_build": true,
+      "triton_build_spec": "workloads/reference/triton_row_sum_kernel.py:get_build_spec"
+    }
+  ],
+  "generated_outputs": {
+    "train_trajectory": "datasets/pre_h200_transition_train_v1",
+    "dev_trajectory": "datasets/pre_h200_transition_dev_v1",
+    "train_sft": "datasets/pre_h200_sft_train_v1",
+    "dev_sft": "datasets/pre_h200_sft_dev_v1",
+    "data_report": "artifacts/training/pre_h200_data_report.json"
+  },
+  "heldout_rollout_config_ref": "configs/training/rollout_debug_repair_heldout_v1.json"
+}

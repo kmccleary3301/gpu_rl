@@ -1,0 +1,37 @@
+# Run eval_20260310_003348_820754_bd9ea5
+
+- task: `task/reduction_debug/eval/v1`
+- status: `ok`
+- trace_enabled: `False`
+- backend: `triton`
+- vendor: `nvidia`
+- parent_run_id: `run_20260310_003348_718454_c04d4e`
+- candidate_id: `cand_e92315a83f32`
+- parent_candidate_id: `None`
+- patch_present: `True`
+- patch_kind: `bug_fix`
+- transition_kind: `repaired`
+- candidate_role: `patched_candidate`
+- exit_code: `0`
+- duration_ms: `1708`
+
+## Key Artifacts
+- `manifest.json`
+- `events.jsonl`
+- `prompt/task_spec.json`
+- `meta/task_spec_full.json`
+- `meta/hardware_fingerprint.json`
+- `meta/doctor_report.json`
+- `correctness/correctness.json`
+- `correctness/determinism.json`
+- `eval/anti_hack_report.json`
+- `eval/eval_envelope.json`
+- `eval/gate_summary.json`
+- `summary.json`
+- `summary.md`
+- `command/stdout.txt`
+- `command/stderr.txt`
+- `command/summary.json`
+
+## Warnings
+- none

@@ -27,7 +27,7 @@
     "success": 2
   },
   "readiness_counts": {
-    "positive_rl_trace": 2
+    "benchmark_only": 2
   },
   "metadata": {
     "collection_kind": "public_benchmark_golden_fixture",

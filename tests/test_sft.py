@@ -33,8 +33,11 @@ class SFTPackagingTests(unittest.TestCase):
     def test_package_and_validate_sft_dataset(self) -> None:
         episode = run_scripted_reference_episode(
             self.tmp_root,
-            "task/smoke/eval/v1",
-            ["python3", "-c", "print('GPU_COCKPIT_SMOKE_OK')"],
+            "task/reduction_debug/eval/v1",
+            ["python3", "workloads/reference/triton_row_sum_debug_candidate.py", "--benchmark-repeats", "2"],
+            section="quality",
+            include_build=True,
+            triton_build_spec="workloads/reference/triton_row_sum_repaired_kernel.py:get_build_spec",
         )
         trajectory_dir = self.tmp_root / "trajectory_dataset"
         export_episode_dataset([episode], trajectory_dir, policy_id="scripted_reference_v1", split="seed")
@@ -52,9 +55,10 @@ class SFTPackagingTests(unittest.TestCase):
         self.assertEqual(manifest["example_count"], 1)
         example_path = out_dir / manifest["example_refs"][0]
         example = json.loads(example_path.read_text(encoding="utf-8"))
-        self.assertEqual(example["task_id"], "task/smoke/eval/v1")
+        self.assertEqual(example["task_id"], "task/reduction_debug/eval/v1")
         self.assertIn("knowledge_query", example["response"])
-        self.assertNotEqual(example["metadata"]["training_example_kind"], "unusable")
+        self.assertEqual(example["metadata"]["training_example_kind"], "positive_sft_example")
+        self.assertEqual(example["metadata"]["episode_governance_kind"], "usable_positive_sft")
 
     def test_package_filters_public_benchmark_and_verb(self) -> None:
         smoke_episode = run_scripted_reference_episode(
@@ -86,8 +90,65 @@ class SFTPackagingTests(unittest.TestCase):
             split="train",
             include_failures=False,
             only_public_benchmarks=True,
+            include_benchmark_only=True,
             verb_allowlist=[public_verb],
+            allowed_training_example_kinds=["benchmark_only"],
         )
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         self.assertEqual(manifest["example_count"], 1)
         self.assertEqual(manifest["metadata"]["verb_allowlist"], [public_verb])
+
+    def test_package_can_filter_patch_bearing_governed_examples(self) -> None:
+        debug_episode = run_scripted_reference_episode(
+            self.tmp_root,
+            "task/reduction_debug/eval/v1",
+            ["python3", "workloads/reference/triton_row_sum_debug_candidate.py", "--benchmark-repeats", "2"],
+            section="quality",
+            include_build=True,
+            triton_build_spec="workloads/reference/triton_row_sum_repaired_kernel.py:get_build_spec",
+        )
+        public_episode = run_scripted_reference_episode(
+            self.tmp_root,
+            "task/kernelbench/level1/32_hardtanh/eval/v1",
+            [
+                "python3",
+                "workloads/reference/kernelbench_reference_runner.py",
+                "--case-config",
+                "workloads/public_benchmarks/kernelbench/v0_1/cases/level1_032_hardtanh.json",
+                "--benchmark-repeats",
+                "2",
+            ],
+            section="eval",
+        )
+        trajectory_dir = self.tmp_root / "patch_bearing_trajectory_dataset"
+        export_episode_dataset([debug_episode, public_episode], trajectory_dir, policy_id="scripted_reference_v1", split="seed")
+        out_dir = self.tmp_root / "patch_bearing_sft_dataset"
+        manifest_path = package_trajectory_dataset_as_sft(
+            self.tmp_root,
+            trajectory_dir,
+            out_dir,
+            split="train",
+            patch_bearing_only=True,
+            governance_allowlist=["usable_positive_sft"],
+            transition_kind_allowlist=["repaired"],
+        )
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        self.assertEqual(manifest["example_count"], 1)
+        self.assertTrue(manifest["metadata"]["patch_bearing_only"])
+        example = json.loads((out_dir / manifest["example_refs"][0]).read_text(encoding="utf-8"))
+        self.assertTrue(example["metadata"]["patch_present"])
+        self.assertEqual(example["metadata"]["episode_governance_kind"], "usable_positive_sft")
+
+    def test_validate_checked_in_transition_sft_fixture(self) -> None:
+        validation = validate_sft_dataset(ROOT / "tests" / "golden_datasets" / "transition_sft_v1")
+        self.assertEqual(validation["status"], "ok")
+        manifest = validation["manifest"]
+        self.assertEqual(manifest["example_count"], 2)
+        self.assertTrue(manifest["metadata"]["patch_bearing_only"])
+
+    def test_validate_checked_in_negative_transition_sft_fixture(self) -> None:
+        validation = validate_sft_dataset(ROOT / "tests" / "golden_datasets" / "transition_negative_sft_v1")
+        self.assertEqual(validation["status"], "ok")
+        manifest = validation["manifest"]
+        self.assertEqual(manifest["example_count"], 2)
+        self.assertTrue(manifest["metadata"]["patch_bearing_only"])

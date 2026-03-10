@@ -71,7 +71,7 @@ def run_determinism_check(
 
     next_index = len(attempts) + 1
     while len(attempts) < target_runs:
-        result = executor.run(command)
+        result = executor.run(command, cwd=writer.root)
         attempts.append(
             _build_attempt(
                 attempt_index=next_index,

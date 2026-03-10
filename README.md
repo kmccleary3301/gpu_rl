@@ -8,7 +8,9 @@ Research and tooling substrate for training and evaluating LLM-powered code agen
 - `workloads/`: internal tasks, public benchmark adapters, reference implementations, hooks, and curated benchmark inputs
 - `tests/`: regression tests plus checked-in golden bundles, datasets, and episodes
 - `knowledge/`: operator docs, benchmark notes, profiler playbooks, transformation cards, and hardware notes
-- `scripts/`: schema export, seed trajectory collection, SFT packaging, and related utilities
+- `scripts/`: schema export, transition corpus builders, held-out baseline reports, SFT packaging, and related utilities
+- `configs/training/`: checked-in training and rollout configs for the planned H200 handoff
+- `docs/h200_handoff/`: frozen first training target, remote bootstrap notes, smoke sequence, and machine-readable handoff manifest
 
 ## Main CLI Surfaces
 

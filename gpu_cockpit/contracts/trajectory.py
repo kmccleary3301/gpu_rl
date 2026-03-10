@@ -5,6 +5,7 @@ from datetime import datetime
 from pydantic import Field
 
 from gpu_cockpit.contracts.base import ContractModel
+from gpu_cockpit.contracts.evidence import EpisodeReadinessReport
 
 
 class TrajectoryAction(ContractModel):
@@ -26,15 +27,22 @@ class TrajectoryObservation(ContractModel):
     vendor: str | None = None
     summary_ref: str | None = None
     artifact_refs: list[str] = Field(default_factory=list)
+    salient_artifact_refs: list[str] = Field(default_factory=list)
     projection: dict[str, object] = Field(default_factory=dict)
 
 
 class TrajectoryStep(ContractModel):
     step_index: int = Field(ge=0)
+    step_label: str | None = None
     action: TrajectoryAction
     observation: TrajectoryObservation
     reward_components: dict[str, float] = Field(default_factory=dict)
     reward_total: float
+    transition_kind: str | None = None
+    input_candidate_id: str | None = None
+    output_candidate_id: str | None = None
+    patch_hash: str | None = None
+    recommended_next_actions: list[str] = Field(default_factory=list)
     terminal: bool = False
     terminal_state: str | None = None
 
@@ -54,6 +62,7 @@ class TrajectoryEpisode(ContractModel):
     terminal_state: str
     environment_hash: str | None = None
     artifact_refs: list[str] = Field(default_factory=list)
+    governance: EpisodeReadinessReport | None = None
     metadata: dict[str, object] = Field(default_factory=dict)
 
 
@@ -66,10 +75,18 @@ class TrajectoryDatasetManifest(ContractModel):
     episode_count: int = Field(ge=0)
     successful_episode_count: int = Field(ge=0)
     failed_episode_count: int = Field(ge=0)
+    patch_bearing_episode_count: int = Field(ge=0)
+    patch_bearing_negative_episode_count: int = Field(ge=0, default=0)
+    lineage_safe_episode_count: int = Field(ge=0)
+    usable_positive_episode_count: int = Field(ge=0, default=0)
+    usable_negative_episode_count: int = Field(ge=0, default=0)
     episode_refs: list[str] = Field(default_factory=list)
     task_ids: list[str] = Field(default_factory=list)
     verb_counts: dict[str, int] = Field(default_factory=dict)
     operator_family_counts: dict[str, int] = Field(default_factory=dict)
     terminal_state_counts: dict[str, int] = Field(default_factory=dict)
     readiness_counts: dict[str, int] = Field(default_factory=dict)
+    episode_governance_counts: dict[str, int] = Field(default_factory=dict)
+    transition_kind_counts: dict[str, int] = Field(default_factory=dict)
+    patch_kind_counts: dict[str, int] = Field(default_factory=dict)
     metadata: dict[str, object] = Field(default_factory=dict)

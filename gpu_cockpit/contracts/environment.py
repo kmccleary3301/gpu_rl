@@ -11,6 +11,9 @@ class AgentActionSpec(ContractModel):
     requires_task: bool = False
     requires_command: bool = False
     produces_run_bundle: bool = False
+    cost_units: float = 0.0
+    observation_focus: str | None = None
+    recommended_verbs: list[str] = Field(default_factory=list)
 
 
 class AgentEnvironmentState(ContractModel):
@@ -22,6 +25,8 @@ class AgentEnvironmentState(ContractModel):
     steps_taken: int = Field(ge=0, default=0)
     last_run_id: str | None = None
     last_run_ref: str | None = None
+    current_candidate_id: str | None = None
+    current_candidate_run_ref: str | None = None
     comparison_anchor_run_ref: str | None = None
     comparison_anchor_label: str | None = None
     run_history: list[str] = Field(default_factory=list)

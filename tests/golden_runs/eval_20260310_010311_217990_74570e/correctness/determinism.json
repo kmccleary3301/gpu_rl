@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0.0",
+  "command": [
+    "python3",
+    "workloads/reference/triton_attention_score_weak_baseline.py",
+    "--benchmark-repeats",
+    "2"
+  ],
+  "runs": 2,
+  "passed": true,
+  "stable_exit_codes": true,
+  "stable_stdout": true,
+  "stable_stderr": true,
+  "baseline_exit_code": 0,
+  "baseline_stdout_sha256": "494fcca33e22201115de0845de95ef6516c9f71aa73f652ba41a6ee32ad0001a",
+  "baseline_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "attempts": [
+    {
+      "schema_version": "1.0.0",
+      "attempt_index": 1,
+      "exit_code": 0,
+      "duration_ms": 1669,
+      "stdout_sha256": "494fcca33e22201115de0845de95ef6516c9f71aa73f652ba41a6ee32ad0001a",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 597,
+      "stderr_bytes": 0
+    },
+    {
+      "schema_version": "1.0.0",
+      "attempt_index": 2,
+      "exit_code": 0,
+      "duration_ms": 1649,
+      "stdout_sha256": "494fcca33e22201115de0845de95ef6516c9f71aa73f652ba41a6ee32ad0001a",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 597,
+      "stderr_bytes": 0
+    }
+  ],
+  "warnings": []
+}

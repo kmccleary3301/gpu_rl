@@ -15,12 +15,15 @@ from gpu_cockpit.engine.indexer import list_runs
 from gpu_cockpit.engine.inspector import compare_runs, inspect_run
 from gpu_cockpit.engine.knowledge import build_knowledge_index, query_knowledge, retrieve_similar_for_task
 from gpu_cockpit.engine.replay import export_proof_bundle, validate_run_bundle, write_replay_pack
+from gpu_cockpit.engine.rollout import run_scripted_rollout_suite
 from gpu_cockpit.engine.run_bundle import RunBundleWriter
 from gpu_cockpit.engine.runner import build_run_id, build_run_spec, write_run_summary, write_task_artifacts
 from gpu_cockpit.engine.runner import run_task
 from gpu_cockpit.engine.sft import package_trajectory_dataset_as_sft, validate_sft_dataset
 from gpu_cockpit.engine.task_registry import TaskRegistry
+from gpu_cockpit.engine.training import load_training_config, validate_sft_training_config, write_sft_smoke_report
 from gpu_cockpit.engine.trajectory import export_trajectory_dataset, validate_trajectory_dataset, write_episode, write_trajectory_episode
+from gpu_cockpit.contracts import RLRolloutConfig
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -172,7 +175,11 @@ def build_parser() -> argparse.ArgumentParser:
     sft_package.add_argument("--split", default="train", help="Dataset split label")
     sft_package.add_argument("--success-only", action="store_true", help="Exclude failed episodes")
     sft_package.add_argument("--public-only", action="store_true", help="Keep only public benchmark tasks")
+    sft_package.add_argument("--include-benchmark-only", action="store_true", help="Allow benchmark-only episodes into the packaged dataset")
+    sft_package.add_argument("--patch-bearing-only", action="store_true", help="Keep only patch-bearing episodes")
     sft_package.add_argument("--verb", action="append", default=[], help="Restrict packaging to one or more task verbs")
+    sft_package.add_argument("--governance", action="append", default=[], help="Restrict packaging to one or more episode governance kinds")
+    sft_package.add_argument("--transition-kind", action="append", default=[], help="Require at least one matching transition kind")
     sft_validate = sft_subparsers.add_parser("validate", help="Validate an SFT dataset directory")
     sft_validate.add_argument("dataset_dir", type=Path, help="SFT dataset directory")
 
@@ -195,6 +202,20 @@ def build_parser() -> argparse.ArgumentParser:
     knowledge_similar.add_argument("task_id", help="Task id")
     knowledge_similar.add_argument("--limit", type=int, default=5, help="Maximum rows to return")
     knowledge_similar.add_argument("--index-dir", type=Path, default=None, help="Optional index directory")
+
+    train = subparsers.add_parser("train", help="Training-config validation and smoke scaffolding")
+    train_subparsers = train.add_subparsers(dest="train_command", required=True)
+    train_validate = train_subparsers.add_parser("validate-config", help="Validate an SFT training config")
+    train_validate.add_argument("config_path", type=Path, help="Path to SFT training config JSON")
+    train_smoke = train_subparsers.add_parser("smoke-sft", help="Write a smoke SFT training report from a config")
+    train_smoke.add_argument("config_path", type=Path, help="Path to SFT training config JSON")
+    train_smoke.add_argument("--out", type=Path, required=True, help="Destination report path")
+
+    rollout = subparsers.add_parser("rollout", help="Scripted rollout suite scaffolding for held-out debug/diagnose tasks")
+    rollout_subparsers = rollout.add_subparsers(dest="rollout_command", required=True)
+    rollout_run = rollout_subparsers.add_parser("scripted", help="Run a scripted rollout suite from a rollout config")
+    rollout_run.add_argument("config_path", type=Path, help="Path to rollout config JSON")
+    rollout_run.add_argument("--out-dir", type=Path, required=True, help="Destination rollout report directory")
 
     return parser
 
@@ -497,7 +518,11 @@ def main() -> int:
             split=args.split,
             include_failures=not args.success_only,
             only_public_benchmarks=args.public_only,
+            include_benchmark_only=args.include_benchmark_only,
+            patch_bearing_only=args.patch_bearing_only,
             verb_allowlist=list(args.verb),
+            governance_allowlist=list(args.governance),
+            transition_kind_allowlist=list(args.transition_kind),
         )
         print(manifest_path)
         return 0
@@ -536,6 +561,23 @@ def main() -> int:
             index_dir=args.index_dir,
         )
         print(json.dumps(rows, indent=2))
+        return 0
+
+    if args.command == "train" and args.train_command == "validate-config":
+        config = load_training_config(args.config_path)
+        print(json.dumps(validate_sft_training_config(Path.cwd(), config), indent=2))
+        return 0
+
+    if args.command == "train" and args.train_command == "smoke-sft":
+        report_path = write_sft_smoke_report(Path.cwd(), args.config_path, args.out)
+        print(report_path)
+        return 0
+
+    if args.command == "rollout" and args.rollout_command == "scripted":
+        config_payload = json.loads(args.config_path.read_text(encoding="utf-8"))
+        config = RLRolloutConfig.model_validate(config_payload)
+        report = run_scripted_rollout_suite(Path.cwd(), config, args.out_dir)
+        print(json.dumps(report.model_dump(mode="json"), indent=2))
         return 0
 
     if args.command == "eval":

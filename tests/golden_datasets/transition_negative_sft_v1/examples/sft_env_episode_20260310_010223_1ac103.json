@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0.0",
+  "example_id": "sft_env_episode_20260310_010223_1ac103",
+  "created_at": "2026-03-10T01:03:30.091430Z",
+  "split": "train",
+  "task_id": "task/reduction_debug/eval/v1",
+  "prompt_family": "debug",
+  "prompt": "Task family: debug\nTask id: task/reduction_debug/eval/v1\n\nRepair the broken Triton row-sum kernel that drops the last column from its reduction mask. Print JSON with visible_row_sum, hidden_row_sum, and debug_summary describing the bug class and the concrete fix that restores full-column coverage.\n\nProduce a compact tool-using plan for the task and keep the actions consistent with the cockpit tool API.\nObserved reference episode actions: knowledge_query, build, build, eval, inspect_quality, patch_candidate, build, inspect_quality, eval, inspect_quality, replay, compare",
+  "response": "1. knowledge_query reward=-0.020\n2. build -> run=run_20260310_010223_814043_1d1996 reward=-0.030\n3. build -> run=run_20260310_010223_919754_b85c33 reward=-0.030\n4. eval -> run=eval_20260310_010224_022215_4af5ec reward=0.950\n5. inspect_quality -> run=eval_20260310_010224_022215_4af5ec reward=-0.010\n6. patch_candidate -> run=patch_20260310_010227_450709_649713 transition=patch_applied reward=-0.040\n7. build -> run=run_20260310_010227_549093_413956 reward=-0.030\n8. inspect_quality -> run=run_20260310_010227_549093_413956 reward=-0.010\n9. eval -> run=eval_20260310_010227_653038_c43b02 reward=-0.050\n10. inspect_quality -> run=eval_20260310_010227_653038_c43b02 reward=-0.010\n11. replay -> run=eval_20260310_010227_653038_c43b02 reward=-0.010\n12. compare -> run=/shared_folders/querylake_server/side_projects/gpu_rl/tests/tmp_transition_goldens/runs/eval_20260310_010227_653038_c43b02 reward=-0.010\nterminal_state=failure",
+  "source_episode_ref": "episodes/env_episode_20260310_010223_1ac103.json",
+  "metadata": {
+    "task_verb": "debug",
+    "operator_family": "reduction_sum",
+    "backend": "triton",
+    "feature_requirements": [
+      "cuda",
+      "torch",
+      "triton"
+    ],
+    "terminal_state": "failure",
+    "episode_kind": "scripted_reference",
+    "benchmark_name": null,
+    "evidence_score": 0.7208,
+    "training_example_kind": "negative_debug_example",
+    "episode_governance_kind": "usable_negative_debug",
+    "episode_governance_reasons": [
+      "correctness_gate:fail",
+      "debug_episode_contains_relevant_evidence",
+      "diagnostic_evidence_missing",
+      "eval_artifacts_incomplete",
+      "has_build_evidence",
+      "patch_bearing",
+      "required_artifacts_missing",
+      "run_status:failed",
+      "terminal_not_success"
+    ],
+    "patch_present": true,
+    "patch_kinds": [
+      "no_op"
+    ],
+    "transition_kinds": [
+      "patch_applied"
+    ],
+    "candidate_lineage_depth": 1
+  }
+}

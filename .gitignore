@@ -6,6 +6,8 @@ docs_tmp/
 runs/
 datasets/
 knowledge/index/
+artifacts/
+docs/h200_handoff/handoff_manifest.json
 
 __pycache__/
 *.py[cod]

@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0.0",
+  "dataset_id": "sft_dataset_20260310_010330",
+  "created_at": "2026-03-10T01:03:30.091974Z",
+  "split": "train",
+  "example_count": 2,
+  "example_refs": [
+    "examples/sft_env_episode_20260310_010223_1ac103.json",
+    "examples/sft_env_episode_20260310_010231_30d37c.json"
+  ],
+  "task_ids": [
+    "task/attention_reformulate/eval/v1",
+    "task/reduction_debug/eval/v1"
+  ],
+  "metadata": {
+    "source_dataset": "/shared_folders/querylake_server/side_projects/gpu_rl/tests/golden_datasets/transition_negative_collection_v1",
+    "include_failures": true,
+    "only_public_benchmarks": false,
+    "include_benchmark_only": false,
+    "patch_bearing_only": true,
+    "verb_allowlist": [],
+    "governance_allowlist": [
+      "usable_negative_debug",
+      "usable_negative_transition"
+    ],
+    "transition_kind_allowlist": [
+      "patch_applied"
+    ],
+    "allowed_training_example_kinds": [
+      "negative_debug_example",
+      "negative_reformulate_example",
+      "positive_rl_trace",
+      "positive_sft_example"
+    ],
+    "prompt_family_counts": {
+      "debug": 1,
+      "reformulate": 1
+    },
+    "verb_counts": {
+      "debug": 1,
+      "reformulate": 1
+    }
+  }
+}

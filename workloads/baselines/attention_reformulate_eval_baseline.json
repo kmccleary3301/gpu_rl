@@ -4,7 +4,7 @@
     "python3",
     "workloads/reference/triton_attention_score_weak_baseline.py",
     "--benchmark-repeats",
-    "2"
+    "12"
   ],
   "notes": [
     "Naive loop-based causal attention-score baseline used for reformulation tasks."

@@ -1,0 +1,47 @@
+{
+  "candidate": {
+    "command": [
+      "python3",
+      "workloads/reference/triton_attention_score_weak_baseline.py",
+      "--benchmark-repeats",
+      "2"
+    ],
+    "timings_ms": [
+      1598.0,
+      1603.0,
+      1598.0,
+      1580.0,
+      1636.0
+    ],
+    "exit_codes": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "baseline": {
+    "baseline_id": "baseline/attention_reformulate/eval/v1",
+    "command": [
+      "python3",
+      "workloads/reference/triton_attention_score_weak_baseline.py",
+      "--benchmark-repeats",
+      "2"
+    ],
+    "timings_ms": [
+      1500.0,
+      1520.0,
+      1540.0,
+      1503.0,
+      1509.0
+    ],
+    "exit_codes": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  }
+}

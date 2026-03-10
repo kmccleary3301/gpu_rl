@@ -25,7 +25,8 @@ def _benchmark_inputs(n_q: int, n_k: int, head_dim: int) -> tuple[torch.Tensor, 
 def _run_benchmark(repeats: int) -> None:
     q, k = _benchmark_inputs(n_q=512, n_k=512, head_dim=64)
     for _ in range(repeats):
-        out = reference_attention_tensor(q, k, causal=True)
+        for _baseline_pass in range(4):
+            out = reference_attention_tensor(q, k, causal=True)
     _ = out
 
 

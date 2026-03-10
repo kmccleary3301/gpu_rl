@@ -1,0 +1,22 @@
+{
+  "config_id": "cfg/rollout/debug_repair/v1",
+  "policy_id": "scripted_reference_v1",
+  "task_refs": [
+    "task/reduction_debug/eval/v1",
+    "task/profile_diagnose/eval/v1",
+    "task/attention_reformulate/eval/v1"
+  ],
+  "step_budget": 12,
+  "determinism_runs": 2,
+  "workflow": "auto",
+  "reward_weights": {
+    "correctness": 1.0,
+    "determinism": 0.5,
+    "anti_hack": 0.5,
+    "tool_cost": -0.1,
+    "patch_success": 0.25
+  },
+  "notes": [
+    "Held-out scripted rollout smoke for the first narrow debug/diagnose/reformulate policy."
+  ]
+}

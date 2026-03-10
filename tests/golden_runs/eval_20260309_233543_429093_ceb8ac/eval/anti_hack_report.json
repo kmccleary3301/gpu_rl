@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0.0",
+  "passed": true,
+  "forbidden_patterns": [
+    "torch.sum(",
+    ".sum("
+  ],
+  "scanned_locations": [
+    "command",
+    "command/stdout.txt",
+    "command/stderr.txt"
+  ],
+  "hits": [],
+  "cpu_fallback_detected": false,
+  "library_shortcut_detected": false,
+  "warnings": []
+}

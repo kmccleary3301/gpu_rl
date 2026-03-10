@@ -15,4 +15,12 @@ class ReplayPack(ContractModel):
     input_snapshot_ref: str | None = None
     task_ref: str
     commands_ref: str | None = None
+    candidate_id: str | None = None
+    parent_candidate_id: str | None = None
+    source_run_ref: str | None = None
+    patch_ref: str | None = None
+    diff_ref: str | None = None
+    transition_ref: str | None = None
+    candidate_role: str | None = None
+    transition_kind: str | None = None
     required_artifacts: list[str] = Field(default_factory=list)

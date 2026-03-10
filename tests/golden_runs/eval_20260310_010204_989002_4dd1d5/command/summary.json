@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "backend": "subprocess",
+  "command": [
+    "python3",
+    "workloads/reference/triton_attention_score_weak_baseline.py",
+    "--benchmark-repeats",
+    "2"
+  ],
+  "trace_enabled": false,
+  "exit_code": 0,
+  "duration_ms": 1630,
+  "report_path": null,
+  "sqlite_path": null,
+  "stdout_path": "command/stdout.txt",
+  "stderr_path": "command/stderr.txt",
+  "warnings": []
+}

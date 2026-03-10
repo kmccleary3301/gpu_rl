@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "candidate_id": "cand_d156e63506fe",
+  "task_id": "task/reduction_debug/eval/v1",
+  "workspace_root": "/shared_folders/querylake_server/side_projects/gpu_rl/tests/tmp_transition_goldens",
+  "source_run_ref": "/shared_folders/querylake_server/side_projects/gpu_rl/tests/tmp_transition_goldens/runs/eval_20260309_233543_429093_ceb8ac",
+  "source_run_id": "eval_20260309_233543_429093_ceb8ac",
+  "parent_candidate_id": null,
+  "parent_run_ref": "/shared_folders/querylake_server/side_projects/gpu_rl/tests/tmp_transition_goldens/runs/eval_20260309_233543_429093_ceb8ac",
+  "patch_id": "patch_5a8f5ed80530",
+  "patch_hash": "9cd8d7fc5e6c7c3654b51d3f7d75339dc2579bed6d8f317c3fdfcbbc5deacd33",
+  "patch_kind": "bug_fix",
+  "changed_files": [
+    "workloads/reference/triton_row_sum_patchable_candidate.py"
+  ],
+  "candidate_role": "patched_candidate",
+  "lineage_depth": 0,
+  "metadata": {
+    "intent": "repair the reduction candidate so it uses the corrected Triton row-sum implementation",
+    "expected_effect": "turn the broken reduction candidate into a correct implementation without changing the task contract"
+  }
+}

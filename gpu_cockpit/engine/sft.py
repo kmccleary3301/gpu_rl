@@ -18,6 +18,13 @@ PROMPT_FAMILY_MAP = {
     "port": "reformulate",
 }
 
+DEFAULT_ALLOWED_TRAINING_KINDS = {
+    "positive_sft_example",
+    "positive_rl_trace",
+    "negative_debug_example",
+    "negative_reformulate_example",
+}
+
 
 def _load_manifest(dataset_dir: Path) -> dict[str, object]:
     manifest_path = dataset_dir / "trajectory_dataset_manifest.json"
@@ -56,10 +63,11 @@ def _render_response(episode: TrajectoryEpisode) -> str:
     lines = []
     for step in episode.steps:
         reward_suffix = f" reward={step.reward_total:.3f}"
+        transition_suffix = f" transition={step.transition_kind}" if step.transition_kind else ""
         if step.observation.run_id:
-            lines.append(f"{step.step_index + 1}. {step.action.action_type} -> run={step.observation.run_id}{reward_suffix}")
+            lines.append(f"{step.step_index + 1}. {step.action.action_type} -> run={step.observation.run_id}{transition_suffix}{reward_suffix}")
         else:
-            lines.append(f"{step.step_index + 1}. {step.action.action_type}{reward_suffix}")
+            lines.append(f"{step.step_index + 1}. {step.action.action_type}{transition_suffix}{reward_suffix}")
     lines.append(f"terminal_state={episode.terminal_state}")
     return "\n".join(lines)
 
@@ -84,7 +92,12 @@ def package_trajectory_dataset_as_sft(
     split: str = "train",
     include_failures: bool = True,
     only_public_benchmarks: bool = False,
+    include_benchmark_only: bool = False,
+    patch_bearing_only: bool = False,
     verb_allowlist: list[str] | None = None,
+    governance_allowlist: list[str] | None = None,
+    transition_kind_allowlist: list[str] | None = None,
+    allowed_training_example_kinds: list[str] | None = None,
 ) -> Path:
     registry = TaskRegistry(root)
     episodes = _load_episodes(dataset_dir)
@@ -95,6 +108,11 @@ def package_trajectory_dataset_as_sft(
     task_ids: list[str] = []
     prompt_family_counts: dict[str, int] = {}
     verb_counts: dict[str, int] = {}
+    allowed_kinds = set(allowed_training_example_kinds or DEFAULT_ALLOWED_TRAINING_KINDS)
+    if not include_benchmark_only:
+        allowed_kinds.discard("benchmark_only")
+    allowed_governance = set(governance_allowlist or [])
+    allowed_transitions = set(transition_kind_allowlist or [])
     for relative_ref, episode in episodes:
         if not include_failures and episode.terminal_state != "success":
             continue
@@ -104,7 +122,25 @@ def package_trajectory_dataset_as_sft(
         if verb_allowlist and task.verb not in set(verb_allowlist):
             continue
         prompt_family = PROMPT_FAMILY_MAP.get(task.verb, "general")
-        readiness = str(episode.metadata.get("training_example_kind", "unusable"))
+        readiness = str(episode.governance.training_example_kind if episode.governance else episode.metadata.get("training_example_kind", "unusable"))
+        if readiness not in allowed_kinds:
+            continue
+        patch_kinds = sorted(
+            {
+                str(step.action.metadata["patch_kind"])
+                for step in episode.steps
+                if isinstance(step.action.metadata.get("patch_kind"), str)
+            }
+        )
+        transition_kinds = [step.transition_kind for step in episode.steps if isinstance(step.transition_kind, str)]
+        governance_kind = str(episode.governance.episode_governance_kind if episode.governance else episode.metadata.get("episode_governance_kind", "unusable"))
+        governance_reasons = list(episode.governance.reasons) if episode.governance else list(episode.metadata.get("episode_governance_reasons", []))
+        if patch_bearing_only and not patch_kinds:
+            continue
+        if allowed_governance and governance_kind not in allowed_governance:
+            continue
+        if allowed_transitions and not (allowed_transitions & set(transition_kinds)):
+            continue
         example = SFTExample(
             example_id=f"sft_{episode.episode_id}",
             created_at=datetime.now(tz=UTC),
@@ -124,6 +160,12 @@ def package_trajectory_dataset_as_sft(
                 "benchmark_name": _benchmark_name(task.task_id),
                 "evidence_score": episode.metadata.get("evidence_score"),
                 "training_example_kind": readiness,
+                "episode_governance_kind": governance_kind,
+                "episode_governance_reasons": governance_reasons,
+                "patch_present": bool(patch_kinds),
+                "patch_kinds": patch_kinds,
+                "transition_kinds": transition_kinds,
+                "candidate_lineage_depth": episode.metadata.get("candidate_lineage_depth", 0),
             },
         )
         example_path = examples_dir / f"{example.example_id}.json"
@@ -143,7 +185,12 @@ def package_trajectory_dataset_as_sft(
             "source_dataset": str(dataset_dir),
             "include_failures": include_failures,
             "only_public_benchmarks": only_public_benchmarks,
+            "include_benchmark_only": include_benchmark_only,
+            "patch_bearing_only": patch_bearing_only,
             "verb_allowlist": list(verb_allowlist or []),
+            "governance_allowlist": sorted(allowed_governance),
+            "transition_kind_allowlist": sorted(allowed_transitions),
+            "allowed_training_example_kinds": sorted(allowed_kinds),
             "prompt_family_counts": prompt_family_counts,
             "verb_counts": verb_counts,
         },

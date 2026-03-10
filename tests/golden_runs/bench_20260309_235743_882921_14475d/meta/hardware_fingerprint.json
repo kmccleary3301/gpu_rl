@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "vendor": "nvidia",
+  "gpu_name": "NVIDIA RTX 6000 Ada Generation",
+  "arch": "gpu_0",
+  "driver_version": "580.126.09",
+  "runtime_version": "unknown",
+  "memory_gb": 47,
+  "power_limit_w": 300,
+  "clock_state": "unknown",
+  "mig_mode": false,
+  "mps_mode": false,
+  "host_kernel": "6.8.0-90-generic",
+  "container_runtime": "docker",
+  "tool_versions": {
+    "schema_version": "1.0.0",
+    "versions": {
+      "nvidia-smi": "580.126.09",
+      "nsys": "NVIDIA Nsight Systems version 2023.4.4.54-234433681190v0"
+    }
+  }
+}

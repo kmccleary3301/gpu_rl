@@ -1,0 +1,147 @@
+{
+  "schema_version": "1.0.0",
+  "host_platform": "Linux-6.8.0-90-generic-x86_64-with-glibc2.35",
+  "host_kernel": "6.8.0-90-generic",
+  "python_executable": "/home/querylake_manager/miniconda3/bin/python3",
+  "python_version": "3.12.12",
+  "container_runtime": "docker",
+  "available_tools": [
+    {
+      "schema_version": "1.0.0",
+      "name": "nvidia-smi",
+      "path": "/usr/bin/nvidia-smi",
+      "version": "580.126.09",
+      "available": true
+    },
+    {
+      "schema_version": "1.0.0",
+      "name": "nsys",
+      "path": "/usr/local/bin/nsys",
+      "version": "NVIDIA Nsight Systems version 2023.4.4.54-234433681190v0",
+      "available": true
+    },
+    {
+      "schema_version": "1.0.0",
+      "name": "ncu",
+      "path": null,
+      "version": null,
+      "available": false
+    },
+    {
+      "schema_version": "1.0.0",
+      "name": "compute-sanitizer",
+      "path": null,
+      "version": null,
+      "available": false
+    },
+    {
+      "schema_version": "1.0.0",
+      "name": "cuobjdump",
+      "path": null,
+      "version": null,
+      "available": false
+    },
+    {
+      "schema_version": "1.0.0",
+      "name": "nvdisasm",
+      "path": null,
+      "version": null,
+      "available": false
+    },
+    {
+      "schema_version": "1.0.0",
+      "name": "nvcc",
+      "path": null,
+      "version": null,
+      "available": false
+    },
+    {
+      "schema_version": "1.0.0",
+      "name": "rocminfo",
+      "path": null,
+      "version": null,
+      "available": false
+    },
+    {
+      "schema_version": "1.0.0",
+      "name": "rocm-smi",
+      "path": null,
+      "version": null,
+      "available": false
+    },
+    {
+      "schema_version": "1.0.0",
+      "name": "hipcc",
+      "path": null,
+      "version": null,
+      "available": false
+    },
+    {
+      "schema_version": "1.0.0",
+      "name": "rocprof",
+      "path": null,
+      "version": null,
+      "available": false
+    },
+    {
+      "schema_version": "1.0.0",
+      "name": "rocprofv3",
+      "path": null,
+      "version": null,
+      "available": false
+    }
+  ],
+  "hardware_fingerprints": [
+    {
+      "schema_version": "1.0.0",
+      "vendor": "nvidia",
+      "gpu_name": "NVIDIA RTX 6000 Ada Generation",
+      "arch": "gpu_0",
+      "driver_version": "580.126.09",
+      "runtime_version": "unknown",
+      "memory_gb": 47,
+      "power_limit_w": 300,
+      "clock_state": "unknown",
+      "mig_mode": false,
+      "mps_mode": false,
+      "host_kernel": "6.8.0-90-generic",
+      "container_runtime": "docker",
+      "tool_versions": {
+        "schema_version": "1.0.0",
+        "versions": {
+          "nvidia-smi": "580.126.09",
+          "nsys": "NVIDIA Nsight Systems version 2023.4.4.54-234433681190v0"
+        }
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "vendor": "nvidia",
+      "gpu_name": "NVIDIA RTX 6000 Ada Generation",
+      "arch": "gpu_1",
+      "driver_version": "580.126.09",
+      "runtime_version": "unknown",
+      "memory_gb": 47,
+      "power_limit_w": 300,
+      "clock_state": "unknown",
+      "mig_mode": false,
+      "mps_mode": false,
+      "host_kernel": "6.8.0-90-generic",
+      "container_runtime": "docker",
+      "tool_versions": {
+        "schema_version": "1.0.0",
+        "versions": {
+          "nvidia-smi": "580.126.09",
+          "nsys": "NVIDIA Nsight Systems version 2023.4.4.54-234433681190v0"
+        }
+      }
+    }
+  ],
+  "warnings": [
+    "Nsight Compute CLI not found; kernel-level NVIDIA profiling is unavailable.",
+    "Compute Sanitizer not found; sanitizer workflows are unavailable.",
+    "cuobjdump/nvdisasm not found; NVIDIA disassembly extraction is unavailable.",
+    "ROCm tooling not found; AMD workflows are currently unavailable.",
+    "rocprof not found; AMD trace/profile workflows are unavailable."
+  ]
+}

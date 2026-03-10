@@ -1,0 +1,9 @@
+{
+  "schema_version": "1.0.0",
+  "name": "hidden_tests",
+  "ref": "workloads/tests/attention_score_hidden.py",
+  "exit_code": 0,
+  "passed": true,
+  "stdout_path": "correctness/hidden_tests_stdout.txt",
+  "stderr_path": "correctness/hidden_tests_stderr.txt"
+}

@@ -1,0 +1,66 @@
+{
+  "config_id": "cfg/sft/qwen32b/debug_repair_lora/v1",
+  "model_id": "Qwen/Qwen3.5-Coder-32B",
+  "tokenizer_id": "Qwen/Qwen3.5-Coder-32B",
+  "adapter_mode": "lora",
+  "dataset_refs": [
+    {
+      "dataset_kind": "sft",
+      "path": "datasets/pre_h200_sft_train_v1",
+      "split": "train",
+      "required": true,
+      "notes": [
+        "Primary pre-H200 train split built from patch-bearing repair and reformulate traces."
+      ]
+    },
+    {
+      "dataset_kind": "sft",
+      "path": "datasets/pre_h200_sft_dev_v1",
+      "split": "dev",
+      "required": true,
+      "notes": [
+        "Primary pre-H200 dev split for smoke validation and held-out prompt formatting checks."
+      ]
+    },
+    {
+      "dataset_kind": "sft",
+      "path": "tests/golden_datasets/transition_sft_v1",
+      "split": "train",
+      "required": true,
+      "notes": [
+        "Checked-in patch-bearing transition examples for smoke validation."
+      ]
+    }
+  ],
+  "eval_dataset_refs": [
+    {
+      "dataset_kind": "trajectory",
+      "path": "datasets/pre_h200_transition_dev_v1",
+      "split": "dev",
+      "required": true,
+      "notes": [
+        "Generated dev transition dataset used for local handoff validation."
+      ]
+    },
+    {
+      "dataset_kind": "trajectory",
+      "path": "tests/golden_datasets/transition_collection_v1",
+      "split": "eval",
+      "required": true,
+      "notes": [
+        "Held-out scripted transition episodes for smoke rollout evaluation."
+      ]
+    }
+  ],
+  "context_length": 8192,
+  "per_device_batch_size": 1,
+  "gradient_accumulation_steps": 32,
+  "learning_rate": 2e-05,
+  "num_epochs": 1,
+  "max_steps": 250,
+  "output_dir": "artifacts/training/qwen32b_debug_repair_lora_v1",
+  "notes": [
+    "Intended for the 2xH200 node.",
+    "PEFT-first warm-start on patch-bearing debug/reformulate traces."
+  ]
+}

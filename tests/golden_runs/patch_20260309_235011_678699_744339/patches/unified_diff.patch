@@ -1,0 +1,48 @@
+--- a/workloads/reference/triton_attention_score_weak_baseline.py
++++ b/workloads/reference/triton_attention_score_weak_baseline.py
+@@ -11,7 +11,8 @@
+ if str(HERE) not in sys.path:
+     sys.path.insert(0, str(HERE))
+ 
+-from triton_attention_score_shared import HIDDEN_K, HIDDEN_Q, VISIBLE_K, VISIBLE_Q, reference_attention_tensor
++from triton_attention_score_kernel import triton_attention_scores
++from triton_attention_score_shared import HIDDEN_K, HIDDEN_Q, VISIBLE_K, VISIBLE_Q
+ 
+ 
+ def _benchmark_inputs(n_q: int, n_k: int, head_dim: int) -> tuple[torch.Tensor, torch.Tensor]:
+@@ -22,33 +23,16 @@
+     return q, k
+ 
+ 
+-def _weak_attention_scores(q: torch.Tensor, k: torch.Tensor) -> torch.Tensor:
+-    # Intentionally weak row-wise formulation used as the reformulation baseline.
+-    outputs: list[torch.Tensor] = []
+-    for row in range(int(q.shape[0])):
+-        row_scores = reference_attention_tensor(q[row : row + 1], k, causal=False).squeeze(0)
+-        row_scores = torch.where(
+-            torch.arange(k.shape[0], device=q.device) <= row,
+-            row_scores,
+-            torch.full_like(row_scores, -1.0e9),
+-        )
+-        outputs.append(row_scores)
+-    return torch.stack(outputs, dim=0)
+-
+-
+ def _run_benchmark(repeats: int) -> None:
+     q, k = _benchmark_inputs(n_q=512, n_k=512, head_dim=64)
+     for _ in range(repeats):
+-        # Keep the baseline materially weaker than the tiled candidate under
+-        # end-to-end subprocess timing by doing several row-wise passes.
+-        for _baseline_pass in range(4):
+-            out = _weak_attention_scores(q, k)
++        out = triton_attention_scores(q, k, causal=True)
+         torch.cuda.synchronize()
+     _ = out
+ 
+ 
+ def _serialize(q: torch.Tensor, k: torch.Tensor) -> list[list[float]]:
+-    scores = _weak_attention_scores(q.cuda(), k.cuda()).cpu()
++    scores = triton_attention_scores(q.cuda(), k.cuda(), causal=True).cpu()
+     return [[round(float(value), 6) for value in row] for row in scores.tolist()]
+ 
+ 

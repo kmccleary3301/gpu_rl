@@ -38,6 +38,7 @@ def _training_example_kind(
     *,
     status: str,
     benchmark_ready: bool,
+    allow_benchmark_only: bool,
     sft_ready: bool,
     rl_ready: bool,
     eval_complete: bool,
@@ -46,11 +47,26 @@ def _training_example_kind(
         return "positive_rl_trace"
     if status == "ok" and sft_ready:
         return "positive_sft_example"
-    if status != "ok" and eval_complete:
+    if status != "ok" and eval_complete and sft_ready:
         return "negative_debug_example"
-    if benchmark_ready:
+    if benchmark_ready and allow_benchmark_only:
         return "benchmark_only"
     return "unusable"
+
+
+def _task_verb(task_spec: dict[str, Any]) -> str | None:
+    verb = task_spec.get("verb")
+    if isinstance(verb, str) and verb:
+        return verb
+    return None
+
+
+def _requires_rich_optimize_evidence(task_verb: str | None) -> bool:
+    return task_verb in {"optimize", "reformulate"}
+
+
+def _requires_diagnostic_evidence(task_verb: str | None) -> bool:
+    return task_verb in {"diagnose", "debug"}
 
 
 def assess_run_evidence(run_dir: Path) -> EvidenceQualityReport:
@@ -109,6 +125,7 @@ def assess_run_evidence(run_dir: Path) -> EvidenceQualityReport:
         task_id = str(summary_payload["task_id"])
     elif summary_payload.get("task_ref") is not None:
         task_id = str(summary_payload["task_ref"])
+    task_verb = _task_verb(task_spec)
 
     missing_provenance_fields: list[str] = []
     if not (run_dir / "replay" / "replay_pack.json").exists():
@@ -129,7 +146,7 @@ def assess_run_evidence(run_dir: Path) -> EvidenceQualityReport:
     provenance_total = 5 + (2 if _public_benchmark_task(task_id) else 0)
     provenance_completeness = _ratio(provenance_total - len(missing_provenance_fields), provenance_total)
 
-    overall_score = round(
+    governance_score = round(
         required_completeness * 0.35
         + eval_completeness * 0.25
         + replay_completeness * 0.20
@@ -154,7 +171,7 @@ def assess_run_evidence(run_dir: Path) -> EvidenceQualityReport:
         benchmark_reasons.append("required_artifacts_missing")
     if eval_completeness < 1.0:
         benchmark_reasons.append("eval_artifacts_incomplete")
-    if perf_gate in {"not_run", "blocked"}:
+    if _requires_rich_optimize_evidence(task_verb) and perf_gate in {"not_run", "blocked"}:
         benchmark_reasons.append(f"perf_gate:{perf_gate}")
     if provenance_completeness < 1.0:
         benchmark_reasons.append("provenance_incomplete")
@@ -166,10 +183,12 @@ def assess_run_evidence(run_dir: Path) -> EvidenceQualityReport:
         sft_reasons.append("task_spec_missing")
     if replay_completeness < 0.5:
         sft_reasons.append("replay_too_sparse")
-    if overall_score < 0.5:
-        sft_reasons.append("evidence_score_too_low")
     if provenance_completeness < 0.8:
         sft_reasons.append("provenance_too_sparse")
+    if _requires_rich_optimize_evidence(task_verb) and build_completeness == 0.0:
+        sft_reasons.append("build_evidence_missing")
+    if _requires_diagnostic_evidence(task_verb) and build_completeness == 0.0 and profile_completeness == 0.0:
+        sft_reasons.append("diagnostic_evidence_missing")
 
     rl_reasons: list[str] = []
     if replay_completeness < 0.75:
@@ -186,6 +205,16 @@ def assess_run_evidence(run_dir: Path) -> EvidenceQualityReport:
         rl_reasons.append(f"anti_hack_gate:{anti_hack_gate}")
     if provenance_completeness < 1.0:
         rl_reasons.append("provenance_incomplete")
+    if _requires_rich_optimize_evidence(task_verb):
+        if build_completeness < 0.67:
+            rl_reasons.append("build_evidence_incomplete")
+        if profile_completeness < 0.25:
+            rl_reasons.append("profile_evidence_incomplete")
+        if perf_gate != "pass":
+            rl_reasons.append(f"perf_gate:{perf_gate}")
+    elif _requires_diagnostic_evidence(task_verb):
+        if build_completeness == 0.0 and profile_completeness == 0.0:
+            rl_reasons.append("diagnostic_evidence_missing")
 
     notes: list[str] = []
     if missing_required_artifacts:
@@ -200,6 +229,7 @@ def assess_run_evidence(run_dir: Path) -> EvidenceQualityReport:
     training_example_kind = _training_example_kind(
         status=status,
         benchmark_ready=not benchmark_reasons,
+        allow_benchmark_only=_public_benchmark_task(task_id) or _requires_rich_optimize_evidence(task_verb),
         sft_ready=not sft_reasons,
         rl_ready=not rl_reasons,
         eval_complete=eval_completeness >= 1.0,
@@ -216,7 +246,7 @@ def assess_run_evidence(run_dir: Path) -> EvidenceQualityReport:
         profile_completeness=profile_completeness,
         eval_completeness=eval_completeness,
         provenance_completeness=provenance_completeness,
-        overall_score=overall_score,
+        overall_score=governance_score,
         benchmark_reporting=_decision(not benchmark_reasons, benchmark_reasons),
         sft_collection=_decision(not sft_reasons, sft_reasons),
         rl_reward_trace=_decision(not rl_reasons, rl_reasons),

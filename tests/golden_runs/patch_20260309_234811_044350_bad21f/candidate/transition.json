@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0.0",
+  "transition_id": "transition_3e19dee6ca56",
+  "transition_kind": "reformulated",
+  "task_id": "task/attention_reformulate/eval/v1",
+  "input_candidate_id": null,
+  "output_candidate_id": "cand_f3f84374790b",
+  "source_run_ref": "/shared_folders/querylake_server/side_projects/gpu_rl/tests/tmp_transition_goldens/runs/bench_20260309_234752_151508_742bb6",
+  "target_run_ref": "/shared_folders/querylake_server/side_projects/gpu_rl/tests/tmp_transition_goldens/runs/patch_20260309_234811_044350_bad21f",
+  "patch_id": "patch_0c4ba78b1ef6",
+  "patch_hash": "9f5f693ae609aa3ba5534c9133d3c10da863f00fd127503231994bd596babf5e",
+  "patch_kind": "perf_transform",
+  "changed_files": [
+    "workloads/reference/triton_attention_score_weak_baseline.py"
+  ],
+  "status": "ok",
+  "summary": "replace the naive causal attention-score baseline with the tiled Triton implementation",
+  "metadata": {
+    "expected_effect": "preserve score semantics while improving the implementation strategy and performance profile"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "candidate_id": "cand_4b2cb926d879",
+  "task_id": "task/attention_reformulate/eval/v1",
+  "workspace_root": "/shared_folders/querylake_server/side_projects/gpu_rl/tests/tmp_transition_goldens",
+  "source_run_ref": "/shared_folders/querylake_server/side_projects/gpu_rl/tests/tmp_transition_goldens/runs/bench_20260310_003502_068662_cbabdd",
+  "source_run_id": "bench_20260310_003502_068662_cbabdd",
+  "parent_candidate_id": null,
+  "parent_run_ref": "/shared_folders/querylake_server/side_projects/gpu_rl/tests/tmp_transition_goldens/runs/bench_20260310_003502_068662_cbabdd",
+  "patch_id": "patch_855d73ba9002",
+  "patch_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "patch_kind": "no_op",
+  "changed_files": [
+    "workloads/reference/triton_attention_score_weak_baseline.py"
+  ],
+  "candidate_role": "patched_candidate",
+  "lineage_depth": 0,
+  "metadata": {
+    "intent": "attempt a reformulation without changing the weak causal attention-score implementation",
+    "expected_effect": "preserve the baseline implementation so the perf gate still fails and the episode remains a useful negative transform example"
+  }
+}

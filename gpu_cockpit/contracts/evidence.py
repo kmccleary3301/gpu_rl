@@ -28,3 +28,16 @@ class EvidenceQualityReport(ContractModel):
     missing_provenance_fields: list[str] = Field(default_factory=list)
     training_example_kind: str = "unusable"
     notes: list[str] = Field(default_factory=list)
+
+
+class EpisodeReadinessReport(ContractModel):
+    episode_governance_kind: str = "unusable"
+    training_example_kind: str = "unusable"
+    benchmark_collection: ReadinessDecision
+    sft_collection: ReadinessDecision
+    rl_reward_trace: ReadinessDecision
+    has_build_evidence: bool = False
+    has_profile_evidence: bool = False
+    patch_bearing: bool = False
+    reasons: list[str] = Field(default_factory=list)
+    notes: list[str] = Field(default_factory=list)

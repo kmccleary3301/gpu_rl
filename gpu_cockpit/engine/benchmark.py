@@ -30,14 +30,15 @@ def _measure_command(
     command: list[str],
     warmups: int,
     repeats: int,
+    cwd: Path | None = None,
 ) -> tuple[list[float], list[int]]:
     for _ in range(warmups):
-        executor.run(command)
+        executor.run(command, cwd=cwd)
 
     timings: list[float] = []
     exit_codes: list[int] = []
     for _ in range(repeats):
-        result = executor.run(command)
+        result = executor.run(command, cwd=cwd)
         timings.append(float(result.duration_ms))
         exit_codes.append(result.exit_code)
     return timings, exit_codes
@@ -79,7 +80,7 @@ def run_subprocess_benchmark(
             "baseline_command": baseline_command,
         },
     )
-    timings, exit_codes = _measure_command(executor, command, warmups=warmups, repeats=repeats)
+    timings, exit_codes = _measure_command(executor, command, warmups=warmups, repeats=repeats, cwd=writer.root)
 
     if any(code != 0 for code in exit_codes):
         writer.append_event(scope=scope, kind="failed", payload={"exit_codes": exit_codes})
@@ -88,7 +89,7 @@ def run_subprocess_benchmark(
     baseline_timings: list[float] = []
     baseline_exit_codes: list[int] = []
     if baseline_command is not None:
-        baseline_timings, baseline_exit_codes = _measure_command(executor, baseline_command, warmups=warmups, repeats=repeats)
+        baseline_timings, baseline_exit_codes = _measure_command(executor, baseline_command, warmups=warmups, repeats=repeats, cwd=writer.root)
         if any(code != 0 for code in baseline_exit_codes):
             writer.append_event(scope=scope, kind="failed", payload={"baseline_exit_codes": baseline_exit_codes})
             raise RuntimeError(f"Baseline benchmark command failed with exit codes: {baseline_exit_codes}")

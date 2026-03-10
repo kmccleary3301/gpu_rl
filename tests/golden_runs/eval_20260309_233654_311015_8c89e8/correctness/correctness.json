@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "compile_ok": true,
+  "visible_tests_ok": false,
+  "hidden_tests_ok": false,
+  "dtype_sweep": {},
+  "shape_sweep": {},
+  "determinism": {
+    "runs": 2,
+    "passed": true,
+    "stable_exit_codes": true,
+    "stable_stdout": true,
+    "stable_stderr": true
+  },
+  "numerical_deltas_ref": null,
+  "failures": [
+    "visible_tests_failed",
+    "hidden_tests_failed"
+  ]
+}

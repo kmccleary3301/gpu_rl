@@ -1,0 +1,7 @@
+{
+  "executor": "local_host",
+  "policy_pack": "balanced",
+  "target_backend": "triton",
+  "target_vendor": "nvidia",
+  "determinism_runs": 2
+}

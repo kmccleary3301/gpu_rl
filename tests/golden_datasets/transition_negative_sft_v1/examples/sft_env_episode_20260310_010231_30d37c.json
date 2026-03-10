@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0.0",
+  "example_id": "sft_env_episode_20260310_010231_30d37c",
+  "created_at": "2026-03-10T01:03:30.091822Z",
+  "split": "train",
+  "task_id": "task/attention_reformulate/eval/v1",
+  "prompt_family": "reformulate",
+  "prompt": "Task family: reformulate\nTask id: task/attention_reformulate/eval/v1\n\nReformulate the weak naive causal attention-score implementation into a tiled Triton kernel while preserving the visible and hidden score matrices. Print JSON with visible_attention_scores, hidden_attention_scores, and a reformulation_summary describing the strategy change.\n\nProduce a compact tool-using plan for the task and keep the actions consistent with the cockpit tool API.\nObserved reference episode actions: knowledge_query, bench, inspect_quality, patch_candidate, bench, inspect_quality, eval, inspect_quality, replay, compare",
+  "response": "1. knowledge_query reward=-0.020\n2. bench -> run=bench_20260310_010231_093110_76152b reward=-0.030\n3. inspect_quality -> run=bench_20260310_010231_093110_76152b reward=-0.010\n4. patch_candidate -> run=patch_20260310_010251_148675_4c9633 transition=patch_applied reward=-0.040\n5. bench -> run=bench_20260310_010251_248072_f29725 reward=-0.030\n6. inspect_quality -> run=bench_20260310_010251_248072_f29725 reward=-0.010\n7. eval -> run=eval_20260310_010311_217990_74570e reward=0.750\n8. inspect_quality -> run=eval_20260310_010311_217990_74570e reward=-0.010\n9. replay -> run=eval_20260310_010311_217990_74570e reward=-0.010\n10. compare -> run=/shared_folders/querylake_server/side_projects/gpu_rl/tests/tmp_transition_goldens/runs/eval_20260310_010311_217990_74570e reward=-0.010\nterminal_state=success",
+  "source_episode_ref": "episodes/env_episode_20260310_010231_30d37c.json",
+  "metadata": {
+    "task_verb": "reformulate",
+    "operator_family": "attention_score_tile",
+    "backend": "triton",
+    "feature_requirements": [
+      "cuda",
+      "torch",
+      "triton"
+    ],
+    "terminal_state": "success",
+    "episode_kind": "scripted_reference",
+    "benchmark_name": null,
+    "evidence_score": 0.85,
+    "training_example_kind": "negative_reformulate_example",
+    "episode_governance_kind": "usable_negative_transition",
+    "episode_governance_reasons": [
+      "build_evidence_incomplete",
+      "patch_bearing",
+      "perf_gate:fail",
+      "perf_gate_failed_or_build_evidence_missing",
+      "profile_evidence_incomplete",
+      "reformulate_episode_contains_transition_evidence"
+    ],
+    "patch_present": true,
+    "patch_kinds": [
+      "no_op"
+    ],
+    "transition_kinds": [
+      "patch_applied"
+    ],
+    "candidate_lineage_depth": 1
+  }
+}

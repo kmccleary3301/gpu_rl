@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.0.0",
+  "run_id": "bench_20260309_234811_439818_d0808f",
+  "replay_version": "1.0.0",
+  "image_digest": null,
+  "git_snapshot": null,
+  "seed_pack": {
+    "global_seed": 1234,
+    "input_seed": 5678
+  },
+  "hardware_fingerprint_ref": "meta/hardware_fingerprint.json",
+  "input_snapshot_ref": "replay/environment.json",
+  "task_ref": "task/attention_reformulate/eval/v1",
+  "commands_ref": "replay/command.json",
+  "candidate_id": "cand_f3f84374790b",
+  "parent_candidate_id": null,
+  "source_run_ref": "/shared_folders/querylake_server/side_projects/gpu_rl/tests/tmp_transition_goldens/runs/patch_20260309_234811_044350_bad21f",
+  "patch_ref": "patches/applied_patch.json",
+  "diff_ref": "patches/unified_diff.patch",
+  "transition_ref": "candidate/transition.json",
+  "candidate_role": "patched_candidate",
+  "transition_kind": "reformulated",
+  "required_artifacts": [
+    "events.jsonl",
+    "manifest.json",
+    "meta/doctor_report.json",
+    "meta/hardware_fingerprint.json",
+    "meta/task_spec_full.json",
+    "perf/benchmark.json",
+    "perf/raw_timings.json",
+    "prompt/task_spec.json",
+    "summary.json",
+    "summary.md"
+  ]
+}

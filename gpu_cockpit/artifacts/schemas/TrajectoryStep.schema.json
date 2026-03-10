@@ -165,6 +165,13 @@
           "title": "Artifact Refs",
           "type": "array"
         },
+        "salient_artifact_refs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Salient Artifact Refs",
+          "type": "array"
+        },
         "projection": {
           "additionalProperties": true,
           "title": "Projection",
@@ -190,6 +197,18 @@
       "title": "Step Index",
       "type": "integer"
     },
+    "step_label": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Step Label"
+    },
     "action": {
       "$ref": "#/$defs/TrajectoryAction"
     },
@@ -206,6 +225,61 @@
     "reward_total": {
       "title": "Reward Total",
       "type": "number"
+    },
+    "transition_kind": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Transition Kind"
+    },
+    "input_candidate_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Input Candidate Id"
+    },
+    "output_candidate_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Output Candidate Id"
+    },
+    "patch_hash": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Patch Hash"
+    },
+    "recommended_next_actions": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Recommended Next Actions",
+      "type": "array"
     },
     "terminal": {
       "default": false,

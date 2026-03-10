@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "patch_id": "patch_5a8f5ed80530",
+  "target_file": "workloads/reference/triton_row_sum_patchable_candidate.py",
+  "patch_kind": "bug_fix",
+  "intent": "repair the reduction candidate so it uses the corrected Triton row-sum implementation",
+  "expected_effect": "turn the broken reduction candidate into a correct implementation without changing the task contract",
+  "content_mode": "replace",
+  "accepted": true,
+  "patch_hash": "9cd8d7fc5e6c7c3654b51d3f7d75339dc2579bed6d8f317c3fdfcbbc5deacd33",
+  "changed_line_count": 8,
+  "before_ref": "patches/before.txt",
+  "after_ref": "patches/after.txt",
+  "diff_ref": "patches/unified_diff.patch",
+  "error_message": null,
+  "metadata": {
+    "applied_at": "2026-03-09T23:35:46.864409+00:00",
+    "workspace_target": "/shared_folders/querylake_server/side_projects/gpu_rl/tests/tmp_transition_goldens/workloads/reference/triton_row_sum_patchable_candidate.py"
+  }
+}
