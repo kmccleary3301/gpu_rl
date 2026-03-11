@@ -1301,6 +1301,13 @@
       ],
       "default": null,
       "title": "Build Sass Hash Changed"
+    },
+    "summary_lines": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Summary Lines",
+      "type": "array"
     }
   },
   "required": [

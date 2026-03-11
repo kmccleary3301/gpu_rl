@@ -120,3 +120,4 @@ class RunComparison(ContractModel):
     lhs_build_sass_hash: str | None = None
     rhs_build_sass_hash: str | None = None
     build_sass_hash_changed: bool | None = None
+    summary_lines: list[str] = Field(default_factory=list)

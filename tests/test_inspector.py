@@ -235,6 +235,7 @@ class InspectorTests(unittest.TestCase):
         self.assertIn("benchmark_reporting", section["evidence_quality"])
         self.assertIn("training_readiness", section)
         self.assertIn("training_trace_triage", section)
+        self.assertIn("profile_triage", section)
         self.assertEqual(section["training_readiness"]["training_example_kind"], "unusable")
 
     def test_compare_golden_reformulate_pair_surfaces_training_transition(self) -> None:
@@ -247,11 +248,13 @@ class InspectorTests(unittest.TestCase):
         self.assertEqual(comparison.rhs_training_example_kind, "benchmark_only")
         self.assertTrue(comparison.rhs_benchmark_ready)
         self.assertFalse(comparison.rhs_rl_trace_ready)
+        self.assertTrue(any("Trainworthiness changed" in line for line in comparison.summary_lines))
 
     def test_inspect_golden_debug_bundle_surfaces_failure_triage(self) -> None:
         section = inspect_run(ROOT, str(ROOT / "tests" / "golden_runs" / "reduction_debug_bundle_v1"), section="quality")
         self.assertEqual(section["failure_triage"]["task_verb"], "debug")
         self.assertIn("correctness/correctness.json", section["failure_triage"]["likely_artifacts"])
+        self.assertIn("summary_lines", section["profile_triage"])
 
     def test_compare_golden_public_benchmark_bundles(self) -> None:
         comparison = compare_runs(

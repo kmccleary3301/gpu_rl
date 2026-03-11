@@ -132,6 +132,40 @@ def _recommended_next_actions(projection: dict[str, Any]) -> list[str]:
     return ["inspect_quality", "compare", "replay"]
 
 
+def _profile_triage(projection: dict[str, Any]) -> dict[str, Any]:
+    profile_summary = projection.get("profile_summary") or {}
+    bottleneck_card = projection.get("bottleneck_card") or {}
+    sanitizer_summary = projection.get("sanitizer_summary") or {}
+    summary_lines: list[str] = []
+    classification = profile_summary.get("classification")
+    kernel_name = profile_summary.get("kernel_name")
+    if classification is not None:
+        subject = f"`{kernel_name}`" if kernel_name else "primary kernel"
+        summary_lines.append(f"{subject} is currently classified as `{classification}`.")
+    primary_bottleneck = bottleneck_card.get("primary_bottleneck") if isinstance(bottleneck_card, dict) else None
+    if primary_bottleneck is not None and primary_bottleneck != classification:
+        summary_lines.append(f"Bottleneck card highlights `{primary_bottleneck}` as the dominant constraint.")
+    dominant_sanitizer_family = sanitizer_summary.get("dominant_failure_family") if isinstance(sanitizer_summary, dict) else None
+    if dominant_sanitizer_family is not None:
+        summary_lines.append(f"Sanitizer findings are dominated by `{dominant_sanitizer_family}` issues.")
+    occupancy = profile_summary.get("occupancy")
+    dram_pct_peak = profile_summary.get("dram_throughput_pct_peak")
+    sm_pct_peak = profile_summary.get("sm_throughput_pct_peak")
+    if isinstance(occupancy, (int, float)):
+        summary_lines.append(f"Occupancy is `{float(occupancy):.1f}` percent of peak active warps.")
+    if isinstance(dram_pct_peak, (int, float)) and isinstance(sm_pct_peak, (int, float)):
+        if float(dram_pct_peak) > float(sm_pct_peak):
+            summary_lines.append("Memory throughput is higher than SM throughput, which supports a memory-oriented diagnosis.")
+        elif float(sm_pct_peak) > float(dram_pct_peak):
+            summary_lines.append("SM throughput is higher than DRAM throughput, which supports a compute-oriented diagnosis.")
+    return {
+        "classification": classification,
+        "primary_bottleneck": primary_bottleneck,
+        "dominant_sanitizer_family": dominant_sanitizer_family,
+        "summary_lines": summary_lines,
+    }
+
+
 def _training_trace_triage(projection: dict[str, Any]) -> dict[str, Any]:
     evidence_quality = projection.get("evidence_quality", {})
     failure_triage = projection.get("failure_triage", {})
@@ -271,6 +305,7 @@ def project_run_bundle(run_dir: Path) -> dict[str, Any]:
     projection["candidate_projection"] = _candidate_projection(run_dir)
     projection["evidence_quality"] = assess_run_evidence(run_dir).model_dump(mode="json")
     projection["failure_triage"] = _failure_triage(run_dir)
+    projection["profile_triage"] = _profile_triage(projection)
     projection["recommended_next_actions"] = _recommended_next_actions(projection)
     evidence_quality = projection["evidence_quality"]
     projection["training_readiness"] = {
@@ -316,9 +351,9 @@ def select_inspection_section(payload: dict[str, Any], section: str) -> dict[str
     section_map = {
         "build": ["build_record", "tri_view", "build_projection"],
         "eval": ["correctness_summary", "determinism_summary", "anti_hack_summary", "eval_envelope", "gate_summary"],
-        "profile": ["profile_summary", "sanitizer_summary", "bottleneck_card"],
+        "profile": ["profile_summary", "sanitizer_summary", "bottleneck_card", "profile_triage"],
         "replay": ["replay_validation", "replay_pack"],
-        "quality": ["evidence_quality", "training_readiness", "training_trace_triage", "failure_triage", "recommended_next_actions"],
+        "quality": ["evidence_quality", "training_readiness", "training_trace_triage", "failure_triage", "profile_triage", "recommended_next_actions"],
         "transition": ["candidate_projection", "recommended_next_actions"],
     }
     keys = section_map.get(section)
@@ -451,6 +486,32 @@ def compare_runs(root: Path, lhs_ref: str, rhs_ref: str) -> RunComparison:
     elif lhs_evidence.overall_score != rhs_evidence.overall_score:
         direction = "improved" if rhs_evidence.overall_score > lhs_evidence.overall_score else "regressed"
         trainworthiness_change = f"evidence_{direction}"
+    summary_lines: list[str] = []
+    if lhs_correctness_gate == "fail" and rhs_correctness_gate == "pass":
+        summary_lines.append("Correctness recovered in the rhs run.")
+    elif lhs_correctness_gate == "pass" and rhs_correctness_gate == "fail":
+        summary_lines.append("Correctness regressed in the rhs run.")
+    if isinstance(lhs_perf_p50, (int, float)) and isinstance(rhs_perf_p50, (int, float)):
+        if rhs_perf_p50 < lhs_perf_p50:
+            summary_lines.append("Steady-state benchmark latency improved in the rhs run.")
+        elif rhs_perf_p50 > lhs_perf_p50:
+            summary_lines.append("Steady-state benchmark latency regressed in the rhs run.")
+    if trainworthiness_change is not None:
+        summary_lines.append(f"Trainworthiness changed: `{trainworthiness_change}`.")
+    if lineage_relationship == "lhs_parent_of_rhs":
+        summary_lines.append("The rhs run is a direct child candidate of the lhs run.")
+    elif lineage_relationship == "rhs_parent_of_lhs":
+        summary_lines.append("The lhs run is a direct child candidate of the rhs run.")
+    if lhs_profile.get("classification") != rhs_profile.get("classification") and rhs_profile.get("classification") is not None:
+        summary_lines.append(
+            f"Profile classification changed from `{lhs_profile.get('classification')}` to `{rhs_profile.get('classification')}`."
+        )
+    if lhs_build_binary_hash != rhs_build_binary_hash and lhs_build_binary_hash is not None and rhs_build_binary_hash is not None:
+        summary_lines.append("The compiled binary changed across the two runs.")
+    if lhs_patch.get("patch_kind") != rhs_patch.get("patch_kind") and rhs_patch.get("patch_kind") is not None:
+        summary_lines.append(
+            f"Patch kind changed from `{lhs_patch.get('patch_kind')}` to `{rhs_patch.get('patch_kind')}`."
+        )
     return RunComparison(
         lhs_run_id=lhs.run_id,
         rhs_run_id=rhs.run_id,
@@ -617,4 +678,5 @@ def compare_runs(root: Path, lhs_ref: str, rhs_ref: str) -> RunComparison:
             (lhs_build_projection.get("artifact_hashes") or {}).get("sass"),
             (rhs_build_projection.get("artifact_hashes") or {}).get("sass"),
         ),
+        summary_lines=summary_lines,
     )

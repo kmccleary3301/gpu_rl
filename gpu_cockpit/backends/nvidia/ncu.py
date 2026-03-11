@@ -341,17 +341,59 @@ def profile_kernel_nvidia(
         f"- exit_code: `{report.exit_code}`",
         f"- primary_kernel: `{report.kernel_name}`",
         f"- classification: `{report.classification}`",
+        f"- roofline_position: `{report.roofline_position}`",
+        f"- profiled_kernel_count: `{report.profiled_kernel_count}`",
+        f"- primary_kernel_duration_ms: `{report.primary_kernel_duration_ms}`",
         f"- occupancy: `{report.occupancy}`",
+        f"- registers_per_thread: `{report.registers_per_thread}`",
+        f"- spills_bytes: `{report.spills_bytes}`",
         f"- dram_pct_peak: `{report.dram_throughput_pct_peak}`",
         f"- sm_pct_peak: `{report.sm_throughput_pct_peak}`",
+        f"- compute_pct_peak: `{report.compute_throughput_pct_peak}`",
         f"- l2_hit_rate: `{report.l2_hit_rate}`",
         "",
-        "## Top Kernels",
+        "## Triage",
     ]
+    if report.classification == "memory_bound":
+        markdown_lines.extend(
+            [
+                "- primary signal: memory-bound kernel; inspect coalescing, cache hit rate, and effective bytes moved.",
+                "- next action: compare DRAM saturation against source-level access patterns before changing launch geometry.",
+            ]
+        )
+    elif report.classification == "occupancy_limited":
+        markdown_lines.extend(
+            [
+                "- primary signal: occupancy-limited kernel; inspect launch limits, register pressure, and shared-memory usage.",
+                "- next action: compare occupancy with register/thread and spill counts before changing tiling.",
+            ]
+        )
+    elif report.classification == "register_pressure":
+        markdown_lines.extend(
+            [
+                "- primary signal: register pressure and/or spills are likely constraining throughput.",
+                "- next action: inspect accumulator count, unrolling, and local memory spill metrics.",
+            ]
+        )
+    elif report.classification == "compute_bound":
+        markdown_lines.extend(
+            [
+                "- primary signal: compute throughput is high relative to memory throughput.",
+                "- next action: inspect instruction mix and whether the generated kernel is using the expected fast path.",
+            ]
+        )
+    else:
+        markdown_lines.append("- primary signal: mixed or inconclusive; inspect the top kernels and raw metrics before making algorithmic changes.")
+    markdown_lines.extend(
+        [
+            "",
+        "## Top Kernels",
+        ]
+    )
     if top_kernels:
         for record in top_kernels[:5]:
             markdown_lines.append(
-                f"- `{record.kernel_name}`: class=`{record.classification}` duration_ms=`{record.duration_ms}` occupancy=`{record.occupancy}`"
+                f"- `{record.kernel_name}`: class=`{record.classification}` time_pct=`{record.time_pct}` duration_ms=`{record.duration_ms}` occupancy=`{record.occupancy}` dram_pct_peak=`{record.dram_throughput_pct_peak}` sm_pct_peak=`{record.sm_throughput_pct_peak}` regs/thread=`{record.registers_per_thread}`"
             )
     else:
         markdown_lines.append("- none")
