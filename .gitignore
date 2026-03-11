@@ -7,7 +7,6 @@ runs/
 datasets/
 knowledge/index/
 artifacts/
-docs/training/training_manifest.json
 
 __pycache__/
 *.py[cod]

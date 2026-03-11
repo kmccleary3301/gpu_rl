@@ -11,11 +11,11 @@ This document freezes the intended scope of `gpu_rl` before any real training ru
 - patch-bearing repair and reformulate traces
 - transition-aware trajectory export
 - SFT packaging and rollout scaffolding
-- training preparation
+- training-oriented data preparation
 
 The project is intentionally structured so that the environment and data surface can be completed before expensive SFT or RL runs begin.
 
-## In Scope for the Training-Preparation Program
+## In Scope for the Local Environment/Data Program
 
 - task registry and benchmark adapter surface
 - internal Triton/CUDA/HIP-backed workload families
@@ -42,7 +42,7 @@ The project is intentionally structured so that the environment and data surface
 - dense fine-tuning of frontier-scale models
 - full vendor parity across every NVIDIA and AMD profiling/debug feature
 - generalized multi-node orchestration platform work
-- production-serving infrastructure unrelated to research or training preparation
+- production-serving infrastructure unrelated to research or training data work
 - benchmark leaderboard maximization as an end in itself
 
 ## First-Wave Training Focus
@@ -56,10 +56,10 @@ The first training wave is defined as:
 
 ## Completion Definition
 
-The training-preparation program is complete when:
+The local environment/data program is complete when:
 
 - the first-wave tasks and semantics are frozen
 - the environment surface is stable enough for repeatable data collection
 - the data products are governance-clean and training-ready
-- the training-preparation package is mechanically executable on the target training environment
+- the checked-in datasets, configs, and smoke paths are mechanically executable on a target training environment
 - the only major remaining work is actual SFT / RL execution and iteration

@@ -1,6 +1,6 @@
 # Observability and Build Surface
 
-This document freezes the intended local observability surface for the training-preparation program.
+This document freezes the intended local observability surface for the environment/data program.
 
 ## Goals
 
@@ -90,7 +90,7 @@ When a tool is missing, the expected behavior is:
 
 ## Exit criterion for this surface
 
-The training-preparation observability surface is considered complete when:
+The local observability surface is considered complete when:
 
 - build artifacts are stable and inspectable
 - trace/profile/sanitizer outputs normalize into checked-in contracts

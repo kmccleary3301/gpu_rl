@@ -39,7 +39,7 @@
       "split": "dev",
       "required": true,
       "notes": [
-        "Generated dev transition dataset used for training-preparation validation."
+        "Generated dev transition dataset used for smoke validation."
       ]
     },
     {

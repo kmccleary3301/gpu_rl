@@ -1,6 +1,6 @@
 # Replay, Compare, and Proof Bundles
 
-This document freezes the role of replay, compare, and proof-bundle tooling in the training-preparation scope.
+This document freezes the role of replay, compare, and proof-bundle tooling in the local environment/data scope.
 
 ## Replay
 
@@ -59,13 +59,13 @@ Replay and compare are first-class inputs to:
 - patch-bearing trajectory export
 - SFT packaging metadata
 - retrieval over prior failures and prior repairs
-- training-preparation validation before expensive training
+- dataset and config validation before expensive training
 
 They are not post-hoc convenience commands bolted onto the side of the repo.
 
 ## Exit criterion for this surface
 
-The training-preparation replay/compare surface is considered complete when:
+The local replay/compare surface is considered complete when:
 
 - candidate lineage survives into replay
 - inspect and compare explain training usefulness directly

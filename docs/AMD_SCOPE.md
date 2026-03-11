@@ -2,7 +2,7 @@
 
 This project includes a deliberately narrow AMD/ROCm mirror of the core replay, trace, profile, and inspection surfaces. The intent is contract parity where it is cheap and useful, not broad vendor-feature parity before the first training wave.
 
-## Covered in the training-preparation scope
+## Covered in the current local scope
 
 - `doctor` detection for ROCm-adjacent tooling such as `rocminfo`, `rocm-smi`, `rocprof`, `rocprofv3`, and `hipcc`
 - realistic parsing of `rocminfo` and `rocm-smi`-style outputs into the shared hardware and tool-status contracts
