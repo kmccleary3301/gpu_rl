@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0.0",
-  "dataset_id": "sft_dataset_20260310_010330",
-  "created_at": "2026-03-10T01:03:30.091974Z",
+  "dataset_id": "sft_dataset_20260310_212757",
+  "created_at": "2026-03-10T21:27:57.376122Z",
   "split": "train",
   "example_count": 2,
   "example_refs": [
-    "examples/sft_env_episode_20260310_010223_1ac103.json",
-    "examples/sft_env_episode_20260310_010231_30d37c.json"
+    "examples/sft_fixture_reduction_debug_negative_episode_v1.json",
+    "examples/sft_fixture_attention_reformulate_negative_episode_v1.json"
   ],
   "task_ids": [
     "task/attention_reformulate/eval/v1",
@@ -39,6 +39,25 @@
     "verb_counts": {
       "debug": 1,
       "reformulate": 1
-    }
+    },
+    "operator_family_counts": {
+      "reduction_sum": 1,
+      "attention_score_tile": 1
+    },
+    "training_example_kind_counts": {
+      "negative_debug_example": 1,
+      "negative_reformulate_example": 1
+    },
+    "episode_governance_counts": {
+      "usable_negative_debug": 1,
+      "usable_negative_transition": 1
+    },
+    "patch_kind_counts": {
+      "no_op": 2
+    },
+    "transition_kind_counts": {
+      "patch_applied": 2
+    },
+    "patch_bearing_example_count": 2
   }
 }

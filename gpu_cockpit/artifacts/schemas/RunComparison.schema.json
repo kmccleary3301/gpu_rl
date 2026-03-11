@@ -810,6 +810,54 @@
       "default": null,
       "title": "Patch Hash Changed"
     },
+    "lhs_parent_candidate_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Lhs Parent Candidate Id"
+    },
+    "rhs_parent_candidate_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rhs Parent Candidate Id"
+    },
+    "lineage_relationship": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Lineage Relationship"
+    },
+    "parent_child_related": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Parent Child Related"
+    },
     "lhs_changed_file_count": {
       "anyOf": [
         {
@@ -1037,6 +1085,222 @@
       ],
       "default": null,
       "title": "Triview Unique Source Lines Delta"
+    },
+    "lhs_build_source_hash": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Lhs Build Source Hash"
+    },
+    "rhs_build_source_hash": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rhs Build Source Hash"
+    },
+    "build_source_hash_changed": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Build Source Hash Changed"
+    },
+    "lhs_build_ttir_hash": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Lhs Build Ttir Hash"
+    },
+    "rhs_build_ttir_hash": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rhs Build Ttir Hash"
+    },
+    "build_ttir_hash_changed": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Build Ttir Hash Changed"
+    },
+    "lhs_build_ttgir_hash": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Lhs Build Ttgir Hash"
+    },
+    "rhs_build_ttgir_hash": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rhs Build Ttgir Hash"
+    },
+    "build_ttgir_hash_changed": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Build Ttgir Hash Changed"
+    },
+    "lhs_build_llir_hash": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Lhs Build Llir Hash"
+    },
+    "rhs_build_llir_hash": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rhs Build Llir Hash"
+    },
+    "build_llir_hash_changed": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Build Llir Hash Changed"
+    },
+    "lhs_build_ptx_hash": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Lhs Build Ptx Hash"
+    },
+    "rhs_build_ptx_hash": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rhs Build Ptx Hash"
+    },
+    "build_ptx_hash_changed": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Build Ptx Hash Changed"
+    },
+    "lhs_build_sass_hash": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Lhs Build Sass Hash"
+    },
+    "rhs_build_sass_hash": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rhs Build Sass Hash"
+    },
+    "build_sass_hash_changed": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Build Sass Hash Changed"
     }
   },
   "required": [

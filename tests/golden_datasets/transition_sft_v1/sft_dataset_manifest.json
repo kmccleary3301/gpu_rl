@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0.0",
-  "dataset_id": "sft_dataset_20260310_010330",
-  "created_at": "2026-03-10T01:03:30.089359Z",
+  "dataset_id": "sft_dataset_20260310_212757",
+  "created_at": "2026-03-10T21:27:57.373849Z",
   "split": "train",
   "example_count": 2,
   "example_refs": [
-    "examples/sft_env_episode_20260310_010107_257990.json",
-    "examples/sft_env_episode_20260310_010116_dc1f74.json"
+    "examples/sft_fixture_reduction_debug_patch_episode_v1.json",
+    "examples/sft_fixture_attention_reformulate_patch_episode_v1.json"
   ],
   "task_ids": [
     "task/attention_reformulate/eval/v1",
@@ -39,6 +39,25 @@
     "verb_counts": {
       "debug": 1,
       "reformulate": 1
-    }
+    },
+    "operator_family_counts": {
+      "reduction_sum": 1,
+      "attention_score_tile": 1
+    },
+    "training_example_kind_counts": {
+      "positive_sft_example": 2
+    },
+    "episode_governance_counts": {
+      "usable_positive_sft": 2
+    },
+    "patch_kind_counts": {
+      "bug_fix": 1,
+      "perf_transform": 1
+    },
+    "transition_kind_counts": {
+      "repaired": 1,
+      "reformulated": 1
+    },
+    "patch_bearing_example_count": 2
   }
 }

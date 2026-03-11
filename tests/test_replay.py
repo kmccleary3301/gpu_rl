@@ -89,12 +89,35 @@ class ReplayTests(unittest.TestCase):
         self.assertEqual(replay_pack["transition_kind"], "repaired")
         self.assertEqual(replay_pack["patch_ref"], "patches/applied_patch.json")
         self.assertEqual(replay_pack["diff_ref"], "patches/unified_diff.patch")
+        self.assertTrue(payload["checks"]["patch_ref"])
+        self.assertTrue(payload["checks"]["diff_ref"])
+        self.assertTrue(payload["checks"]["transition_ref"])
+        self.assertTrue(payload["checks"]["candidate_lineage_present"])
 
     def test_validate_checked_in_patch_transition_fixture(self) -> None:
         payload = validate_run_bundle(ROOT, str(ROOT / "tests" / "golden_runs" / "reduction_debug_patch_transition_v1"))
         self.assertEqual(payload["status"], "ok")
         self.assertEqual(payload["replay_pack"]["transition_kind"], "repaired")
         self.assertEqual(payload["replay_pack"]["patch_ref"], "patches/applied_patch.json")
+
+    def test_export_proof_bundle_for_patch_run_includes_transition_artifacts(self) -> None:
+        run_dir, _, _, _ = apply_patch_candidate(
+            self.tmp_root,
+            task_ref="task/reduction_debug/eval/v1",
+            target_file="workloads/reference/triton_row_sum_broken_kernel.py",
+            replacement_text=(self.tmp_root / "workloads" / "reference" / "triton_row_sum_repaired_kernel.py").read_text(encoding="utf-8"),
+            intent="repair the row-sum kernel mask",
+            expected_effect="restore the omitted column",
+            patch_kind="bug_fix",
+            transition_kind="repaired",
+        )
+        bundle_path = export_proof_bundle(self.tmp_root, str(run_dir))
+        with zipfile.ZipFile(bundle_path) as archive:
+            names = set(archive.namelist())
+        self.assertIn("candidate/state.json", names)
+        self.assertIn("candidate/transition.json", names)
+        self.assertIn("patches/applied_patch.json", names)
+        self.assertIn("patches/unified_diff.patch", names)
 
 
 if __name__ == "__main__":

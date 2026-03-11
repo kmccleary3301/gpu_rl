@@ -26,22 +26,101 @@ def _rewrite_episode_source_run(episode, source_run_ref: str):
     return episode.model_copy(update={"source_run_ref": source_run_ref})
 
 
-def _rewrite_episode_run_ref_map(episode):
+def _rewrite_episode_identity(episode, episode_id: str):
+    return episode.model_copy(update={"episode_id": episode_id})
+
+
+def _rewrite_refs_in_value(payload, ref_map: dict[str, str]):
+    if isinstance(payload, str):
+        return ref_map.get(payload, payload)
+    if isinstance(payload, list):
+        return [_rewrite_refs_in_value(item, ref_map) for item in payload]
+    if isinstance(payload, dict):
+        return {key: _rewrite_refs_in_value(value, ref_map) for key, value in payload.items()}
+    return payload
+
+
+def _rewrite_episode_refs(episode, ref_map: dict[str, str]):
+    payload = episode.model_dump(mode="json")
+    rewritten = _rewrite_refs_in_value(payload, ref_map)
+    return type(episode).model_validate(rewritten)
+
+
+def _rewrite_run_dir_refs(run_dir: Path, ref_map: dict[str, str]) -> None:
+    for path in run_dir.rglob("*.json"):
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        rewritten = _rewrite_refs_in_value(payload, ref_map)
+        path.write_text(json.dumps(rewritten, indent=2) + "\n", encoding="utf-8")
+
+
+def _remove_stale_timestamped_goldens() -> None:
+    golden_runs_dir = ROOT / "tests" / "golden_runs"
+    for path in golden_runs_dir.iterdir():
+        if path.name.startswith(("run_20", "bench_20", "eval_20", "patch_20")):
+            shutil.rmtree(path, ignore_errors=True)
+
+    golden_dataset_dirs = [
+        ROOT / "tests" / "golden_datasets" / "transition_collection_v1" / "episodes",
+        ROOT / "tests" / "golden_datasets" / "transition_negative_collection_v1" / "episodes",
+        ROOT / "tests" / "golden_datasets" / "transition_sft_v1" / "examples",
+        ROOT / "tests" / "golden_datasets" / "transition_negative_sft_v1" / "examples",
+    ]
+    for directory in golden_dataset_dirs:
+        if not directory.exists():
+            continue
+        for path in directory.iterdir():
+            if path.name.startswith(("env_episode_20", "sft_env_episode_20")):
+                path.unlink(missing_ok=True)
+
+
+def _canonicalize_golden_run_refs(tmp_root: Path) -> None:
+    golden_runs_dir = ROOT / "tests" / "golden_runs"
+    ref_map: dict[str, str] = {}
+    for path in golden_runs_dir.iterdir():
+        manifest_path = path / "manifest.json"
+        if not path.is_dir() or not manifest_path.exists():
+            continue
+        payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+        run_id = payload.get("run_id")
+        if not isinstance(run_id, str) or not run_id:
+            continue
+        ref_map[str(tmp_root / "runs" / run_id)] = f"tests/golden_runs/{path.name}"
+    for path in golden_runs_dir.iterdir():
+        if path.is_dir():
+            _rewrite_run_dir_refs(path, ref_map)
+
+
+def _rewrite_episode_run_ref_map(episode, fixture_prefix: str, current_candidate_ref: str | None = None):
     run_ref_map = episode.metadata.get("run_ref_map", {})
     rewritten: dict[str, str] = {}
+    original_ref_to_rewritten: dict[str, str] = {}
+    original_ref_to_destination: dict[str, Path] = {}
+    prefix_counts: dict[str, int] = {}
     if isinstance(run_ref_map, dict):
         for run_id, run_ref in run_ref_map.items():
             if not isinstance(run_id, str) or not isinstance(run_ref, str):
                 continue
-            destination = ROOT / "tests" / "golden_runs" / run_id
+            prefix = run_id.split("_", 1)[0]
+            prefix_counts[prefix] = prefix_counts.get(prefix, 0) + 1
+            alias = f"{fixture_prefix}_{prefix}_{prefix_counts[prefix]:02d}"
+            destination = ROOT / "tests" / "golden_runs" / alias
             _copy_run_dir(run_ref, destination)
-            rewritten[run_id] = f"../../golden_runs/{run_id}"
+            rewritten[alias] = f"../../golden_runs/{alias}"
+            original_ref_to_rewritten[run_ref] = f"../../golden_runs/{alias}"
+            original_ref_to_destination[run_ref] = destination
+        for destination in original_ref_to_destination.values():
+            _rewrite_run_dir_refs(destination, original_ref_to_rewritten)
     metadata = dict(episode.metadata)
     metadata["run_ref_map"] = rewritten
-    return episode.model_copy(update={"metadata": metadata})
+    if current_candidate_ref and current_candidate_ref in original_ref_to_rewritten:
+        metadata["current_candidate_run_ref"] = original_ref_to_rewritten[current_candidate_ref]
+    rewritten_episode = episode.model_copy(update={"metadata": metadata})
+    return _rewrite_episode_refs(rewritten_episode, original_ref_to_rewritten), original_ref_to_rewritten
 
 
 def main() -> int:
+    _remove_stale_timestamped_goldens()
+
     tmp_root = ROOT / "tests" / "tmp_transition_goldens"
     if tmp_root.exists():
         shutil.rmtree(tmp_root, ignore_errors=True)
@@ -92,14 +171,65 @@ def main() -> int:
     _copy_run_dir(reformulate_episode.source_run_ref, reformulate_eval_destination)
     _copy_run_dir(debug_negative_episode.source_run_ref, debug_negative_destination)
     _copy_run_dir(reformulate_negative_episode.source_run_ref, reformulate_negative_destination)
+    stable_ref_map = {
+        str(debug_episode.source_run_ref): "../../golden_runs/reduction_debug_patch_eval_v1",
+        str(reformulate_episode.source_run_ref): "../../golden_runs/attention_reformulate_patch_eval_v1",
+        str(debug_negative_episode.source_run_ref): "../../golden_runs/reduction_debug_negative_eval_v1",
+        str(reformulate_negative_episode.source_run_ref): "../../golden_runs/attention_reformulate_negative_eval_v1",
+    }
     debug_episode = _rewrite_episode_source_run(debug_episode, "../../golden_runs/reduction_debug_patch_eval_v1")
     reformulate_episode = _rewrite_episode_source_run(reformulate_episode, "../../golden_runs/attention_reformulate_patch_eval_v1")
     debug_negative_episode = _rewrite_episode_source_run(debug_negative_episode, "../../golden_runs/reduction_debug_negative_eval_v1")
     reformulate_negative_episode = _rewrite_episode_source_run(reformulate_negative_episode, "../../golden_runs/attention_reformulate_negative_eval_v1")
-    debug_episode = _rewrite_episode_run_ref_map(debug_episode)
-    reformulate_episode = _rewrite_episode_run_ref_map(reformulate_episode)
-    debug_negative_episode = _rewrite_episode_run_ref_map(debug_negative_episode)
-    reformulate_negative_episode = _rewrite_episode_run_ref_map(reformulate_negative_episode)
+    current_candidate_run_ref = str(debug_episode.metadata.get("current_candidate_run_ref", ""))
+    if current_candidate_run_ref:
+        _copy_run_dir(current_candidate_run_ref, ROOT / "tests" / "golden_runs" / "reduction_debug_patch_transition_v1")
+        stable_ref_map[current_candidate_run_ref] = "../../golden_runs/reduction_debug_patch_transition_v1"
+
+    debug_episode, debug_run_ref_map = _rewrite_episode_run_ref_map(
+        debug_episode,
+        "reduction_debug_patch",
+        current_candidate_ref=current_candidate_run_ref or None,
+    )
+    if current_candidate_run_ref:
+        debug_metadata = dict(debug_episode.metadata)
+        debug_metadata["current_candidate_run_ref"] = "../../golden_runs/reduction_debug_patch_transition_v1"
+        debug_episode = debug_episode.model_copy(update={"metadata": debug_metadata})
+    reformulate_episode, reformulate_run_ref_map = _rewrite_episode_run_ref_map(
+        reformulate_episode,
+        "attention_reformulate_patch",
+        current_candidate_ref=str(reformulate_episode.metadata.get("current_candidate_run_ref", "")) or None,
+    )
+    debug_negative_episode, debug_negative_run_ref_map = _rewrite_episode_run_ref_map(
+        debug_negative_episode,
+        "reduction_debug_negative",
+        current_candidate_ref=str(debug_negative_episode.metadata.get("current_candidate_run_ref", "")) or None,
+    )
+    reformulate_negative_episode, reformulate_negative_run_ref_map = _rewrite_episode_run_ref_map(
+        reformulate_negative_episode,
+        "attention_reformulate_negative",
+        current_candidate_ref=str(reformulate_negative_episode.metadata.get("current_candidate_run_ref", "")) or None,
+    )
+    all_ref_maps = {}
+    for mapping in (
+        debug_run_ref_map,
+        reformulate_run_ref_map,
+        debug_negative_run_ref_map,
+        reformulate_negative_run_ref_map,
+        stable_ref_map,
+    ):
+        all_ref_maps.update(mapping)
+    _rewrite_run_dir_refs(debug_eval_destination, all_ref_maps)
+    _rewrite_run_dir_refs(reformulate_eval_destination, all_ref_maps)
+    _rewrite_run_dir_refs(debug_negative_destination, all_ref_maps)
+    _rewrite_run_dir_refs(reformulate_negative_destination, all_ref_maps)
+    if current_candidate_run_ref:
+        _rewrite_run_dir_refs(ROOT / "tests" / "golden_runs" / "reduction_debug_patch_transition_v1", all_ref_maps)
+
+    debug_episode = _rewrite_episode_identity(debug_episode, "fixture_reduction_debug_patch_episode_v1")
+    reformulate_episode = _rewrite_episode_identity(reformulate_episode, "fixture_attention_reformulate_patch_episode_v1")
+    debug_negative_episode = _rewrite_episode_identity(debug_negative_episode, "fixture_reduction_debug_negative_episode_v1")
+    reformulate_negative_episode = _rewrite_episode_identity(reformulate_negative_episode, "fixture_attention_reformulate_negative_episode_v1")
 
     write_episode(debug_episode, ROOT / "tests" / "golden_episodes" / "reduction_debug_patch_episode_v1.json")
     write_episode(reformulate_episode, ROOT / "tests" / "golden_episodes" / "attention_reformulate_patch_episode_v1.json")
@@ -154,9 +284,7 @@ def main() -> int:
         transition_kind_allowlist=["patch_applied"],
     )
 
-    current_candidate_run_ref = str(debug_episode.metadata.get("current_candidate_run_ref", ""))
-    if current_candidate_run_ref:
-        _copy_run_dir(current_candidate_run_ref, ROOT / "tests" / "golden_runs" / "reduction_debug_patch_transition_v1")
+    _canonicalize_golden_run_refs(tmp_root)
 
     shutil.rmtree(tmp_root, ignore_errors=True)
     print("tests/golden_episodes/reduction_debug_patch_episode_v1.json")

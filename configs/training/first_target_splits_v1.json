@@ -83,11 +83,11 @@
     }
   ],
   "generated_outputs": {
-    "train_trajectory": "datasets/pre_h200_transition_train_v1",
-    "dev_trajectory": "datasets/pre_h200_transition_dev_v1",
-    "train_sft": "datasets/pre_h200_sft_train_v1",
-    "dev_sft": "datasets/pre_h200_sft_dev_v1",
-    "data_report": "artifacts/training/pre_h200_data_report.json"
+    "train_trajectory": "datasets/first_target_transition_train_v1",
+    "dev_trajectory": "datasets/first_target_transition_dev_v1",
+    "train_sft": "datasets/first_target_sft_train_v1",
+    "dev_sft": "datasets/first_target_sft_dev_v1",
+    "data_report": "artifacts/training/first_target_data_report.json"
   },
   "heldout_rollout_config_ref": "configs/training/rollout_debug_repair_heldout_v1.json"
 }

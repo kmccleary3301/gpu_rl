@@ -105,6 +105,11 @@ def sanitize_nvidia(
     warnings: list[str] = []
     if not findings and result.exit_code != 0:
         warnings.append("sanitizer exited non-zero without parseable findings")
+    severity_counts: dict[str, int] = {}
+    category_counts: dict[str, int] = {}
+    for finding in findings:
+        severity_counts[finding.severity] = severity_counts.get(finding.severity, 0) + 1
+        category_counts[finding.category] = category_counts.get(finding.category, 0) + 1
 
     report = SanitizerReport(
         backend="nvidia_compute_sanitizer",
@@ -115,6 +120,8 @@ def sanitize_nvidia(
         passed=result.exit_code == 0 and not findings,
         error_count=sum(1 for finding in findings if finding.severity == "error"),
         warning_count=sum(1 for finding in findings if finding.severity == "warning"),
+        severity_counts=severity_counts,
+        category_counts=category_counts,
         findings=findings,
         stdout_path=stdout_artifact.path,
         stderr_path=stderr_artifact.path,
@@ -140,6 +147,8 @@ def sanitize_nvidia(
                 f"- passed: `{report.passed}`",
                 f"- error_count: `{report.error_count}`",
                 f"- warning_count: `{report.warning_count}`",
+                f"- severity_counts: `{report.severity_counts}`",
+                f"- category_counts: `{report.category_counts}`",
                 "",
                 "## Findings",
                 *([f"- `{finding.category}`: {finding.message}" for finding in findings] or ["- none"]),

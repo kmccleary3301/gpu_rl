@@ -1,3 +1,7 @@
 {
-  "command": ["python3", "-c", "print('amd fixture')"]
+  "command": [
+    "python3",
+    "-c",
+    "print('amd fixture')"
+  ]
 }

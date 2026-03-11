@@ -140,6 +140,8 @@ class NvidiaBackendTests(unittest.TestCase):
             )
         self.assertFalse(report.passed)
         self.assertEqual(report.error_count, 1)
+        self.assertEqual(report.severity_counts["error"], 1)
+        self.assertEqual(report.category_counts["memory_access_error"], 1)
         self.assertEqual(report.findings[0].category, "memory_access_error")
         self.assertEqual(report.findings[0].line, 42)
         self.assertTrue((self.writer.run_dir / "sanitize" / "memcheck_summary.json").exists())

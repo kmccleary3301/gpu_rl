@@ -1,13 +1,13 @@
 {
   "schema_version": "1.0.0",
-  "transition_id": "transition_7d1b72ad04be",
+  "transition_id": "transition_58c7c36e5116",
   "transition_kind": "repaired",
   "task_id": "task/reduction_debug/eval/v1",
   "input_candidate_id": null,
-  "output_candidate_id": "cand_f48c7710631e",
-  "source_run_ref": "/shared_folders/querylake_server/side_projects/gpu_rl/tests/tmp_transition_goldens/runs/eval_20260310_010110_002776_8f475f",
-  "target_run_ref": "/shared_folders/querylake_server/side_projects/gpu_rl/tests/tmp_transition_goldens/runs/patch_20260310_010113_433809_56e30d",
-  "patch_id": "patch_cf898b000241",
+  "output_candidate_id": "cand_d3e95cfa0bc4",
+  "source_run_ref": "../../golden_runs/reduction_debug_patch_eval_01",
+  "target_run_ref": "../../golden_runs/reduction_debug_patch_transition_v1",
+  "patch_id": "patch_9b3267fd32a6",
   "patch_hash": "8afc3253d7645aed3f455fe266d83d71026d6de879d6ee9e39c2badd0e35e309",
   "patch_kind": "bug_fix",
   "changed_files": [

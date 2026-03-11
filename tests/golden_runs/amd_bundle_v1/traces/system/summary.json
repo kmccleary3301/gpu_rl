@@ -1,7 +1,11 @@
 {
   "schema_version": "1.0.0",
   "backend": "amd_rocprof_trace",
-  "command": ["python3", "-c", "print('amd fixture')"],
+  "command": [
+    "python3",
+    "-c",
+    "print('amd fixture')"
+  ],
   "trace_enabled": true,
   "exit_code": 0,
   "duration_ms": 31,

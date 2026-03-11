@@ -6,9 +6,24 @@
   "primary_bottleneck": "memory_bound",
   "confidence": 0.8,
   "evidence": [
-    {"schema_version":"1.0.0","type":"occupancy","value":48.0,"artifact_ref":"profiles/kernel/summary.json"},
-    {"schema_version":"1.0.0","type":"dram_pct_peak","value":72.0,"artifact_ref":"profiles/kernel/summary.json"},
-    {"schema_version":"1.0.0","type":"registers_per_thread","value":40,"artifact_ref":"profiles/kernel/summary.json"}
+    {
+      "schema_version": "1.0.0",
+      "type": "occupancy",
+      "value": 48.0,
+      "artifact_ref": "profiles/kernel/summary.json"
+    },
+    {
+      "schema_version": "1.0.0",
+      "type": "dram_pct_peak",
+      "value": 72.0,
+      "artifact_ref": "profiles/kernel/summary.json"
+    },
+    {
+      "schema_version": "1.0.0",
+      "type": "registers_per_thread",
+      "value": 40,
+      "artifact_ref": "profiles/kernel/summary.json"
+    }
   ],
   "why": "Primary kernel `amd_fixture_kernel` classified as `memory_bound` from normalized profiler metrics.",
   "next_actions": [

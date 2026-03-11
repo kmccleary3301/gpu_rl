@@ -131,6 +131,20 @@
       "title": "Warning Count",
       "type": "integer"
     },
+    "severity_counts": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "Severity Counts",
+      "type": "object"
+    },
+    "category_counts": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "Category Counts",
+      "type": "object"
+    },
     "findings": {
       "items": {
         "$ref": "#/$defs/SanitizerFinding"

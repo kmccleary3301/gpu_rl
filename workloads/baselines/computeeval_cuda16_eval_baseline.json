@@ -6,7 +6,7 @@
     "--problem",
     "workloads/public_benchmarks/computeeval/2025_1/problems/cuda_16.json",
     "--benchmark-repeats",
-    "200"
+    "2000"
   ],
   "notes": [
     "Reference runner for a curated ComputeEval 2025-1 CUDA/16 streams and concurrency case."

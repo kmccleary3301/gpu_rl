@@ -11,10 +11,15 @@
   "hidden_tests_ref": null,
   "input_generator_ref": null,
   "deterministic_mode": true,
-  "feature_requirements": ["amd", "rocm"],
+  "feature_requirements": [
+    "amd",
+    "rocm"
+  ],
   "numerical_policy": {
     "schema_version": "1.0.0",
-    "dtype_matrix": ["fp32"],
+    "dtype_matrix": [
+      "fp32"
+    ],
     "rtol": 1e-05,
     "atol": 1e-06
   },
@@ -25,7 +30,12 @@
     "timer": "hip_event",
     "split_compile_from_run": true
   },
-  "allowed_backends": ["hip"],
+  "allowed_backends": [
+    "hip"
+  ],
   "forbidden_patterns": [],
-  "required_artifacts": ["meta/doctor_report.json", "prompt/task_spec.json"]
+  "required_artifacts": [
+    "meta/doctor_report.json",
+    "prompt/task_spec.json"
+  ]
 }

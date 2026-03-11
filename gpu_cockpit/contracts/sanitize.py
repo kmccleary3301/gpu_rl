@@ -25,6 +25,8 @@ class SanitizerReport(ContractModel):
     passed: bool
     error_count: int = Field(default=0, ge=0)
     warning_count: int = Field(default=0, ge=0)
+    severity_counts: dict[str, int] = Field(default_factory=dict)
+    category_counts: dict[str, int] = Field(default_factory=dict)
     findings: list[SanitizerFinding] = Field(default_factory=list)
     stdout_path: str | None = None
     stderr_path: str | None = None

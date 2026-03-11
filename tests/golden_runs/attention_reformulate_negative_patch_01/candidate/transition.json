@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0.0",
+  "transition_id": "transition_7c10bf0ce2c5",
+  "transition_kind": "patch_applied",
+  "task_id": "task/attention_reformulate/eval/v1",
+  "input_candidate_id": null,
+  "output_candidate_id": "cand_89194a7f4fb7",
+  "source_run_ref": "../../golden_runs/attention_reformulate_negative_bench_01",
+  "target_run_ref": "../../golden_runs/attention_reformulate_negative_patch_01",
+  "patch_id": "patch_acca9fd00c34",
+  "patch_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "patch_kind": "no_op",
+  "changed_files": [
+    "workloads/reference/triton_attention_score_weak_baseline.py"
+  ],
+  "status": "ok",
+  "summary": "attempt a reformulation without changing the weak causal attention-score implementation",
+  "metadata": {
+    "expected_effect": "preserve the baseline implementation so the perf gate still fails and the episode remains a useful negative transform example"
+  }
+}

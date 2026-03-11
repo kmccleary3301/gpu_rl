@@ -6,7 +6,7 @@
   "dataset_refs": [
     {
       "dataset_kind": "sft",
-      "path": "datasets/pre_h200_sft_train_v1",
+      "path": "datasets/first_target_sft_train_v1",
       "split": "train",
       "required": true,
       "notes": [
@@ -15,7 +15,7 @@
     },
     {
       "dataset_kind": "sft",
-      "path": "datasets/pre_h200_sft_dev_v1",
+      "path": "datasets/first_target_sft_dev_v1",
       "split": "dev",
       "required": true,
       "notes": [
@@ -35,11 +35,11 @@
   "eval_dataset_refs": [
     {
       "dataset_kind": "trajectory",
-      "path": "datasets/pre_h200_transition_dev_v1",
+      "path": "datasets/first_target_transition_dev_v1",
       "split": "dev",
       "required": true,
       "notes": [
-        "Generated dev transition dataset used for local handoff validation."
+        "Generated dev transition dataset used for training-preparation validation."
       ]
     },
     {

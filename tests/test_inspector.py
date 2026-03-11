@@ -126,6 +126,14 @@ class InspectorTests(unittest.TestCase):
         )
         (lhs / "build").mkdir(parents=True, exist_ok=True)
         (rhs / "build").mkdir(parents=True, exist_ok=True)
+        (lhs / "build" / "source.txt").write_text("def lhs_kernel():\n    return 1\n", encoding="utf-8")
+        (rhs / "build" / "source.txt").write_text("def rhs_kernel():\n    return 2\n", encoding="utf-8")
+        (lhs / "build" / "ttir.mlir").write_text("tt.func @lhs()\n", encoding="utf-8")
+        (rhs / "build" / "ttir.mlir").write_text("tt.func @rhs()\n", encoding="utf-8")
+        (lhs / "build" / "ttgir.mlir").write_text("ttg.func @lhs()\n", encoding="utf-8")
+        (rhs / "build" / "ttgir.mlir").write_text("ttg.func @rhs()\n", encoding="utf-8")
+        (lhs / "build" / "llir.ll").write_text("define void @lhs() {}\n", encoding="utf-8")
+        (rhs / "build" / "llir.ll").write_text("define void @rhs() {}\n", encoding="utf-8")
         (lhs / "build" / "ptx.txt").write_text("visible ptx\n", encoding="utf-8")
         (lhs / "build" / "sass.txt").write_text("visible sass\n", encoding="utf-8")
         (rhs / "build" / "ptx.txt").write_text("changed ptx\n", encoding="utf-8")
@@ -139,11 +147,11 @@ class InspectorTests(unittest.TestCase):
             encoding="utf-8",
         )
         (lhs / "build" / "tri_view.json").write_text(
-            '{"backend":"triton_nvidia","correlation_method":"ptx_loc_source_map_v1","source_path":"lhs.py","ptx_ref":"build/ptx.txt","sass_ref":"build/sass.txt","lines":[{"source_line":10,"ptx_line":20,"sass_line":30},{"source_line":11,"ptx_line":21,"sass_line":31}],"warnings":[]}\n',
+            '{"backend":"triton_nvidia","correlation_method":"ptx_loc_source_map_v1","source_path":"lhs.py","source_ref":"build/source.txt","ttir_ref":"build/ttir.mlir","ttgir_ref":"build/ttgir.mlir","llir_ref":"build/llir.ll","ptx_ref":"build/ptx.txt","sass_ref":"build/sass.txt","lines":[{"source_line":10,"ptx_line":20,"sass_line":30},{"source_line":11,"ptx_line":21,"sass_line":31}],"warnings":[]}\n',
             encoding="utf-8",
         )
         (rhs / "build" / "tri_view.json").write_text(
-            '{"backend":"triton_nvidia","correlation_method":"heuristic_anchor_alignment_v2","source_path":"rhs.py","ptx_ref":"build/ptx.txt","sass_ref":"build/sass.txt","lines":[{"source_line":7,"ptx_line":17,"sass_line":27}],"warnings":[]}\n',
+            '{"backend":"triton_nvidia","correlation_method":"heuristic_anchor_alignment_v2","source_path":"rhs.py","source_ref":"build/source.txt","ttir_ref":"build/ttir.mlir","ttgir_ref":"build/ttgir.mlir","llir_ref":"build/llir.ll","ptx_ref":"build/ptx.txt","sass_ref":"build/sass.txt","lines":[{"source_line":7,"ptx_line":17,"sass_line":27}],"warnings":[]}\n',
             encoding="utf-8",
         )
         comparison = compare_runs(self.tmp_root, str(lhs), str(rhs))
@@ -158,6 +166,12 @@ class InspectorTests(unittest.TestCase):
         self.assertEqual(comparison.lhs_triview_line_count, 2)
         self.assertEqual(comparison.rhs_triview_line_count, 1)
         self.assertTrue(comparison.build_binary_hash_changed)
+        self.assertTrue(comparison.build_source_hash_changed)
+        self.assertTrue(comparison.build_ttir_hash_changed)
+        self.assertTrue(comparison.build_ttgir_hash_changed)
+        self.assertTrue(comparison.build_llir_hash_changed)
+        self.assertTrue(comparison.build_ptx_hash_changed)
+        self.assertTrue(comparison.build_sass_hash_changed)
         self.assertIsNotNone(comparison.lhs_evidence_score)
         self.assertIsNotNone(comparison.rhs_evidence_score)
         self.assertTrue(comparison.lhs_sft_ready)
@@ -295,6 +309,9 @@ class InspectorTests(unittest.TestCase):
         self.assertEqual(comparison.lhs_transition_kind, "repaired")
         self.assertEqual(comparison.rhs_transition_kind, "reverted")
         self.assertTrue(comparison.patch_hash_changed)
+        self.assertEqual(comparison.lineage_relationship, "lhs_parent_of_rhs")
+        self.assertTrue(comparison.parent_child_related)
+        self.assertEqual(comparison.rhs_parent_candidate_id, lhs_candidate.candidate_id)
 
 
 if __name__ == "__main__":

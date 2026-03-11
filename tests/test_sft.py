@@ -59,6 +59,13 @@ class SFTPackagingTests(unittest.TestCase):
         self.assertIn("knowledge_query", example["response"])
         self.assertEqual(example["metadata"]["training_example_kind"], "positive_sft_example")
         self.assertEqual(example["metadata"]["episode_governance_kind"], "usable_positive_sft")
+        self.assertEqual(manifest["metadata"]["verb_counts"]["debug"], 1)
+        self.assertEqual(manifest["metadata"]["operator_family_counts"]["reduction_sum"], 1)
+        self.assertEqual(manifest["metadata"]["training_example_kind_counts"]["positive_sft_example"], 1)
+        self.assertEqual(manifest["metadata"]["episode_governance_counts"]["usable_positive_sft"], 1)
+        self.assertEqual(manifest["metadata"]["transition_kind_counts"]["repaired"], 1)
+        self.assertEqual(manifest["metadata"]["patch_kind_counts"]["bug_fix"], 1)
+        self.assertEqual(manifest["metadata"]["patch_bearing_example_count"], 1)
 
     def test_package_filters_public_benchmark_and_verb(self) -> None:
         smoke_episode = run_scripted_reference_episode(
@@ -135,6 +142,7 @@ class SFTPackagingTests(unittest.TestCase):
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         self.assertEqual(manifest["example_count"], 1)
         self.assertTrue(manifest["metadata"]["patch_bearing_only"])
+        self.assertEqual(manifest["metadata"]["patch_bearing_example_count"], 1)
         example = json.loads((out_dir / manifest["example_refs"][0]).read_text(encoding="utf-8"))
         self.assertTrue(example["metadata"]["patch_present"])
         self.assertEqual(example["metadata"]["episode_governance_kind"], "usable_positive_sft")
@@ -145,6 +153,9 @@ class SFTPackagingTests(unittest.TestCase):
         manifest = validation["manifest"]
         self.assertEqual(manifest["example_count"], 2)
         self.assertTrue(manifest["metadata"]["patch_bearing_only"])
+        self.assertEqual(manifest["metadata"]["patch_bearing_example_count"], 2)
+        self.assertEqual(manifest["metadata"]["transition_kind_counts"]["repaired"], 1)
+        self.assertEqual(manifest["metadata"]["transition_kind_counts"]["reformulated"], 1)
 
     def test_validate_checked_in_negative_transition_sft_fixture(self) -> None:
         validation = validate_sft_dataset(ROOT / "tests" / "golden_datasets" / "transition_negative_sft_v1")
@@ -152,3 +163,6 @@ class SFTPackagingTests(unittest.TestCase):
         manifest = validation["manifest"]
         self.assertEqual(manifest["example_count"], 2)
         self.assertTrue(manifest["metadata"]["patch_bearing_only"])
+        self.assertEqual(manifest["metadata"]["patch_bearing_example_count"], 2)
+        self.assertEqual(manifest["metadata"]["training_example_kind_counts"]["negative_debug_example"], 1)
+        self.assertEqual(manifest["metadata"]["training_example_kind_counts"]["negative_reformulate_example"], 1)

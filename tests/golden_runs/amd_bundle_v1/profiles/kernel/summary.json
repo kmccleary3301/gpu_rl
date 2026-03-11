@@ -2,7 +2,11 @@
   "schema_version": "1.0.0",
   "profiler": "rocprof",
   "backend": "amd_rocprof",
-  "command": ["python3", "-c", "print('amd fixture')"],
+  "command": [
+    "python3",
+    "-c",
+    "print('amd fixture')"
+  ],
   "profile_pack": "quick",
   "exit_code": 0,
   "duration_ms": 42,
@@ -20,28 +24,58 @@
   "roofline_position": "memory_roof",
   "top_kernels": [
     {
-      "schema_version":"1.0.0",
-      "kernel_name":"amd_fixture_kernel",
-      "invocation_count":1,
-      "duration_ms":4.0,
-      "time_pct":100.0,
-      "classification":"memory_bound",
-      "occupancy":48.0,
-      "registers_per_thread":40,
-      "spill_load_bytes":null,
-      "spill_store_bytes":null,
-      "dram_throughput_pct_peak":72.0,
-      "sm_throughput_pct_peak":null,
-      "compute_throughput_pct_peak":35.0,
-      "l2_hit_rate":81.0,
-      "roofline_position":"memory_roof",
-      "raw_metrics":[
-        {"schema_version":"1.0.0","metric_name":"DurationNs","unit":"ns","value":4000000},
-        {"schema_version":"1.0.0","metric_name":"OccupancyPct","unit":"%","value":48},
-        {"schema_version":"1.0.0","metric_name":"VGPR","unit":null,"value":40},
-        {"schema_version":"1.0.0","metric_name":"DRAMPct","unit":"%","value":72},
-        {"schema_version":"1.0.0","metric_name":"ComputePct","unit":"%","value":35},
-        {"schema_version":"1.0.0","metric_name":"L2HitPct","unit":"%","value":81}
+      "schema_version": "1.0.0",
+      "kernel_name": "amd_fixture_kernel",
+      "invocation_count": 1,
+      "duration_ms": 4.0,
+      "time_pct": 100.0,
+      "classification": "memory_bound",
+      "occupancy": 48.0,
+      "registers_per_thread": 40,
+      "spill_load_bytes": null,
+      "spill_store_bytes": null,
+      "dram_throughput_pct_peak": 72.0,
+      "sm_throughput_pct_peak": null,
+      "compute_throughput_pct_peak": 35.0,
+      "l2_hit_rate": 81.0,
+      "roofline_position": "memory_roof",
+      "raw_metrics": [
+        {
+          "schema_version": "1.0.0",
+          "metric_name": "DurationNs",
+          "unit": "ns",
+          "value": 4000000
+        },
+        {
+          "schema_version": "1.0.0",
+          "metric_name": "OccupancyPct",
+          "unit": "%",
+          "value": 48
+        },
+        {
+          "schema_version": "1.0.0",
+          "metric_name": "VGPR",
+          "unit": null,
+          "value": 40
+        },
+        {
+          "schema_version": "1.0.0",
+          "metric_name": "DRAMPct",
+          "unit": "%",
+          "value": 72
+        },
+        {
+          "schema_version": "1.0.0",
+          "metric_name": "ComputePct",
+          "unit": "%",
+          "value": 35
+        },
+        {
+          "schema_version": "1.0.0",
+          "metric_name": "L2HitPct",
+          "unit": "%",
+          "value": 81
+        }
       ]
     }
   ],

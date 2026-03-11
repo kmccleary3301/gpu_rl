@@ -216,6 +216,35 @@ def _build_projection(run_dir: Path) -> dict[str, Any] | None:
     return build_projection
 
 
+def _lineage_relationship(
+    lhs_candidate_id: str | None,
+    rhs_candidate_id: str | None,
+    lhs_parent_candidate_id: str | None,
+    rhs_parent_candidate_id: str | None,
+) -> tuple[str | None, bool | None]:
+    if lhs_candidate_id is None and rhs_candidate_id is None:
+        return None, None
+    if lhs_candidate_id is not None and rhs_candidate_id is not None and lhs_candidate_id == rhs_candidate_id:
+        return "same_candidate", True
+    if lhs_candidate_id is not None and rhs_parent_candidate_id is not None and lhs_candidate_id == rhs_parent_candidate_id:
+        return "lhs_parent_of_rhs", True
+    if rhs_candidate_id is not None and lhs_parent_candidate_id is not None and rhs_candidate_id == lhs_parent_candidate_id:
+        return "rhs_parent_of_lhs", True
+    if (
+        lhs_parent_candidate_id is not None
+        and rhs_parent_candidate_id is not None
+        and lhs_parent_candidate_id == rhs_parent_candidate_id
+    ):
+        return "same_parent", False
+    return "unrelated", False
+
+
+def _hash_delta(lhs_hash: str | None, rhs_hash: str | None) -> bool | None:
+    if lhs_hash is None or rhs_hash is None:
+        return None
+    return lhs_hash != rhs_hash
+
+
 def project_run_bundle(run_dir: Path) -> dict[str, Any]:
     projection = _required_artifact_projection(run_dir)
     projection["failed_scopes"] = _load_failed_scopes(run_dir)
@@ -398,8 +427,22 @@ def compare_runs(root: Path, lhs_ref: str, rhs_ref: str) -> RunComparison:
     rhs_build_binary_hash = rhs_build_record.get("binary_hash")
     lhs_patch_hash = lhs_patch.get("patch_hash")
     rhs_patch_hash = rhs_patch.get("patch_hash")
+    lhs_candidate_id = str(lhs_candidate_state["candidate_id"]) if lhs_candidate_state.get("candidate_id") is not None else None
+    rhs_candidate_id = str(rhs_candidate_state["candidate_id"]) if rhs_candidate_state.get("candidate_id") is not None else None
+    lhs_parent_candidate_id = (
+        str(lhs_candidate_state["parent_candidate_id"]) if lhs_candidate_state.get("parent_candidate_id") is not None else None
+    )
+    rhs_parent_candidate_id = (
+        str(rhs_candidate_state["parent_candidate_id"]) if rhs_candidate_state.get("parent_candidate_id") is not None else None
+    )
     lhs_changed_file_count = len(lhs_candidate_state.get("changed_files", [])) if isinstance(lhs_candidate_state.get("changed_files"), list) else 0
     rhs_changed_file_count = len(rhs_candidate_state.get("changed_files", [])) if isinstance(rhs_candidate_state.get("changed_files"), list) else 0
+    lineage_relationship, parent_child_related = _lineage_relationship(
+        lhs_candidate_id=lhs_candidate_id,
+        rhs_candidate_id=rhs_candidate_id,
+        lhs_parent_candidate_id=lhs_parent_candidate_id,
+        rhs_parent_candidate_id=rhs_parent_candidate_id,
+    )
     lhs_correctness_gate = lhs_eval.get("correctness_gate")
     rhs_correctness_gate = rhs_eval.get("correctness_gate")
     trainworthiness_change = None
@@ -503,16 +546,21 @@ def compare_runs(root: Path, lhs_ref: str, rhs_ref: str) -> RunComparison:
         rhs_patch_kind=str(rhs_patch["patch_kind"]) if rhs_patch.get("patch_kind") is not None else None,
         lhs_patch_hash=str(lhs_patch_hash) if lhs_patch_hash is not None else None,
         rhs_patch_hash=str(rhs_patch_hash) if rhs_patch_hash is not None else None,
-        patch_hash_changed=(lhs_patch_hash != rhs_patch_hash)
-        if lhs_patch_hash is not None and rhs_patch_hash is not None
-        else None,
+        patch_hash_changed=_hash_delta(
+            str(lhs_patch_hash) if lhs_patch_hash is not None else None,
+            str(rhs_patch_hash) if rhs_patch_hash is not None else None,
+        ),
+        lhs_parent_candidate_id=lhs_parent_candidate_id,
+        rhs_parent_candidate_id=rhs_parent_candidate_id,
+        lineage_relationship=lineage_relationship,
+        parent_child_related=parent_child_related,
         lhs_changed_file_count=lhs_changed_file_count,
         rhs_changed_file_count=rhs_changed_file_count,
         changed_file_count_delta=rhs_changed_file_count - lhs_changed_file_count,
         lhs_transition_kind=str(lhs_transition["transition_kind"]) if lhs_transition.get("transition_kind") is not None else None,
         rhs_transition_kind=str(rhs_transition["transition_kind"]) if rhs_transition.get("transition_kind") is not None else None,
-        lhs_candidate_id=str(lhs_candidate_state["candidate_id"]) if lhs_candidate_state.get("candidate_id") is not None else None,
-        rhs_candidate_id=str(rhs_candidate_state["candidate_id"]) if rhs_candidate_state.get("candidate_id") is not None else None,
+        lhs_candidate_id=lhs_candidate_id,
+        rhs_candidate_id=rhs_candidate_id,
         lhs_triview_present=(lhs_run_dir / "build" / "tri_view.json").exists(),
         rhs_triview_present=(rhs_run_dir / "build" / "tri_view.json").exists(),
         lhs_triview_correlation_method=str(lhs_triview["correlation_method"])
@@ -533,4 +581,40 @@ def compare_runs(root: Path, lhs_ref: str, rhs_ref: str) -> RunComparison:
         triview_unique_source_lines_delta=(int(rhs_unique_source_lines) - int(lhs_unique_source_lines))
         if isinstance(lhs_unique_source_lines, int) and isinstance(rhs_unique_source_lines, int)
         else None,
+        lhs_build_source_hash=(lhs_build_projection.get("artifact_hashes") or {}).get("source"),
+        rhs_build_source_hash=(rhs_build_projection.get("artifact_hashes") or {}).get("source"),
+        build_source_hash_changed=_hash_delta(
+            (lhs_build_projection.get("artifact_hashes") or {}).get("source"),
+            (rhs_build_projection.get("artifact_hashes") or {}).get("source"),
+        ),
+        lhs_build_ttir_hash=(lhs_build_projection.get("artifact_hashes") or {}).get("ttir"),
+        rhs_build_ttir_hash=(rhs_build_projection.get("artifact_hashes") or {}).get("ttir"),
+        build_ttir_hash_changed=_hash_delta(
+            (lhs_build_projection.get("artifact_hashes") or {}).get("ttir"),
+            (rhs_build_projection.get("artifact_hashes") or {}).get("ttir"),
+        ),
+        lhs_build_ttgir_hash=(lhs_build_projection.get("artifact_hashes") or {}).get("ttgir"),
+        rhs_build_ttgir_hash=(rhs_build_projection.get("artifact_hashes") or {}).get("ttgir"),
+        build_ttgir_hash_changed=_hash_delta(
+            (lhs_build_projection.get("artifact_hashes") or {}).get("ttgir"),
+            (rhs_build_projection.get("artifact_hashes") or {}).get("ttgir"),
+        ),
+        lhs_build_llir_hash=(lhs_build_projection.get("artifact_hashes") or {}).get("llir"),
+        rhs_build_llir_hash=(rhs_build_projection.get("artifact_hashes") or {}).get("llir"),
+        build_llir_hash_changed=_hash_delta(
+            (lhs_build_projection.get("artifact_hashes") or {}).get("llir"),
+            (rhs_build_projection.get("artifact_hashes") or {}).get("llir"),
+        ),
+        lhs_build_ptx_hash=(lhs_build_projection.get("artifact_hashes") or {}).get("ptx"),
+        rhs_build_ptx_hash=(rhs_build_projection.get("artifact_hashes") or {}).get("ptx"),
+        build_ptx_hash_changed=_hash_delta(
+            (lhs_build_projection.get("artifact_hashes") or {}).get("ptx"),
+            (rhs_build_projection.get("artifact_hashes") or {}).get("ptx"),
+        ),
+        lhs_build_sass_hash=(lhs_build_projection.get("artifact_hashes") or {}).get("sass"),
+        rhs_build_sass_hash=(rhs_build_projection.get("artifact_hashes") or {}).get("sass"),
+        build_sass_hash_changed=_hash_delta(
+            (lhs_build_projection.get("artifact_hashes") or {}).get("sass"),
+            (rhs_build_projection.get("artifact_hashes") or {}).get("sass"),
+        ),
     )

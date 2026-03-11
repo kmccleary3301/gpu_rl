@@ -1,0 +1,2 @@
+{"schema_version": "1.0.0", "event_id": "evt_000000", "run_id": "patch_20260310_212654_757907_97a209", "seq": 0, "ts": "2026-03-10T21:26:54.758219Z", "scope": "run", "kind": "started", "payload": {"task_ref": "task/reduction_debug/eval/v1"}}
+{"schema_version": "1.0.0", "event_id": "evt_000001", "run_id": "patch_20260310_212654_757907_97a209", "seq": 1, "ts": "2026-03-10T21:26:54.763254Z", "scope": "candidate", "kind": "completed", "payload": {"candidate_id": "cand_9fc252661c4f", "transition_kind": "patch_applied", "patch_id": "patch_c614711b6a3d"}}

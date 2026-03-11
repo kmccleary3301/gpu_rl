@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "baseline_id": "baseline/attention_reformulate/eval/v1",
+  "timer": "wall_clock",
+  "warmups": 1,
+  "repeats": 5,
+  "cold_compile_ms": null,
+  "steady_state_ms_p50": 1653.0,
+  "steady_state_ms_p95": 1666.0,
+  "baseline_steady_state_ms_p50": 1645.0,
+  "baseline_steady_state_ms_p95": 1673.1999999999998,
+  "speedup_vs_baseline": 0.9951603145795523,
+  "variance_pct": 0.46757929414443217,
+  "memory_peak_mb": null,
+  "perf_notes": [
+    "subprocess benchmark",
+    "baseline:baseline/attention_reformulate/eval/v1"
+  ]
+}

@@ -7,7 +7,7 @@ runs/
 datasets/
 knowledge/index/
 artifacts/
-docs/h200_handoff/handoff_manifest.json
+docs/training/training_manifest.json
 
 __pycache__/
 *.py[cod]

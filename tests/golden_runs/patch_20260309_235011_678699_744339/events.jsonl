@@ -1,2 +1,0 @@
-{"schema_version": "1.0.0", "event_id": "evt_000000", "run_id": "patch_20260309_235011_678699_744339", "seq": 0, "ts": "2026-03-09T23:50:11.679012Z", "scope": "run", "kind": "started", "payload": {"task_ref": "task/attention_reformulate/eval/v1"}}
-{"schema_version": "1.0.0", "event_id": "evt_000001", "run_id": "patch_20260309_235011_678699_744339", "seq": 1, "ts": "2026-03-09T23:50:11.683074Z", "scope": "candidate", "kind": "completed", "payload": {"candidate_id": "cand_58bcd1302445", "transition_kind": "reformulated", "patch_id": "patch_223b15a0e731"}}

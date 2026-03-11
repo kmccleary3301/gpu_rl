@@ -3,8 +3,6 @@
   "correctness_gate": "pass",
   "anti_hack_gate": "pass",
   "determinism_gate": "pass",
-  "perf_gate": "fail",
-  "reasons": [
-    "candidate slower than baseline"
-  ]
+  "perf_gate": "pass",
+  "reasons": []
 }

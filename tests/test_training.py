@@ -20,7 +20,7 @@ from gpu_cockpit.engine.training import load_training_config, validate_sft_train
 class TrainingTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        subprocess.run(["python3", str(ROOT / "scripts" / "build_pre_h200_training_assets.py")], check=True)
+        subprocess.run(["python3", str(ROOT / "scripts" / "build_first_target_training_assets.py")], check=True)
 
     def setUp(self) -> None:
         self.tmp_root = ROOT / "tests" / "tmp_training"
@@ -50,6 +50,15 @@ class TrainingTests(unittest.TestCase):
         payload = json.loads(out_path.read_text(encoding="utf-8"))
         self.assertEqual(payload["status"], "ok")
         self.assertEqual(payload["config_id"], "cfg/sft/qwen32b/debug_repair_lora/v1")
+
+    def test_build_dataset_governance_report_script(self) -> None:
+        subprocess.run(["python3", str(ROOT / "scripts" / "build_dataset_governance_report.py")], check=True)
+        payload = json.loads((ROOT / "artifacts" / "training" / "dataset_governance_report.json").read_text(encoding="utf-8"))
+        self.assertEqual(payload["report_id"], "report/dataset_governance/v1")
+        self.assertEqual(payload["trajectory_datasets"]["train"]["usable_negative_episode_count"], 2)
+        self.assertEqual(payload["sft_datasets"]["train"]["task_verb_counts"]["debug"], 2)
+        self.assertEqual(payload["sft_datasets"]["train"]["operator_family_counts"]["reduction_sum"], 2)
+        self.assertEqual(payload["sft_datasets"]["train"]["patch_bearing_example_count"], 4)
 
     def test_run_scripted_rollout_suite(self) -> None:
         config_path = ROOT / "configs" / "training" / "rollout_debug_repair_v1.json"

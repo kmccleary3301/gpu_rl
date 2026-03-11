@@ -121,6 +121,21 @@ def validate_run_bundle(root: Path, run_ref: str) -> dict[str, Any]:
         for rel_path in required_artifacts:
             if not (run_dir / rel_path).exists():
                 missing_artifacts.append(rel_path)
+        lineage_refs = {
+            "patch_ref": replay_payload.get("patch_ref"),
+            "diff_ref": replay_payload.get("diff_ref"),
+            "transition_ref": replay_payload.get("transition_ref"),
+        }
+        for check_name, rel_path in lineage_refs.items():
+            if rel_path is None:
+                checks[check_name] = True
+                continue
+            checks[check_name] = (run_dir / str(rel_path)).exists()
+        candidate_id = replay_payload.get("candidate_id")
+        parent_candidate_id = replay_payload.get("parent_candidate_id")
+        source_run_ref = replay_payload.get("source_run_ref")
+        checks["candidate_lineage_present"] = candidate_id is not None or all(value is None for value in lineage_refs.values())
+        checks["parent_candidate_linked"] = parent_candidate_id is None or source_run_ref is not None
 
     status = "ok" if all(checks.values()) and not missing_artifacts else "failed"
     return {
@@ -153,9 +168,24 @@ def export_proof_bundle(root: Path, run_ref: str, out_path: Path | None = None, 
         "correctness/determinism.json",
         "eval/anti_hack_report.json",
         "eval/eval_envelope.json",
+        "eval/gate_summary.json",
         "perf/benchmark.json",
         "command/summary.json",
         "traces/system/summary.json",
+        "profiles/kernel/summary.json",
+        "profiles/kernel/summary.md",
+        "sanitize/memcheck_summary.json",
+        "sanitize/racecheck_summary.json",
+        "sanitize/initcheck_summary.json",
+        "sanitize/synccheck_summary.json",
+        "bottlenecks/primary.json",
+        "build/build_record.json",
+        "build/tri_view.json",
+        "build/source_map_summary.json",
+        "candidate/state.json",
+        "candidate/transition.json",
+        "patches/applied_patch.json",
+        "patches/unified_diff.patch",
         "replay/replay_pack.json",
         "replay/command.json",
         "replay/environment.json",

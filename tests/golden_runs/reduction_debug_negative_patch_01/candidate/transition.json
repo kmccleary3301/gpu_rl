@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0.0",
+  "transition_id": "transition_79a28ad00653",
+  "transition_kind": "patch_applied",
+  "task_id": "task/reduction_debug/eval/v1",
+  "input_candidate_id": null,
+  "output_candidate_id": "cand_9fc252661c4f",
+  "source_run_ref": "../../golden_runs/reduction_debug_negative_eval_01",
+  "target_run_ref": "../../golden_runs/reduction_debug_negative_patch_01",
+  "patch_id": "patch_c614711b6a3d",
+  "patch_hash": "77099f08b4d42da18941658e695a8c82a598906726075948d0bca874e0900ca7",
+  "patch_kind": "no_op",
+  "changed_files": [
+    "workloads/reference/triton_row_sum_patchable_candidate.py"
+  ],
+  "status": "ok",
+  "summary": "attempt a reduction repair but leave the broken last-column mask behavior in place",
+  "metadata": {
+    "expected_effect": "keep the candidate reproducibly broken so the episode becomes a usable failed repair trace"
+  }
+}

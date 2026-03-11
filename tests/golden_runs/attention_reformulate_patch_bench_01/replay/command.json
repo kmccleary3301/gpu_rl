@@ -1,0 +1,8 @@
+{
+  "command": [
+    "python3",
+    "workloads/reference/triton_attention_score_weak_baseline.py",
+    "--benchmark-repeats",
+    "24"
+  ]
+}

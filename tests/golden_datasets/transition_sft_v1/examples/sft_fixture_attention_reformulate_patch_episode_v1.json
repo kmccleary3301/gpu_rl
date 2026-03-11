@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0.0",
+  "example_id": "sft_fixture_attention_reformulate_patch_episode_v1",
+  "created_at": "2026-03-10T21:27:57.373708Z",
+  "split": "train",
+  "task_id": "task/attention_reformulate/eval/v1",
+  "prompt_family": "reformulate",
+  "prompt": "Task family: reformulate\nTask id: task/attention_reformulate/eval/v1\n\nReformulate the weak naive causal attention-score implementation into a tiled Triton kernel while preserving the visible and hidden score matrices. Print JSON with visible_attention_scores, hidden_attention_scores, and a reformulation_summary describing the strategy change.\n\nProduce a compact tool-using plan for the task and keep the actions consistent with the cockpit tool API.\nObserved reference episode actions: knowledge_query, bench, inspect_quality, patch_candidate, build, bench, eval, inspect_quality, replay, compare",
+  "response": "1. knowledge_query reward=-0.020\n2. bench -> run=bench_20260310_212551_927717_90f0af reward=-0.030\n3. inspect_quality -> run=bench_20260310_212551_927717_90f0af reward=-0.010\n4. patch_candidate -> run=patch_20260310_212611_895066_05f5e2 transition=reformulated reward=-0.040\n5. build -> run=run_20260310_212611_992672_8831d8 reward=-0.030\n6. bench -> run=bench_20260310_212612_288471_39e5cf reward=-0.030\n7. eval -> run=eval_20260310_212632_170084_375689 reward=0.950\n8. inspect_quality -> run=eval_20260310_212632_170084_375689 reward=-0.010\n9. replay -> run=eval_20260310_212632_170084_375689 reward=-0.010\n10. compare -> run=../../golden_runs/attention_reformulate_patch_eval_01 reward=-0.010\nterminal_state=success",
+  "source_episode_ref": "episodes/fixture_attention_reformulate_patch_episode_v1.json",
+  "metadata": {
+    "task_verb": "reformulate",
+    "operator_family": "attention_score_tile",
+    "backend": "triton",
+    "feature_requirements": [
+      "cuda",
+      "torch",
+      "triton"
+    ],
+    "terminal_state": "success",
+    "episode_kind": "scripted_reference",
+    "benchmark_name": null,
+    "evidence_score": 0.85,
+    "training_example_kind": "positive_sft_example",
+    "episode_governance_kind": "usable_positive_sft",
+    "episode_governance_reasons": [
+      "build_evidence_incomplete",
+      "has_build_evidence",
+      "patch_bearing",
+      "profile_evidence_incomplete"
+    ],
+    "patch_present": true,
+    "patch_kinds": [
+      "perf_transform"
+    ],
+    "transition_kinds": [
+      "reformulated"
+    ],
+    "candidate_lineage_depth": 1
+  }
+}

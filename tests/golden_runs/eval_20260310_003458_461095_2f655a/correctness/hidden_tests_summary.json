@@ -1,9 +1,0 @@
-{
-  "schema_version": "1.0.0",
-  "name": "hidden_tests",
-  "ref": "workloads/tests/reduction_debug_hidden.py",
-  "exit_code": 1,
-  "passed": false,
-  "stdout_path": "correctness/hidden_tests_stdout.txt",
-  "stderr_path": "correctness/hidden_tests_stderr.txt"
-}

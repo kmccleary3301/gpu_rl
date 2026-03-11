@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
-  "dataset_id": "trajectory_dataset_20260310_010330",
-  "created_at": "2026-03-10T01:03:30.035114Z",
+  "dataset_id": "trajectory_dataset_20260310_212757",
+  "created_at": "2026-03-10T21:27:57.371453Z",
   "policy_id": "scripted_reference_v1",
   "split": "seed",
   "format_version": "1.1.0",
@@ -14,8 +14,8 @@
   "usable_positive_episode_count": 0,
   "usable_negative_episode_count": 2,
   "episode_refs": [
-    "episodes/env_episode_20260310_010223_1ac103.json",
-    "episodes/env_episode_20260310_010231_30d37c.json"
+    "episodes/fixture_reduction_debug_negative_episode_v1.json",
+    "episodes/fixture_attention_reformulate_negative_episode_v1.json"
   ],
   "task_ids": [
     "task/attention_reformulate/eval/v1",

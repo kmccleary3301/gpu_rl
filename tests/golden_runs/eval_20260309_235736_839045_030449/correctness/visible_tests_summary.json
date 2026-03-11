@@ -1,9 +1,0 @@
-{
-  "schema_version": "1.0.0",
-  "name": "visible_tests",
-  "ref": "workloads/tests/reduction_debug_visible.py",
-  "exit_code": 0,
-  "passed": true,
-  "stdout_path": "correctness/visible_tests_stdout.txt",
-  "stderr_path": "correctness/visible_tests_stderr.txt"
-}

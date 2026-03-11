@@ -108,6 +108,12 @@ def package_trajectory_dataset_as_sft(
     task_ids: list[str] = []
     prompt_family_counts: dict[str, int] = {}
     verb_counts: dict[str, int] = {}
+    operator_family_counts: dict[str, int] = {}
+    training_example_kind_counts: dict[str, int] = {}
+    episode_governance_counts: dict[str, int] = {}
+    patch_kind_counts: dict[str, int] = {}
+    transition_kind_counts: dict[str, int] = {}
+    patch_bearing_example_count = 0
     allowed_kinds = set(allowed_training_example_kinds or DEFAULT_ALLOWED_TRAINING_KINDS)
     if not include_benchmark_only:
         allowed_kinds.discard("benchmark_only")
@@ -174,6 +180,16 @@ def package_trajectory_dataset_as_sft(
         task_ids.append(example.task_id)
         prompt_family_counts[prompt_family] = prompt_family_counts.get(prompt_family, 0) + 1
         verb_counts[task.verb] = verb_counts.get(task.verb, 0) + 1
+        operator_family = task.operator_family or "unknown"
+        operator_family_counts[operator_family] = operator_family_counts.get(operator_family, 0) + 1
+        training_example_kind_counts[readiness] = training_example_kind_counts.get(readiness, 0) + 1
+        episode_governance_counts[governance_kind] = episode_governance_counts.get(governance_kind, 0) + 1
+        if patch_kinds:
+            patch_bearing_example_count += 1
+            for patch_kind in patch_kinds:
+                patch_kind_counts[patch_kind] = patch_kind_counts.get(patch_kind, 0) + 1
+        for transition_kind in transition_kinds:
+            transition_kind_counts[transition_kind] = transition_kind_counts.get(transition_kind, 0) + 1
     manifest = SFTDatasetManifest(
         dataset_id=f"sft_dataset_{datetime.now(tz=UTC).strftime('%Y%m%d_%H%M%S')}",
         created_at=datetime.now(tz=UTC),
@@ -193,6 +209,12 @@ def package_trajectory_dataset_as_sft(
             "allowed_training_example_kinds": sorted(allowed_kinds),
             "prompt_family_counts": prompt_family_counts,
             "verb_counts": verb_counts,
+            "operator_family_counts": operator_family_counts,
+            "training_example_kind_counts": training_example_kind_counts,
+            "episode_governance_counts": episode_governance_counts,
+            "patch_kind_counts": patch_kind_counts,
+            "transition_kind_counts": transition_kind_counts,
+            "patch_bearing_example_count": patch_bearing_example_count,
         },
     )
     manifest_path = out_dir / "sft_dataset_manifest.json"
