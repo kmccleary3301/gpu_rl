@@ -135,6 +135,18 @@ def _build_run_entry(root: Path, run_dir: Path, *, entry_prefix: str) -> Knowled
     primary_bottleneck = bottleneck.get("primary_bottleneck") if isinstance(bottleneck, dict) else None
     if primary_bottleneck is not None:
         summary_parts.append(f"Primary bottleneck {primary_bottleneck}.")
+    failure_triage = projection.get("failure_triage", {}) if isinstance(projection, dict) else {}
+    failure_class = failure_triage.get("failure_class") if isinstance(failure_triage, dict) else None
+    if failure_class not in {None, "ready_positive"}:
+        summary_parts.append(f"Failure class {failure_class}.")
+    sanitizer_summary = projection.get("sanitizer_summary", {}) if isinstance(projection, dict) else {}
+    dominant_sanitizer_family = (
+        sanitizer_summary.get("dominant_failure_family")
+        if isinstance(sanitizer_summary, dict)
+        else None
+    )
+    if dominant_sanitizer_family is not None:
+        summary_parts.append(f"Sanitizer family {dominant_sanitizer_family}.")
     if benchmark_name is not None:
         summary_parts.append(f"Benchmark family {benchmark_name}.")
     patch_kind = summary_payload.get("patch_kind")
@@ -156,6 +168,10 @@ def _build_run_entry(root: Path, run_dir: Path, *, entry_prefix: str) -> Knowled
         tags.append(benchmark_name.lower())
     if summary_payload.get("patch_present"):
         tags.extend(["patch-bearing", "repair-example" if task_verb == "debug" else "transform-example"])
+    if isinstance(failure_class, str) and failure_class:
+        tags.append(failure_class)
+    if isinstance(dominant_sanitizer_family, str) and dominant_sanitizer_family:
+        tags.append(dominant_sanitizer_family)
     if isinstance(patch_kind, str) and patch_kind:
         tags.append(patch_kind)
     if isinstance(transition_kind, str) and transition_kind:
@@ -193,6 +209,8 @@ def _build_run_entry(root: Path, run_dir: Path, *, entry_prefix: str) -> Knowled
             "patch_kind": patch_kind,
             "transition_kind": transition_kind,
             "candidate_role": summary_payload.get("candidate_role"),
+            "failure_class": failure_class,
+            "dominant_sanitizer_family": dominant_sanitizer_family,
         },
     )
 
@@ -425,6 +443,18 @@ def query_knowledge(
                 score += 4
             elif entry.metadata.get("sft_ready") is True:
                 score += 2
+            failure_class = entry.metadata.get("failure_class")
+            if isinstance(failure_class, str) and failure_class:
+                failure_tokens = set(_tokenize(failure_class.replace("_", " ")))
+                score += len(query_tokens & failure_tokens) * 4
+            dominant_sanitizer_family = entry.metadata.get("dominant_sanitizer_family")
+            if isinstance(dominant_sanitizer_family, str) and dominant_sanitizer_family:
+                sanitizer_tokens = set(_tokenize(dominant_sanitizer_family.replace("_", " ")))
+                score += len(query_tokens & sanitizer_tokens) * 4
+            training_example_kind = entry.metadata.get("training_example_kind")
+            if isinstance(training_example_kind, str):
+                example_kind_tokens = set(_tokenize(training_example_kind.replace("_", " ")))
+                score += len(query_tokens & example_kind_tokens) * 2
         if not query_tokens:
             score += 1
         if score > 0:

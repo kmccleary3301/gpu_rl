@@ -13,19 +13,19 @@ _KERNEL_RE = re.compile(r"at\s+(?P<kernel>[^()\s]+)\([^)]*\)")
 _FILE_RE = re.compile(r"in\s+(?P<path>[^:\s]+):(?P<line>\d+)")
 
 
-def _categorize_message(message: str, tool: str) -> tuple[str, str]:
+def _categorize_message(message: str, tool: str) -> tuple[str, str, str, str | None]:
     lowered = message.lower()
     if "invalid" in lowered or "out of bounds" in lowered or "misaligned" in lowered:
-        return "memory_access_error", "error"
+        return "memory_access_error", "error", "memory_safety", "inspect memory indexing, bounds checks, and pointer alignment"
     if "race" in lowered:
-        return "data_race", "error"
+        return "data_race", "error", "concurrency", "inspect shared-state writes and synchronization ordering"
     if "uninitialized" in lowered:
-        return "uninitialized_access", "error"
+        return "uninitialized_access", "error", "initialization", "inspect initialization order and masked loads/stores"
     if "barrier" in lowered or "sync" in lowered:
-        return "sync_error", "error"
+        return "sync_error", "error", "synchronization", "inspect barrier placement and warp/block synchronization assumptions"
     if "warning" in lowered:
-        return "tool_warning", "warning"
-    return f"{tool}_issue", "error"
+        return "tool_warning", "warning", "tooling", None
+    return f"{tool}_issue", "error", "unknown", None
 
 
 def _parse_sanitizer_findings(tool: str, raw_log: str) -> list[SanitizerFinding]:
@@ -37,7 +37,7 @@ def _parse_sanitizer_findings(tool: str, raw_log: str) -> list[SanitizerFinding]
         payload = line.removeprefix("=========").strip()
         if not payload or payload.lower().startswith("error summary"):
             continue
-        category, severity = _categorize_message(payload, tool)
+        category, severity, failure_family, remediation_hint = _categorize_message(payload, tool)
         kernel_match = _KERNEL_RE.search(payload)
         file_match = _FILE_RE.search(payload)
         findings.append(
@@ -45,7 +45,9 @@ def _parse_sanitizer_findings(tool: str, raw_log: str) -> list[SanitizerFinding]
                 tool=tool,
                 category=category,
                 severity=severity,
+                failure_family=failure_family,
                 message=payload,
+                remediation_hint=remediation_hint,
                 kernel_name=kernel_match.group("kernel") if kernel_match else None,
                 file_path=file_match.group("path") if file_match else None,
                 line=int(file_match.group("line")) if file_match else None,
@@ -107,9 +109,27 @@ def sanitize_nvidia(
         warnings.append("sanitizer exited non-zero without parseable findings")
     severity_counts: dict[str, int] = {}
     category_counts: dict[str, int] = {}
+    failure_family_counts: dict[str, int] = {}
     for finding in findings:
         severity_counts[finding.severity] = severity_counts.get(finding.severity, 0) + 1
         category_counts[finding.category] = category_counts.get(finding.category, 0) + 1
+        if finding.failure_family:
+            failure_family_counts[finding.failure_family] = failure_family_counts.get(finding.failure_family, 0) + 1
+    dominant_failure_family = None
+    if failure_family_counts:
+        dominant_failure_family = max(
+            sorted(failure_family_counts.items()),
+            key=lambda item: item[1],
+        )[0]
+    triage_summary = []
+    for finding in findings[:5]:
+        location_parts = []
+        if finding.kernel_name:
+            location_parts.append(f"kernel={finding.kernel_name}")
+        if finding.file_path and finding.line:
+            location_parts.append(f"site={finding.file_path}:{finding.line}")
+        location = f" ({', '.join(location_parts)})" if location_parts else ""
+        triage_summary.append(f"{finding.failure_family or finding.category}: {finding.message}{location}")
 
     report = SanitizerReport(
         backend="nvidia_compute_sanitizer",
@@ -122,6 +142,9 @@ def sanitize_nvidia(
         warning_count=sum(1 for finding in findings if finding.severity == "warning"),
         severity_counts=severity_counts,
         category_counts=category_counts,
+        failure_family_counts=failure_family_counts,
+        dominant_failure_family=dominant_failure_family,
+        triage_summary=triage_summary,
         findings=findings,
         stdout_path=stdout_artifact.path,
         stderr_path=stderr_artifact.path,
@@ -149,9 +172,22 @@ def sanitize_nvidia(
                 f"- warning_count: `{report.warning_count}`",
                 f"- severity_counts: `{report.severity_counts}`",
                 f"- category_counts: `{report.category_counts}`",
+                f"- failure_family_counts: `{report.failure_family_counts}`",
+                f"- dominant_failure_family: `{report.dominant_failure_family}`",
                 "",
                 "## Findings",
-                *([f"- `{finding.category}`: {finding.message}" for finding in findings] or ["- none"]),
+                *(
+                    [
+                        f"- `{finding.failure_family or finding.category}`: {finding.message}"
+                        + (f" (`{finding.kernel_name}`)" if finding.kernel_name else "")
+                        + (f" at `{finding.file_path}:{finding.line}`" if finding.file_path and finding.line else "")
+                        for finding in findings
+                    ]
+                    or ["- none"]
+                ),
+                "",
+                "## Triage Summary",
+                *(triage_summary or ["- none"]),
             ]
         )
         + "\n",

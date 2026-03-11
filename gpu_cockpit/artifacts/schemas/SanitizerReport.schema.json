@@ -20,9 +20,33 @@
           "title": "Severity",
           "type": "string"
         },
+        "failure_family": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Failure Family"
+        },
         "message": {
           "title": "Message",
           "type": "string"
+        },
+        "remediation_hint": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Remediation Hint"
         },
         "kernel_name": {
           "anyOf": [
@@ -144,6 +168,32 @@
       },
       "title": "Category Counts",
       "type": "object"
+    },
+    "failure_family_counts": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "Failure Family Counts",
+      "type": "object"
+    },
+    "dominant_failure_family": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Dominant Failure Family"
+    },
+    "triage_summary": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Triage Summary",
+      "type": "array"
     },
     "findings": {
       "items": {

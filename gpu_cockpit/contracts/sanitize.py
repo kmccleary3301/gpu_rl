@@ -9,7 +9,9 @@ class SanitizerFinding(ContractModel):
     tool: str
     category: str
     severity: str
+    failure_family: str | None = None
     message: str
+    remediation_hint: str | None = None
     kernel_name: str | None = None
     file_path: str | None = None
     line: int | None = Field(default=None, ge=1)
@@ -27,6 +29,9 @@ class SanitizerReport(ContractModel):
     warning_count: int = Field(default=0, ge=0)
     severity_counts: dict[str, int] = Field(default_factory=dict)
     category_counts: dict[str, int] = Field(default_factory=dict)
+    failure_family_counts: dict[str, int] = Field(default_factory=dict)
+    dominant_failure_family: str | None = None
+    triage_summary: list[str] = Field(default_factory=list)
     findings: list[SanitizerFinding] = Field(default_factory=list)
     stdout_path: str | None = None
     stderr_path: str | None = None

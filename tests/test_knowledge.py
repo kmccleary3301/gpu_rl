@@ -92,3 +92,22 @@ class KnowledgeTests(unittest.TestCase):
                 for row in rows
             )
         )
+
+    def test_query_matches_failure_class_and_sanitizer_family_terms(self) -> None:
+        build_knowledge_index(ROOT, out_dir=self.out_dir)
+        rows = query_knowledge(
+            ROOT,
+            query="memory safety correctness failure repair",
+            verb="debug",
+            limit=10,
+            index_dir=self.out_dir,
+            prefer_mixed=True,
+        )
+        self.assertGreaterEqual(len(rows), 1)
+        self.assertTrue(
+            any(
+                row["kind"] == "run_example"
+                and row.get("metadata", {}).get("failure_class") in {"correctness", "build_or_kernel"}
+                for row in rows
+            )
+        )

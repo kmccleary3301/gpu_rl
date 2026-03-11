@@ -18,9 +18,33 @@
       "title": "Severity",
       "type": "string"
     },
+    "failure_family": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Failure Family"
+    },
     "message": {
       "title": "Message",
       "type": "string"
+    },
+    "remediation_hint": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Remediation Hint"
     },
     "kernel_name": {
       "anyOf": [
