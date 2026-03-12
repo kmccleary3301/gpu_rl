@@ -1,17 +1,16 @@
-name: CI
+name: GPU CI
 
 on:
-  push:
-    branches: ["main"]
-  pull_request:
+  workflow_dispatch:
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
+  group: gpu-ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  verify-cpu:
-    runs-on: ubuntu-latest
+  verify-gpu:
+    runs-on: [self-hosted, linux, gpu]
+    timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -29,8 +28,5 @@ jobs:
       - name: Export schemas
         run: python scripts/export_schemas.py
 
-      - name: Verify schema artifacts are current
-        run: git diff --exit-code -- gpu_cockpit/artifacts/schemas
-
-      - name: Run CPU-safe public test suite
-        run: python scripts/run_public_ci_tests.py
+      - name: Run GPU smoke suite on self-hosted runner
+        run: python scripts/run_gpu_ci_tests.py --suite smoke
