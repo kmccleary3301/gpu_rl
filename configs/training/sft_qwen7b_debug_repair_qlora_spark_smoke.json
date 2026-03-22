@@ -1,0 +1,49 @@
+{
+  "config_id": "cfg/sft/qwen7b/debug_repair_qlora_spark_smoke/v1",
+  "model_id": "Qwen/Qwen2.5-Coder-7B-Instruct",
+  "tokenizer_id": "Qwen/Qwen2.5-Coder-7B-Instruct",
+  "adapter_mode": "qlora",
+  "dataset_refs": [
+    {
+      "dataset_kind": "sft",
+      "path": "datasets/first_target_sft_train_v1",
+      "split": "train",
+      "required": true,
+      "notes": [
+        "Primary Spark fallback smoke train split built from generated first-target traces."
+      ]
+    },
+    {
+      "dataset_kind": "sft",
+      "path": "datasets/first_target_sft_dev_v1",
+      "split": "dev",
+      "required": true,
+      "notes": [
+        "Primary Spark fallback smoke dev split."
+      ]
+    }
+  ],
+  "eval_dataset_refs": [
+    {
+      "dataset_kind": "trajectory",
+      "path": "datasets/first_target_transition_dev_v1",
+      "split": "dev",
+      "required": true,
+      "notes": [
+        "Used for post-smoke held-out proxy evaluation."
+      ]
+    }
+  ],
+  "context_length": 4096,
+  "per_device_batch_size": 1,
+  "gradient_accumulation_steps": 8,
+  "learning_rate": 2e-05,
+  "num_epochs": 1,
+  "max_steps": 25,
+  "output_dir": "artifacts/training/qwen7b_debug_repair_qlora_spark_smoke_v1",
+  "notes": [
+    "Spark-specific fallback smoke config.",
+    "Uses the same dataset slice as the blocked 32B path so the variable under test is model/runtime footprint, not data.",
+    "This is a stack-validation fallback and not a replacement learning claim for the frozen 32B target."
+  ]
+}

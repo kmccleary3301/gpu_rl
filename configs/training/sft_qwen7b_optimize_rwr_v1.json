@@ -1,0 +1,38 @@
+{
+  "config_id": "cfg/rl/qwen7b/optimize_rwr/v1",
+  "model_id": "Qwen/Qwen2.5-Coder-7B-Instruct",
+  "tokenizer_id": "Qwen/Qwen2.5-Coder-7B-Instruct",
+  "adapter_mode": "qlora",
+  "dataset_refs": [
+    {
+      "dataset_kind": "sft",
+      "path": "datasets/optimize_rwr_train_v1",
+      "split": "train",
+      "required": true,
+      "notes": [
+        "Reward-weighted regression dataset built from on-policy base_v3 optimize episodes."
+      ]
+    },
+    {
+      "dataset_kind": "sft",
+      "path": "datasets/optimize_rwr_dev_v1",
+      "split": "dev",
+      "required": true,
+      "notes": [
+        "Held-out strongest success trajectory from the same rollout batch."
+      ]
+    }
+  ],
+  "eval_dataset_refs": [],
+  "context_length": 4096,
+  "per_device_batch_size": 1,
+  "gradient_accumulation_steps": 8,
+  "learning_rate": 2e-05,
+  "num_epochs": 1,
+  "max_steps": 12,
+  "output_dir": "artifacts/training/qwen7b_optimize_rwr_v1",
+  "notes": [
+    "First bounded local reward-weighted regression update on optimize tasks.",
+    "Uses on-policy base_v3 episodes as the rollout pool and reward-based duplication for credit assignment."
+  ]
+}

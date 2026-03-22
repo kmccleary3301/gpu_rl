@@ -15,7 +15,7 @@
   ],
   "default_command": [
     "python3",
-    "workloads/reference/triton_attention_score_candidate.py",
+    "workloads/reference/triton_attention_score_optimize_candidate.py",
     "--benchmark-repeats",
     "20"
   ],

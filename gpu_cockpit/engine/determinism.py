@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 
 from gpu_cockpit.contracts import DeterminismAttempt, DeterminismReport, SystemTraceSummary
 from gpu_cockpit.executors import CommandExecutor, LocalHostToolExecutor
+from gpu_cockpit.engine.command_utils import local_python_build_env, normalize_python_command
 from gpu_cockpit.engine.run_bundle import RunBundleWriter
 
 
@@ -32,6 +34,9 @@ def run_determinism_check(
     executor: CommandExecutor | None = None,
 ) -> DeterminismReport:
     executor = executor or LocalHostToolExecutor()
+    normalized_command = normalize_python_command(command)
+    run_env = os.environ.copy()
+    run_env.update(local_python_build_env(writer.root))
     target_runs = max(1, runs)
     attempts: list[DeterminismAttempt] = []
     warnings: list[str] = []
@@ -66,12 +71,12 @@ def run_determinism_check(
     started = writer.append_event(
         scope="eval.determinism",
         kind="started",
-        payload={"command": command, "runs": target_runs},
+        payload={"command": normalized_command, "runs": target_runs},
     )
 
     next_index = len(attempts) + 1
     while len(attempts) < target_runs:
-        result = executor.run(command, cwd=writer.root)
+        result = executor.run(normalized_command, cwd=writer.root, env=run_env)
         attempts.append(
             _build_attempt(
                 attempt_index=next_index,
@@ -99,7 +104,7 @@ def run_determinism_check(
         warnings.append("Stderr changed across determinism reruns.")
 
     report = DeterminismReport(
-        command=command,
+        command=normalized_command,
         runs=len(attempts),
         passed=passed,
         stable_exit_codes=stable_exit_codes,

@@ -11,7 +11,7 @@ HERE = Path(__file__).resolve().parent
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 
-from triton_row_sum_broken_kernel import triton_row_sum_broken
+from triton_row_sum_repaired_kernel import triton_row_sum_repaired
 
 
 VISIBLE_MATRIX = torch.tensor(
@@ -39,14 +39,14 @@ def _benchmark_tensor(rows: int, cols: int) -> torch.Tensor:
 def _run_benchmark(repeats: int) -> None:
     x = _benchmark_tensor(4096, 128)
     for _ in range(repeats):
-        out = triton_row_sum_broken(x)
+        out = triton_row_sum_repaired(x)
         torch.cuda.synchronize()
     _ = out
 
 
 def _payload() -> dict[str, object]:
-    visible = triton_row_sum_broken(VISIBLE_MATRIX.cuda()).cpu().tolist()
-    hidden = triton_row_sum_broken(HIDDEN_MATRIX.cuda()).cpu().tolist()
+    visible = triton_row_sum_repaired(VISIBLE_MATRIX.cuda()).cpu().tolist()
+    hidden = triton_row_sum_repaired(HIDDEN_MATRIX.cuda()).cpu().tolist()
     return {
         "visible_row_sum": [float(value) for value in visible],
         "hidden_row_sum": [float(value) for value in hidden],
@@ -55,7 +55,7 @@ def _payload() -> dict[str, object]:
             "broken_ref": "workloads/reference/triton_row_sum_broken_kernel.py",
             "fixed_ref": "workloads/reference/triton_row_sum_repaired_kernel.py",
             "reason_code": "last_column_omitted",
-            "attempt_status": "still_broken",
+            "next_action": "restore_mask_to_cols_lt_n_cols",
         },
     }
 

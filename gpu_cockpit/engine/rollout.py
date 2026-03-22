@@ -37,6 +37,7 @@ def run_scripted_rollout_suite(root: Path, config: RLRolloutConfig, out_dir: Pat
             step_budget=config.step_budget,
             determinism_runs=config.determinism_runs,
             workflow=config.workflow,
+            executor=config.executor,
             section="quality",
         )
         episode_path = episodes_dir / f"{episode.episode_id}.json"
@@ -64,7 +65,7 @@ def run_scripted_rollout_suite(root: Path, config: RLRolloutConfig, out_dir: Pat
         patch_bearing_count=sum(1 for result in results if result.patch_bearing),
         avg_final_reward=round(sum(final_rewards) / len(final_rewards), 4) if final_rewards else 0.0,
         results=results,
-        notes=[f"workflow:{config.workflow}", f"step_budget:{config.step_budget}"],
+        notes=[f"workflow:{config.workflow}", f"step_budget:{config.step_budget}", f"executor:{config.executor}"],
     )
     report_path = out_dir / "rollout_report.json"
     report_path.write_text(json.dumps(report.model_dump(mode="json"), indent=2) + "\n", encoding="utf-8")

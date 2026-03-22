@@ -21,7 +21,7 @@ from gpu_cockpit.engine.runner import build_run_id, build_run_spec, write_run_su
 from gpu_cockpit.engine.runner import run_task
 from gpu_cockpit.engine.sft import package_trajectory_dataset_as_sft, validate_sft_dataset
 from gpu_cockpit.engine.task_registry import TaskRegistry
-from gpu_cockpit.engine.training import load_training_config, validate_sft_training_config, write_sft_smoke_report
+from gpu_cockpit.engine.training import load_training_config, run_sft_training_job, validate_sft_training_config, write_sft_smoke_report
 from gpu_cockpit.engine.trajectory import export_trajectory_dataset, validate_trajectory_dataset, write_episode, write_trajectory_episode
 from gpu_cockpit.contracts import RLRolloutConfig
 
@@ -210,6 +210,10 @@ def build_parser() -> argparse.ArgumentParser:
     train_smoke = train_subparsers.add_parser("smoke-sft", help="Write a smoke SFT training report from a config")
     train_smoke.add_argument("config_path", type=Path, help="Path to SFT training config JSON")
     train_smoke.add_argument("--out", type=Path, required=True, help="Destination report path")
+    train_run = train_subparsers.add_parser("run-sft", help="Run a bounded local SFT job from a config")
+    train_run.add_argument("config_path", type=Path, help="Path to SFT training config JSON")
+    train_run.add_argument("--model-override", default=None, help="Optional model override for local smoke debugging")
+    train_run.add_argument("--max-steps-override", type=int, default=None, help="Optional max-steps override")
 
     rollout = subparsers.add_parser("rollout", help="Scripted rollout suite scaffolding for held-out debug/diagnose tasks")
     rollout_subparsers = rollout.add_subparsers(dest="rollout_command", required=True)
@@ -572,6 +576,17 @@ def main() -> int:
         report_path = write_sft_smoke_report(Path.cwd(), args.config_path, args.out)
         print(report_path)
         return 0
+
+    if args.command == "train" and args.train_command == "run-sft":
+        report_path = run_sft_training_job(
+            Path.cwd(),
+            args.config_path,
+            model_override=args.model_override,
+            max_steps_override=args.max_steps_override,
+        )
+        print(report_path)
+        payload = json.loads(report_path.read_text(encoding="utf-8"))
+        return 0 if payload.get("status") == "ok" else 1
 
     if args.command == "rollout" and args.rollout_command == "scripted":
         config_payload = json.loads(args.config_path.read_text(encoding="utf-8"))

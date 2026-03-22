@@ -2,14 +2,28 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 from pathlib import Path
+from typing import Any
 
-from gpu_cockpit.contracts import AntiHackReport, CorrectnessReport, DeterminismReport, EvalEnvelope, HookExecution, PerfReport, TaskSpec
+from gpu_cockpit.contracts import AntiHackReport, CorrectnessReport, DeterminismReport, EvalEnvelope, HookExecution, LearningRewardTrace, PerfReport, RewardLedger, RewardLedgerEntry, TaskSpec
 from gpu_cockpit.contracts.antihack import AntiHackHit
 from gpu_cockpit.contracts.trace import SystemTraceSummary
 from gpu_cockpit.executors import CommandExecutor, LocalHostToolExecutor
 from gpu_cockpit.engine.determinism import run_determinism_check
 from gpu_cockpit.engine.run_bundle import RunBundleWriter
+
+FAILURE_JSON_PREFIX = "GPC_FAILURE_JSON:"
+EXCLUDED_GOVERNANCE_SIGNALS = [
+    "required_artifact_completeness",
+    "replay_completeness",
+    "build_completeness",
+    "profile_completeness",
+    "provenance_completeness",
+    "benchmark_reporting",
+    "sft_collection",
+    "rl_reward_trace_readiness",
+]
 
 
 def _resolve_hook_command(root: Path, ref: str) -> list[str]:
@@ -18,7 +32,7 @@ def _resolve_hook_command(root: Path, ref: str) -> list[str]:
         path = root / ref
     path = path.resolve()
     if path.suffix == ".py":
-        return ["python3", str(path)]
+        return [sys.executable, str(path)]
     if path.suffix == ".sh":
         return ["bash", str(path)]
     return [str(path)]
@@ -189,6 +203,99 @@ def build_antihack_report(
     return report
 
 
+def _extract_hook_failure_details(writer: RunBundleWriter, execution: HookExecution | None) -> tuple[str | None, dict[str, Any] | None]:
+    if execution is None:
+        return None, None
+    lines: list[str] = []
+    for rel_path in [execution.stderr_path, execution.stdout_path]:
+        if rel_path is None:
+            continue
+        path = writer.run_dir / rel_path
+        if not path.exists():
+            continue
+        for raw_line in path.read_text(encoding="utf-8").splitlines():
+            line = raw_line.strip()
+            if line:
+                lines.append(line)
+    summary: str | None = None
+    details: dict[str, Any] | None = None
+    for line in lines:
+        if line.startswith(FAILURE_JSON_PREFIX):
+            payload = line[len(FAILURE_JSON_PREFIX) :].strip()
+            try:
+                parsed = json.loads(payload)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(parsed, dict):
+                details = parsed
+        else:
+            summary = line
+    return summary, details
+
+
+def _build_learning_reward_trace(
+    *,
+    task: TaskSpec,
+    correctness_gate: str,
+    anti_hack_passed: bool,
+    determinism_passed: bool,
+    perf_gate: str,
+    passes_non_perf_gates: bool,
+) -> LearningRewardTrace:
+    reward_components = {
+        "task_success": 0.6 if passes_non_perf_gates else 0.0,
+        "correctness": 0.25 if correctness_gate == "pass" else 0.0,
+        "determinism": 0.1 if determinism_passed else 0.0,
+        "perf_improvement": 0.05 if perf_gate == "pass" else 0.0,
+    }
+    shaping_components = {
+        "tool_cost": 0.0,
+        "compare_use_bonus": 0.0,
+    }
+    notes: list[str] = []
+    if perf_gate in {"blocked", "not_run"}:
+        notes.append(f"perf_gate:{perf_gate}")
+    if not anti_hack_passed:
+        notes.append("anti_hack_failed")
+    reward_ledger = RewardLedger(
+        task_id=task.task_id,
+        task_verb=task.verb,
+        task_outcome="success" if passes_non_perf_gates else "failure",
+        trace_usability="trainable_positive" if passes_non_perf_gates else "analysis_only",
+        entries=[
+            RewardLedgerEntry(
+                step_index=0,
+                action_type="eval",
+                reward_components=reward_components,
+                shaping_components=shaping_components,
+                total_delta=round(sum(reward_components.values()) + sum(shaping_components.values()), 4),
+                notes=["run_level_eval_reward"],
+            )
+        ],
+        total_reward_components=reward_components,
+        total_shaping_components=shaping_components,
+        total_reward=round(sum(reward_components.values()) + sum(shaping_components.values()), 4),
+    )
+    return LearningRewardTrace(
+        task_id=task.task_id,
+        task_verb=task.verb,
+        terminal_state="success" if passes_non_perf_gates else "failure",
+        task_outcome="success" if passes_non_perf_gates else "failure",
+        trace_usability="trainable_positive" if passes_non_perf_gates else "analysis_only",
+        task_success=passes_non_perf_gates,
+        correctness_passed=correctness_gate == "pass",
+        determinism_passed=determinism_passed,
+        anti_hack_passed=anti_hack_passed,
+        perf_gate=perf_gate,
+        reward_components=reward_components,
+        shaping_components=shaping_components,
+        excluded_governance_signals=EXCLUDED_GOVERNANCE_SIGNALS,
+        total_reward=round(sum(reward_components.values()) + sum(shaping_components.values()), 4),
+        notes=notes,
+        reward_ledger=reward_ledger,
+    )
+
+
 def run_evaluation_hooks(
     writer: RunBundleWriter,
     root: Path,
@@ -213,6 +320,8 @@ def run_evaluation_hooks(
 
     visible_exec = run_hook(writer, root, "visible_tests", task.visible_tests_ref, env, executor=executor) if task.visible_tests_ref else None
     hidden_exec = run_hook(writer, root, "hidden_tests", task.hidden_tests_ref, env, executor=executor) if task.hidden_tests_ref else None
+    visible_failure_summary, visible_failure_details = _extract_hook_failure_details(writer, visible_exec)
+    hidden_failure_summary, hidden_failure_details = _extract_hook_failure_details(writer, hidden_exec)
 
     failures: list[str] = []
     if visible_exec is not None and not visible_exec.passed:
@@ -242,6 +351,16 @@ def run_evaluation_hooks(
             "stable_stderr": determinism.stable_stderr,
         },
         failures=failures,
+        visible_failure_summary=visible_failure_summary,
+        hidden_failure_summary=hidden_failure_summary,
+        failure_localization={
+            key: value
+            for key, value in {
+                "visible_tests": visible_failure_details,
+                "hidden_tests": hidden_failure_details,
+            }.items()
+            if isinstance(value, dict)
+        },
     )
     writer.write_artifact(
         relative_path="correctness/correctness.json",
@@ -249,6 +368,13 @@ def run_evaluation_hooks(
         content=json.dumps(correctness.model_dump(mode="json"), indent=2) + "\n",
         mime="application/json",
         semantic_tags=["correctness", "summary"],
+    )
+    writer.write_artifact(
+        relative_path="correctness/failure_localization.json",
+        kind="failure_localization",
+        content=json.dumps(correctness.failure_localization, indent=2) + "\n",
+        mime="application/json",
+        semantic_tags=["correctness", "failure", "localization"],
     )
 
     anti_hack = build_antihack_report(
@@ -305,12 +431,27 @@ def run_evaluation_hooks(
         },
         final_score=binary_reward + perf_reward if passes_non_perf_gates else 0.0,
     )
+    learning_reward_trace = _build_learning_reward_trace(
+        task=task,
+        correctness_gate=correctness_gate,
+        anti_hack_passed=anti_hack.passed,
+        determinism_passed=determinism.passed,
+        perf_gate=perf_gate,
+        passes_non_perf_gates=passes_non_perf_gates,
+    )
     writer.write_artifact(
         relative_path="eval/eval_envelope.json",
         kind="eval_envelope",
         content=json.dumps(envelope.model_dump(mode="json"), indent=2) + "\n",
         mime="application/json",
         semantic_tags=["eval", "summary"],
+    )
+    writer.write_artifact(
+        relative_path="eval/learning_reward_trace.json",
+        kind="learning_reward_trace",
+        content=json.dumps(learning_reward_trace.model_dump(mode="json"), indent=2) + "\n",
+        mime="application/json",
+        semantic_tags=["eval", "reward", "learning"],
     )
     writer.write_artifact(
         relative_path="eval/gate_summary.json",

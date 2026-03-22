@@ -130,6 +130,16 @@ def _parse_rocm_smi_power_limits(info: str) -> dict[str, int]:
     return limits
 
 
+def _parse_optional_float(raw: str) -> float | None:
+    cleaned = raw.strip().strip("[]")
+    if not cleaned or cleaned.upper() in {"N/A", "NOT SUPPORTED", "UNKNOWN"}:
+        return None
+    try:
+        return float(cleaned)
+    except ValueError:
+        return None
+
+
 def _collect_nvidia_fingerprints(tool_statuses: list[ToolStatus]) -> list[HardwareFingerprint]:
     if shutil.which("nvidia-smi") is None:
         return []
@@ -158,6 +168,8 @@ def _collect_nvidia_fingerprints(tool_statuses: list[ToolStatus]) -> list[Hardwa
         if len(parts) < 4:
             continue
         gpu_name, driver_version, memory_total, power_limit = parts[:4]
+        memory_total_mb = _parse_optional_float(memory_total)
+        power_limit_w = _parse_optional_float(power_limit)
         fingerprints.append(
             HardwareFingerprint(
                 vendor="nvidia",
@@ -165,8 +177,8 @@ def _collect_nvidia_fingerprints(tool_statuses: list[ToolStatus]) -> list[Hardwa
                 arch=f"gpu_{index}",
                 driver_version=driver_version,
                 runtime_version=tool_versions.get("nvcc") or "unknown",
-                memory_gb=int(float(memory_total) / 1024),
-                power_limit_w=int(float(power_limit)) if power_limit else None,
+                memory_gb=int(memory_total_mb / 1024) if memory_total_mb is not None else 0,
+                power_limit_w=int(power_limit_w) if power_limit_w is not None else None,
                 clock_state="unknown",
                 mig_mode=False,
                 mps_mode=False,

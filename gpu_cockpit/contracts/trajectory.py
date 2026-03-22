@@ -5,7 +5,8 @@ from datetime import datetime
 from pydantic import Field
 
 from gpu_cockpit.contracts.base import ContractModel
-from gpu_cockpit.contracts.evidence import EpisodeReadinessReport
+from gpu_cockpit.contracts.evidence import EpisodeReadinessReport, EvidenceQualityReport
+from gpu_cockpit.contracts.reward import LearningRewardTrace, OptimizeTraceSnapshots, RewardLedger
 
 
 class TrajectoryAction(ContractModel):
@@ -63,6 +64,10 @@ class TrajectoryEpisode(ContractModel):
     environment_hash: str | None = None
     artifact_refs: list[str] = Field(default_factory=list)
     governance: EpisodeReadinessReport | None = None
+    governance_score: EvidenceQualityReport | None = None
+    learning_reward_trace: LearningRewardTrace | None = None
+    reward_ledger: RewardLedger | None = None
+    optimize_trace_snapshots: OptimizeTraceSnapshots | None = None
     metadata: dict[str, object] = Field(default_factory=dict)
 
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import subprocess
 import time
 from pathlib import Path
 from typing import Any
@@ -56,10 +57,17 @@ def compile_triton_build_spec(writer: RunBundleWriter, root: Path, build_spec_re
     compiled = kernel.warmup(*warmup_args, grid=grid, **kwargs)
     asm = compiled.asm
     sass_text = None
+    warnings: list[str] = []
     try:
         sass_value = asm["sass"]
         sass_text = sass_value.decode("utf-8", errors="replace") if isinstance(sass_value, bytes) else str(sass_value)
     except KeyError:
+        sass_text = None
+    except Exception as exc:
+        if isinstance(exc, subprocess.CalledProcessError):
+            warnings.append(f"sass extraction unavailable: {' '.join(exc.cmd)} exited with code {exc.returncode}")
+        else:
+            warnings.append(f"sass extraction unavailable: {exc}")
         sass_text = None
     build_record = emit_disassembly_bundle(
         writer=writer,
@@ -89,6 +97,7 @@ def compile_triton_build_spec(writer: RunBundleWriter, root: Path, build_spec_re
                 "grid": list(grid),
                 "kwargs": kwargs,
                 "metadata": dict(compiled.metadata._asdict()),
+                "warnings": warnings,
             },
             default=str,
             indent=2,
@@ -101,6 +110,10 @@ def compile_triton_build_spec(writer: RunBundleWriter, root: Path, build_spec_re
     writer.append_event(
         scope="tool.compile_triton_build_spec",
         kind="completed",
-        payload={"duration_ms": int((time.monotonic() - started) * 1000), "build_spec_ref": build_spec_ref},
+        payload={
+            "duration_ms": int((time.monotonic() - started) * 1000),
+            "build_spec_ref": build_spec_ref,
+            "warnings": warnings,
+        },
     )
     return build_record

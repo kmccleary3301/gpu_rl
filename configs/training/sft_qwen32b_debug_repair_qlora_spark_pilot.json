@@ -1,0 +1,67 @@
+{
+  "config_id": "cfg/sft/qwen32b/debug_repair_qlora_spark_pilot/v1",
+  "model_id": "Qwen/Qwen2.5-Coder-32B-Instruct",
+  "tokenizer_id": "Qwen/Qwen2.5-Coder-32B-Instruct",
+  "adapter_mode": "qlora",
+  "dataset_refs": [
+    {
+      "dataset_kind": "sft",
+      "path": "datasets/first_target_sft_train_v1",
+      "split": "train",
+      "required": true,
+      "notes": [
+        "Primary Spark pilot train split."
+      ]
+    },
+    {
+      "dataset_kind": "sft",
+      "path": "datasets/first_target_sft_dev_v1",
+      "split": "dev",
+      "required": true,
+      "notes": [
+        "Primary Spark pilot dev split."
+      ]
+    },
+    {
+      "dataset_kind": "sft",
+      "path": "tests/golden_datasets/transition_sft_v1",
+      "split": "train",
+      "required": true,
+      "notes": [
+        "Retained as a stable smoke-style sanity reference."
+      ]
+    }
+  ],
+  "eval_dataset_refs": [
+    {
+      "dataset_kind": "trajectory",
+      "path": "datasets/first_target_transition_dev_v1",
+      "split": "dev",
+      "required": true,
+      "notes": [
+        "Primary Spark pilot held-out proxy evaluation set."
+      ]
+    },
+    {
+      "dataset_kind": "trajectory",
+      "path": "tests/golden_datasets/transition_collection_v1",
+      "split": "eval",
+      "required": true,
+      "notes": [
+        "Retained as a fixed evaluation guardrail."
+      ]
+    }
+  ],
+  "context_length": 4096,
+  "per_device_batch_size": 1,
+  "gradient_accumulation_steps": 16,
+  "learning_rate": 1.5e-05,
+  "num_epochs": 1,
+  "max_steps": 200,
+  "output_dir": "artifacts/training/qwen32b_debug_repair_qlora_spark_pilot_v1",
+  "notes": [
+    "Spark-specific pilot config skeleton.",
+    "This remains a bounded pilot and not a final learning claim.",
+    "Pilot should proceed with PTX-only build evidence if SM121a SASS decode remains unavailable."
+  ]
+}

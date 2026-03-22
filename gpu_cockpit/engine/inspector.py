@@ -7,6 +7,7 @@ from typing import Any
 
 from gpu_cockpit.contracts import RunComparison, RunSummary
 from gpu_cockpit.engine.evidence import assess_run_evidence
+from gpu_cockpit.engine.optimize_patch_registry import get_optimize_patch_spec
 
 
 def resolve_run_dir(root: Path, run_ref: str) -> Path:
@@ -30,6 +31,21 @@ def _load_optional_json(run_dir: Path, relative_path: str) -> dict[str, Any] | N
     if not path.exists():
         return None
     return load_json(path)
+
+
+def _load_command_payload(run_dir: Path) -> dict[str, Any] | None:
+    path = run_dir / "command" / "stdout.txt"
+    if not path.exists():
+        return None
+    lines = [line.strip() for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    for line in reversed(lines):
+        try:
+            parsed = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(parsed, dict):
+            return parsed
+    return None
 
 
 def _sha256_for_ref(run_dir: Path, artifact_ref: str | None) -> str | None:
@@ -69,8 +85,17 @@ def _failure_triage(run_dir: Path) -> dict[str, Any]:
     task_spec = _load_optional_json(run_dir, "prompt/task_spec.json") or {}
     eval_envelope = _load_optional_json(run_dir, "eval/eval_envelope.json") or {}
     correctness = _load_optional_json(run_dir, "correctness/correctness.json") or {}
+    failure_localization = _load_optional_json(run_dir, "correctness/failure_localization.json") or {}
     failure_class = "ready_positive"
     likely_artifacts: list[str] = []
+    primary_signal = None
+    if isinstance(failure_localization, dict):
+        for key in ("hidden_tests", "visible_tests"):
+            payload = failure_localization.get(key)
+            if isinstance(payload, dict) and payload.get("code") is not None:
+                primary_signal = str(payload.get("code"))
+                likely_artifacts.append("correctness/failure_localization.json")
+                break
     if correctness.get("failures"):
         failure_class = "correctness"
         likely_artifacts.extend(["correctness/correctness.json", "command/stdout.txt", "command/stderr.txt"])
@@ -91,6 +116,7 @@ def _failure_triage(run_dir: Path) -> dict[str, Any]:
     return {
         "task_verb": task_spec.get("verb"),
         "failure_class": failure_class,
+        "primary_signal": primary_signal,
         "likely_artifacts": list(dict.fromkeys([path for path in likely_artifacts if (run_dir / path).exists()])),
     }
 
@@ -98,14 +124,23 @@ def _failure_triage(run_dir: Path) -> dict[str, Any]:
 def _candidate_projection(run_dir: Path) -> dict[str, Any] | None:
     candidate_state = _load_optional_json(run_dir, "candidate/state.json")
     transition = _load_optional_json(run_dir, "candidate/transition.json")
+    operation = _load_optional_json(run_dir, "candidate/operation.json")
     applied_patch = _load_optional_json(run_dir, "patches/applied_patch.json")
-    if candidate_state is None and transition is None and applied_patch is None:
+    if candidate_state is None and transition is None and operation is None and applied_patch is None:
         return None
     return {
         "candidate_state": candidate_state,
         "transition": transition,
+        "operation": operation,
         "applied_patch": applied_patch,
         "patch_present": applied_patch is not None,
+        "candidate_status": candidate_state.get("status") if isinstance(candidate_state, dict) else None,
+        "candidate_origin_kind": candidate_state.get("origin_kind") if isinstance(candidate_state, dict) else None,
+        "candidate_operation_kind": operation.get("operation_kind")
+        if isinstance(operation, dict)
+        else candidate_state.get("last_operation_kind")
+        if isinstance(candidate_state, dict)
+        else None,
         "changed_file_count": len(applied_patch.get("metadata", {}).get("changed_files", []))
         if isinstance(applied_patch, dict) and isinstance(applied_patch.get("metadata"), dict)
         else len(candidate_state.get("changed_files", []))
@@ -114,7 +149,114 @@ def _candidate_projection(run_dir: Path) -> dict[str, Any] | None:
     }
 
 
+def _public_benchmark_projection(command_payload: dict[str, Any] | None) -> dict[str, Any] | None:
+    if not isinstance(command_payload, dict):
+        return None
+    benchmark_source = command_payload.get("benchmark_source")
+    benchmark_case_id = command_payload.get("benchmark_case_id")
+    benchmark_case_version = command_payload.get("benchmark_case_version")
+    case_config_path = command_payload.get("case_config_path")
+    problem_path = command_payload.get("problem_path")
+    optimization_summary = command_payload.get("optimization_summary")
+    if all(
+        value is None
+        for value in [
+            benchmark_source,
+            benchmark_case_id,
+            benchmark_case_version,
+            case_config_path,
+            problem_path,
+            optimization_summary,
+        ]
+    ):
+        return None
+    result: dict[str, Any] = {
+        "benchmark_source": benchmark_source,
+        "benchmark_case_id": benchmark_case_id,
+        "benchmark_case_version": benchmark_case_version,
+        "case_config_path": case_config_path,
+        "problem_path": problem_path,
+    }
+    if isinstance(optimization_summary, dict):
+        result["optimization_summary"] = optimization_summary
+    return result
+
+
+def _optimization_summary_from_payload(command_payload: dict[str, Any] | None) -> dict[str, Any] | None:
+    if not isinstance(command_payload, dict):
+        return None
+    optimization_summary = command_payload.get("optimization_summary")
+    if isinstance(optimization_summary, dict):
+        return optimization_summary
+    reformulation_summary = command_payload.get("reformulation_summary")
+    if not isinstance(reformulation_summary, dict):
+        return None
+    return {
+        "strategy_change": reformulation_summary.get("strategy_change"),
+        "candidate_ref": reformulation_summary.get("optimized_ref"),
+        "baseline_ref": reformulation_summary.get("baseline_ref"),
+        "supersedes_candidate_ref": reformulation_summary.get("supersedes_candidate_ref"),
+    }
+
+
+def _infer_public_benchmark_projection(
+    task_id: str,
+    *,
+    patch_present: bool,
+    patch_kind: str | None,
+) -> dict[str, Any] | None:
+    spec = get_optimize_patch_spec(task_id)
+    if spec is None:
+        return None
+    public = spec.get("public_benchmark")
+    if not isinstance(public, dict):
+        return None
+    is_positive = patch_present and patch_kind != "no_op"
+    candidate_ref = str(spec["positive_patch_source_file"] if is_positive else spec["negative_patch_source_file"])
+    strategy_change = public["positive_strategy_change"] if is_positive else public["negative_strategy_change"]
+    return {
+        "benchmark_source": public.get("benchmark_source"),
+        "benchmark_case_id": public.get("benchmark_case_id"),
+        "benchmark_case_version": public.get("benchmark_case_version"),
+        "case_config_path": public.get("case_config_ref"),
+        "problem_path": None,
+        "optimization_summary": {
+            "strategy_change": strategy_change,
+            "candidate_ref": candidate_ref,
+            "baseline_ref": public.get("baseline_ref"),
+            "case_config_ref": public.get("case_config_ref"),
+        },
+    }
+
+
+def _parent_candidate_projection(root: Path, parent_run_id: str | None) -> dict[str, Any] | None:
+    if not parent_run_id:
+        return None
+    try:
+        parent_run_dir = resolve_run_dir(root, parent_run_id)
+    except FileNotFoundError:
+        return None
+    return _candidate_projection(parent_run_dir)
+
+
 def _recommended_next_actions(projection: dict[str, Any]) -> list[str]:
+    failure_localization = projection.get("failure_localization") or {}
+    if isinstance(failure_localization, dict):
+        hidden_details = failure_localization.get("hidden_tests")
+        if isinstance(hidden_details, dict):
+            likely_next_actions = hidden_details.get("likely_next_actions")
+            if isinstance(likely_next_actions, list) and likely_next_actions:
+                return [str(action) for action in likely_next_actions]
+            code = str(hidden_details.get("code", ""))
+            if code in {"missing_optimization_summary", "missing_reformulation_summary"}:
+                return ["patch_candidate", "build", "eval", "compare"]
+            if code in {"hidden_attention_score_mismatch", "visible_attention_score_mismatch"}:
+                return ["inspect_quality", "compare", "patch_candidate", "eval"]
+        visible_details = failure_localization.get("visible_tests")
+        if isinstance(visible_details, dict):
+            likely_next_actions = visible_details.get("likely_next_actions")
+            if isinstance(likely_next_actions, list) and likely_next_actions:
+                return [str(action) for action in likely_next_actions]
     failure_triage = projection.get("failure_triage")
     if isinstance(failure_triage, dict):
         failure_class = str(failure_triage.get("failure_class", ""))
@@ -273,10 +415,246 @@ def _lineage_relationship(
     return "unrelated", False
 
 
+def _candidate_role_group(candidate_role: Any) -> str | None:
+    role = str(candidate_role) if candidate_role is not None else None
+    if role is None:
+        return None
+    if role == "baseline_candidate":
+        return "baseline"
+    if role in {"working_candidate", "patched_candidate", "synthesized_candidate"}:
+        return "trial"
+    if role == "branched_candidate":
+        return "branch"
+    if role == "reverted_candidate":
+        return "reverted"
+    if role == "promoted_candidate":
+        return "promoted"
+    if role == "comparison_anchor":
+        return "anchor"
+    return role
+
+
 def _hash_delta(lhs_hash: str | None, rhs_hash: str | None) -> bool | None:
     if lhs_hash is None or rhs_hash is None:
         return None
     return lhs_hash != rhs_hash
+
+
+def _compare_correctness_change(lhs_gate: Any, rhs_gate: Any) -> str:
+    lhs = str(lhs_gate) if lhs_gate is not None else "unknown"
+    rhs = str(rhs_gate) if rhs_gate is not None else "unknown"
+    if lhs == "fail" and rhs == "pass":
+        return "recovered"
+    if lhs == "pass" and rhs == "fail":
+        return "regressed"
+    if lhs == "pass" and rhs == "pass":
+        return "preserved_pass"
+    if lhs == "fail" and rhs == "fail":
+        return "preserved_fail"
+    return "unknown"
+
+
+def _optimize_delta_summary(
+    *,
+    lhs_correctness_gate: Any,
+    rhs_correctness_gate: Any,
+    lhs_perf_p50: Any,
+    rhs_perf_p50: Any,
+    lhs_final_score: Any,
+    rhs_final_score: Any,
+    perf_improved: bool | None,
+    lineage_relationship: str | None,
+    lhs_patch_kind: Any,
+    rhs_patch_kind: Any,
+    rhs_patch_present: bool,
+    lhs_candidate_role: Any,
+    rhs_candidate_role: Any,
+    lhs_public_benchmark: dict[str, Any] | None,
+    rhs_public_benchmark: dict[str, Any] | None,
+    lhs_optimization_summary: dict[str, Any] | None,
+    rhs_optimization_summary: dict[str, Any] | None,
+) -> tuple[dict[str, Any], list[str], list[str]]:
+    correctness_change = _compare_correctness_change(lhs_correctness_gate, rhs_correctness_gate)
+    perf_change = "not_comparable"
+    perf_delta_ms = None
+    if isinstance(lhs_perf_p50, (int, float)) and isinstance(rhs_perf_p50, (int, float)):
+        perf_delta_ms = float(rhs_perf_p50) - float(lhs_perf_p50)
+        if perf_delta_ms < 0:
+            perf_change = "improved"
+        elif perf_delta_ms > 0:
+            perf_change = "regressed"
+        else:
+            perf_change = "unchanged"
+    final_score_delta = None
+    if isinstance(lhs_final_score, (int, float)) and isinstance(rhs_final_score, (int, float)):
+        final_score_delta = float(rhs_final_score) - float(lhs_final_score)
+    focus = "baseline_to_candidate" if rhs_patch_present and not lhs_patch_kind else "candidate_delta"
+    patch_change = None
+    if rhs_patch_kind is not None and rhs_patch_kind != lhs_patch_kind:
+        patch_change = f"{lhs_patch_kind or 'none'}->{rhs_patch_kind}"
+    lhs_strategy_change = lhs_optimization_summary.get("strategy_change") if isinstance(lhs_optimization_summary, dict) else None
+    rhs_strategy_change = rhs_optimization_summary.get("strategy_change") if isinstance(rhs_optimization_summary, dict) else None
+    lhs_candidate_ref = lhs_optimization_summary.get("candidate_ref") if isinstance(lhs_optimization_summary, dict) else None
+    rhs_candidate_ref = rhs_optimization_summary.get("candidate_ref") if isinstance(rhs_optimization_summary, dict) else None
+    lhs_case_ref = lhs_optimization_summary.get("case_config_ref") if isinstance(lhs_optimization_summary, dict) else None
+    rhs_case_ref = rhs_optimization_summary.get("case_config_ref") if isinstance(rhs_optimization_summary, dict) else None
+    benchmark_case_id = None
+    benchmark_case_changed = None
+    if isinstance(lhs_public_benchmark, dict) or isinstance(rhs_public_benchmark, dict):
+        lhs_case_id = lhs_public_benchmark.get("benchmark_case_id") if isinstance(lhs_public_benchmark, dict) else None
+        rhs_case_id = rhs_public_benchmark.get("benchmark_case_id") if isinstance(rhs_public_benchmark, dict) else None
+        benchmark_case_id = rhs_case_id or lhs_case_id
+        if lhs_case_id is not None and rhs_case_id is not None:
+            benchmark_case_changed = lhs_case_id != rhs_case_id
+    lines: list[str] = []
+    if correctness_change == "recovered":
+        lines.append("Correctness recovered relative to the baseline/reference run.")
+    elif correctness_change == "regressed":
+        lines.append("Correctness regressed relative to the baseline/reference run.")
+    elif correctness_change == "preserved_pass":
+        lines.append("Correctness stayed green across both runs.")
+    elif correctness_change == "preserved_fail":
+        lines.append("Both runs still fail correctness; inspect the failure delta before another patch.")
+    if perf_change == "improved" and perf_delta_ms is not None:
+        lines.append(f"Candidate latency improved by {abs(perf_delta_ms):.3f} ms at p50.")
+    elif perf_change == "regressed" and perf_delta_ms is not None:
+        lines.append(f"Candidate latency regressed by {perf_delta_ms:.3f} ms at p50.")
+    if patch_change is not None:
+        lines.append(f"Patch lineage changed via `{patch_change}`.")
+    elif lineage_relationship is not None:
+        lines.append(f"Candidate lineage relation is `{lineage_relationship}`.")
+    if benchmark_case_id is not None:
+        if benchmark_case_changed:
+            lines.append(f"Benchmark case changed from `{lhs_case_id}` to `{rhs_case_id}`.")
+        else:
+            lines.append(f"Compare is anchored to public benchmark case `{benchmark_case_id}`.")
+    if rhs_strategy_change is not None:
+        if lhs_strategy_change is not None and lhs_strategy_change != rhs_strategy_change:
+            lines.append(f"Optimization strategy changed from `{lhs_strategy_change}` to `{rhs_strategy_change}`.")
+        elif lhs_strategy_change is None:
+            lines.append(f"Optimization strategy is `{rhs_strategy_change}`.")
+    if rhs_candidate_ref is not None:
+        if lhs_candidate_ref is not None and lhs_candidate_ref != rhs_candidate_ref:
+            lines.append(f"Candidate reference changed from `{lhs_candidate_ref}` to `{rhs_candidate_ref}`.")
+        elif lhs_candidate_ref is None:
+            lines.append(f"Candidate reference is `{rhs_candidate_ref}`.")
+    recommended_next_actions: list[str]
+    if correctness_change in {"regressed", "preserved_fail"}:
+        recommended_next_actions = ["inspect_quality", "patch_candidate", "eval"]
+    elif perf_change == "regressed":
+        recommended_next_actions = ["inspect_quality", "patch_candidate", "bench"]
+    else:
+        recommended_next_actions = ["inspect_quality", "replay", "eval"]
+    lineage_scopes = {
+        "baseline_delta": {
+            "focus": "baseline_vs_candidate" if focus == "baseline_to_candidate" else "candidate_vs_candidate",
+            "lineage_relationship": lineage_relationship,
+        },
+        "parent_delta": {
+            "available": lineage_relationship in {"lhs_parent_of_rhs", "rhs_parent_of_lhs"},
+            "lineage_relationship": lineage_relationship,
+        },
+        "sibling_delta": {
+            "available": lineage_relationship == "same_parent",
+            "lineage_relationship": lineage_relationship,
+        },
+    }
+    return (
+        {
+            "focus": focus,
+            "benchmark_case_id": benchmark_case_id,
+            "benchmark_case_changed": benchmark_case_changed,
+            "benchmark_source": rhs_public_benchmark.get("benchmark_source")
+            if isinstance(rhs_public_benchmark, dict)
+            else lhs_public_benchmark.get("benchmark_source")
+            if isinstance(lhs_public_benchmark, dict)
+            else None,
+            "case_config_path": rhs_public_benchmark.get("case_config_path")
+            if isinstance(rhs_public_benchmark, dict)
+            else lhs_public_benchmark.get("case_config_path")
+            if isinstance(lhs_public_benchmark, dict)
+            else None,
+            "optimization_strategy_change": rhs_strategy_change,
+            "optimization_strategy_delta": f"{lhs_strategy_change}->{rhs_strategy_change}"
+            if lhs_strategy_change is not None and rhs_strategy_change is not None and lhs_strategy_change != rhs_strategy_change
+            else None,
+            "candidate_ref": rhs_candidate_ref,
+            "candidate_ref_delta": f"{lhs_candidate_ref}->{rhs_candidate_ref}"
+            if lhs_candidate_ref is not None and rhs_candidate_ref is not None and lhs_candidate_ref != rhs_candidate_ref
+            else None,
+            "correctness_change": correctness_change,
+            "perf_change": perf_change,
+            "perf_p50_delta_ms": perf_delta_ms,
+            "final_score_delta": final_score_delta,
+            "lineage_relationship": lineage_relationship,
+            "patch_change": patch_change,
+            "perf_improved": perf_improved,
+            "problem_path": rhs_public_benchmark.get("problem_path")
+            if isinstance(rhs_public_benchmark, dict)
+            else lhs_public_benchmark.get("problem_path")
+            if isinstance(lhs_public_benchmark, dict)
+            else None,
+            "baseline_ref": rhs_optimization_summary.get("baseline_ref") if isinstance(rhs_optimization_summary, dict) else None,
+            "case_config_ref": rhs_case_ref,
+            "lhs_candidate_role": str(lhs_candidate_role) if lhs_candidate_role is not None else None,
+            "rhs_candidate_role": str(rhs_candidate_role) if rhs_candidate_role is not None else None,
+            "lhs_candidate_role_group": _candidate_role_group(lhs_candidate_role),
+            "rhs_candidate_role_group": _candidate_role_group(rhs_candidate_role),
+            "lineage_scopes": lineage_scopes,
+        },
+        lines,
+        recommended_next_actions,
+    )
+
+
+def _candidate_delta_brief(
+    *,
+    lhs_candidate_id: str | None,
+    rhs_candidate_id: str | None,
+    lhs_parent_candidate_id: str | None,
+    rhs_parent_candidate_id: str | None,
+    lhs_transition_kind: Any,
+    rhs_transition_kind: Any,
+    lhs_operation_kind: Any,
+    rhs_operation_kind: Any,
+    lhs_status: Any,
+    rhs_status: Any,
+    lhs_candidate_role: Any,
+    rhs_candidate_role: Any,
+    lhs_changed_file_count: int,
+    rhs_changed_file_count: int,
+    lineage_relationship: str | None,
+) -> dict[str, Any]:
+    sibling_candidate_refs: list[str] = []
+    if (
+        lineage_relationship == "same_parent"
+        and lhs_candidate_id is not None
+        and rhs_candidate_id is not None
+        and lhs_candidate_id != rhs_candidate_id
+    ):
+        sibling_candidate_refs = [lhs_candidate_id, rhs_candidate_id]
+    return {
+        "lhs_candidate_id": lhs_candidate_id,
+        "rhs_candidate_id": rhs_candidate_id,
+        "lhs_parent_candidate_id": lhs_parent_candidate_id,
+        "rhs_parent_candidate_id": rhs_parent_candidate_id,
+        "lhs_transition_kind": str(lhs_transition_kind) if lhs_transition_kind is not None else None,
+        "rhs_transition_kind": str(rhs_transition_kind) if rhs_transition_kind is not None else None,
+        "lhs_operation_kind": str(lhs_operation_kind) if lhs_operation_kind is not None else None,
+        "rhs_operation_kind": str(rhs_operation_kind) if rhs_operation_kind is not None else None,
+        "lhs_candidate_role": str(lhs_candidate_role) if lhs_candidate_role is not None else None,
+        "rhs_candidate_role": str(rhs_candidate_role) if rhs_candidate_role is not None else None,
+        "lhs_candidate_role_group": _candidate_role_group(lhs_candidate_role),
+        "rhs_candidate_role_group": _candidate_role_group(rhs_candidate_role),
+        "lhs_candidate_status": str(lhs_status) if lhs_status is not None else None,
+        "rhs_candidate_status": str(rhs_status) if rhs_status is not None else None,
+        "lhs_changed_file_count": lhs_changed_file_count,
+        "rhs_changed_file_count": rhs_changed_file_count,
+        "changed_file_count_delta": rhs_changed_file_count - lhs_changed_file_count,
+        "lineage_relationship": lineage_relationship,
+        "parent_candidate_ref": rhs_parent_candidate_id or lhs_parent_candidate_id,
+        "sibling_candidate_refs": sibling_candidate_refs,
+    }
 
 
 def project_run_bundle(run_dir: Path) -> dict[str, Any]:
@@ -294,16 +672,21 @@ def project_run_bundle(run_dir: Path) -> dict[str, Any]:
     )
     projection["bottleneck_card"] = _load_optional_json(run_dir, "bottlenecks/primary.json")
     projection["correctness_summary"] = _load_optional_json(run_dir, "correctness/correctness.json")
+    projection["failure_localization"] = _load_optional_json(run_dir, "correctness/failure_localization.json")
     projection["determinism_summary"] = _load_optional_json(run_dir, "correctness/determinism.json")
     projection["anti_hack_summary"] = _load_optional_json(run_dir, "eval/anti_hack_report.json")
     projection["eval_envelope"] = _load_optional_json(run_dir, "eval/eval_envelope.json")
+    projection["learning_reward_trace"] = _load_optional_json(run_dir, "eval/learning_reward_trace.json")
     projection["gate_summary"] = _load_optional_json(run_dir, "eval/gate_summary.json")
     projection["replay_pack"] = _load_optional_json(run_dir, "replay/replay_pack.json")
     projection["build_record"] = _load_optional_json(run_dir, "build/build_record.json")
     projection["tri_view"] = _load_optional_json(run_dir, "build/tri_view.json")
     projection["build_projection"] = _build_projection(run_dir)
     projection["candidate_projection"] = _candidate_projection(run_dir)
+    projection["command_payload"] = _load_command_payload(run_dir)
+    projection["public_benchmark_projection"] = _public_benchmark_projection(projection["command_payload"])
     projection["evidence_quality"] = assess_run_evidence(run_dir).model_dump(mode="json")
+    projection["governance_score"] = projection["evidence_quality"]
     projection["failure_triage"] = _failure_triage(run_dir)
     projection["profile_triage"] = _profile_triage(projection)
     projection["recommended_next_actions"] = _recommended_next_actions(projection)
@@ -342,6 +725,10 @@ def select_inspection_section(payload: dict[str, Any], section: str) -> dict[str
                 "patch_kind",
                 "transition_kind",
                 "candidate_role",
+                "candidate_status",
+                "candidate_origin_kind",
+                "candidate_operation_kind",
+                "candidate_diff_ref",
                 "exit_code",
                 "duration_ms",
                 "warnings",
@@ -350,10 +737,10 @@ def select_inspection_section(payload: dict[str, Any], section: str) -> dict[str
         }
     section_map = {
         "build": ["build_record", "tri_view", "build_projection"],
-        "eval": ["correctness_summary", "determinism_summary", "anti_hack_summary", "eval_envelope", "gate_summary"],
+        "eval": ["correctness_summary", "failure_localization", "determinism_summary", "anti_hack_summary", "eval_envelope", "gate_summary"],
         "profile": ["profile_summary", "sanitizer_summary", "bottleneck_card", "profile_triage"],
         "replay": ["replay_validation", "replay_pack"],
-        "quality": ["evidence_quality", "training_readiness", "training_trace_triage", "failure_triage", "profile_triage", "recommended_next_actions"],
+        "quality": ["evidence_quality", "governance_score", "learning_reward_trace", "training_readiness", "training_trace_triage", "failure_triage", "failure_localization", "profile_triage", "public_benchmark_projection", "recommended_next_actions"],
         "transition": ["candidate_projection", "recommended_next_actions"],
     }
     keys = section_map.get(section)
@@ -430,6 +817,10 @@ def compare_runs(root: Path, lhs_ref: str, rhs_ref: str) -> RunComparison:
     rhs_build_projection = _build_projection(rhs_run_dir) or {}
     lhs_candidate_projection = _candidate_projection(lhs_run_dir) or {}
     rhs_candidate_projection = _candidate_projection(rhs_run_dir) or {}
+    lhs_command_payload = _load_command_payload(lhs_run_dir)
+    rhs_command_payload = _load_command_payload(rhs_run_dir)
+    lhs_public_benchmark = _public_benchmark_projection(lhs_command_payload)
+    rhs_public_benchmark = _public_benchmark_projection(rhs_command_payload)
     lhs_build_record = lhs_build_projection.get("record") or {}
     rhs_build_record = rhs_build_projection.get("record") or {}
     lhs_candidate_state = lhs_candidate_projection.get("candidate_state") or {}
@@ -438,6 +829,50 @@ def compare_runs(root: Path, lhs_ref: str, rhs_ref: str) -> RunComparison:
     rhs_transition = rhs_candidate_projection.get("transition") or {}
     lhs_patch = lhs_candidate_projection.get("applied_patch") or {}
     rhs_patch = rhs_candidate_projection.get("applied_patch") or {}
+    lhs_parent_candidate_projection = _parent_candidate_projection(root, lhs.parent_run_id)
+    rhs_parent_candidate_projection = _parent_candidate_projection(root, rhs.parent_run_id)
+    lhs_effective_candidate_projection = lhs_candidate_projection or lhs_parent_candidate_projection or {}
+    rhs_effective_candidate_projection = rhs_candidate_projection or rhs_parent_candidate_projection or {}
+    lhs_candidate_state = lhs_effective_candidate_projection.get("candidate_state") or lhs_candidate_state
+    rhs_candidate_state = rhs_effective_candidate_projection.get("candidate_state") or rhs_candidate_state
+    lhs_transition = lhs_effective_candidate_projection.get("transition") or lhs_transition
+    rhs_transition = rhs_effective_candidate_projection.get("transition") or rhs_transition
+    lhs_patch = lhs_effective_candidate_projection.get("applied_patch") or lhs_patch
+    rhs_patch = rhs_effective_candidate_projection.get("applied_patch") or rhs_patch
+    lhs_patch_present = bool(lhs_effective_candidate_projection.get("patch_present"))
+    rhs_patch_present = bool(rhs_effective_candidate_projection.get("patch_present"))
+    lhs_candidate_operation_kind = lhs_effective_candidate_projection.get("candidate_operation_kind")
+    rhs_candidate_operation_kind = rhs_effective_candidate_projection.get("candidate_operation_kind")
+    lhs_optimization_summary = _optimization_summary_from_payload(lhs_command_payload)
+    rhs_optimization_summary = _optimization_summary_from_payload(rhs_command_payload)
+    if lhs_public_benchmark is None:
+        lhs_patch_kind = str(lhs_patch.get("patch_kind")) if lhs_patch.get("patch_kind") is not None else None
+        if lhs_patch_kind is None and isinstance(lhs_parent_candidate_projection, dict):
+            parent_patch = lhs_parent_candidate_projection.get("applied_patch") or {}
+            lhs_patch_kind = str(parent_patch.get("patch_kind")) if parent_patch.get("patch_kind") is not None else None
+        lhs_public_benchmark = _infer_public_benchmark_projection(
+            lhs.task_id,
+            patch_present=lhs_patch_present or bool(lhs_parent_candidate_projection and lhs_parent_candidate_projection.get("patch_present")),
+            patch_kind=lhs_patch_kind,
+        )
+    if rhs_public_benchmark is None:
+        rhs_patch_kind = str(rhs_patch.get("patch_kind")) if rhs_patch.get("patch_kind") is not None else None
+        if rhs_patch_kind is None and isinstance(rhs_parent_candidate_projection, dict):
+            parent_patch = rhs_parent_candidate_projection.get("applied_patch") or {}
+            rhs_patch_kind = str(parent_patch.get("patch_kind")) if parent_patch.get("patch_kind") is not None else None
+        rhs_public_benchmark = _infer_public_benchmark_projection(
+            rhs.task_id,
+            patch_present=rhs_patch_present or bool(rhs_parent_candidate_projection and rhs_parent_candidate_projection.get("patch_present")),
+            patch_kind=rhs_patch_kind,
+        )
+    if lhs_optimization_summary is None and isinstance(lhs_public_benchmark, dict):
+        summary = lhs_public_benchmark.get("optimization_summary")
+        if isinstance(summary, dict):
+            lhs_optimization_summary = summary
+    if rhs_optimization_summary is None and isinstance(rhs_public_benchmark, dict):
+        summary = rhs_public_benchmark.get("optimization_summary")
+        if isinstance(summary, dict):
+            rhs_optimization_summary = summary
     lhs_triview = lhs_build_projection.get("tri_view") or {}
     rhs_triview = rhs_build_projection.get("tri_view") or {}
     lhs_final_score = lhs_eval.get("final_score")
@@ -512,11 +947,63 @@ def compare_runs(root: Path, lhs_ref: str, rhs_ref: str) -> RunComparison:
         summary_lines.append(
             f"Patch kind changed from `{lhs_patch.get('patch_kind')}` to `{rhs_patch.get('patch_kind')}`."
         )
+    optimize_delta_summary, optimize_summary_lines, recommended_next_actions = _optimize_delta_summary(
+        lhs_correctness_gate=lhs_correctness_gate,
+        rhs_correctness_gate=rhs_correctness_gate,
+        lhs_perf_p50=lhs_perf_p50,
+        rhs_perf_p50=rhs_perf_p50,
+        lhs_final_score=lhs_final_score,
+        rhs_final_score=rhs_final_score,
+        perf_improved=(
+            True
+            if isinstance(lhs_perf_p50, (int, float)) and isinstance(rhs_perf_p50, (int, float)) and rhs_perf_p50 < lhs_perf_p50
+            else False
+            if isinstance(lhs_perf_p50, (int, float)) and isinstance(rhs_perf_p50, (int, float)) and rhs_perf_p50 >= lhs_perf_p50
+            else None
+        ),
+        lineage_relationship=lineage_relationship,
+        lhs_patch_kind=lhs_patch.get("patch_kind"),
+        rhs_patch_kind=rhs_patch.get("patch_kind"),
+        rhs_patch_present=rhs_patch_present,
+        lhs_candidate_role=lhs_candidate_state.get("candidate_role"),
+        rhs_candidate_role=rhs_candidate_state.get("candidate_role"),
+        lhs_public_benchmark=lhs_public_benchmark,
+        rhs_public_benchmark=rhs_public_benchmark,
+        lhs_optimization_summary=lhs_optimization_summary,
+        rhs_optimization_summary=rhs_optimization_summary,
+    )
+    candidate_delta_brief = _candidate_delta_brief(
+        lhs_candidate_id=lhs_candidate_id,
+        rhs_candidate_id=rhs_candidate_id,
+        lhs_parent_candidate_id=lhs_parent_candidate_id,
+        rhs_parent_candidate_id=rhs_parent_candidate_id,
+        lhs_transition_kind=lhs_transition.get("transition_kind"),
+        rhs_transition_kind=rhs_transition.get("transition_kind"),
+        lhs_operation_kind=lhs_candidate_operation_kind,
+        rhs_operation_kind=rhs_candidate_operation_kind,
+        lhs_status=lhs_candidate_state.get("status"),
+        rhs_status=rhs_candidate_state.get("status"),
+        lhs_candidate_role=lhs_candidate_state.get("candidate_role"),
+        rhs_candidate_role=rhs_candidate_state.get("candidate_role"),
+        lhs_changed_file_count=lhs_changed_file_count,
+        rhs_changed_file_count=rhs_changed_file_count,
+        lineage_relationship=lineage_relationship,
+    )
+    summary_lines.extend(line for line in optimize_summary_lines if line not in summary_lines)
+    if lineage_relationship is not None:
+        summary_lines.append(
+            f"Candidate delta brief: relation `{lineage_relationship}`, changed files `{lhs_changed_file_count}->{rhs_changed_file_count}`."
+        )
     return RunComparison(
         lhs_run_id=lhs.run_id,
         rhs_run_id=rhs.run_id,
         lhs_status=lhs.status,
         rhs_status=rhs.status,
+        candidate_delta_brief=candidate_delta_brief,
+        lhs_candidate_role=str(lhs_candidate_state.get("candidate_role")) if lhs_candidate_state.get("candidate_role") is not None else None,
+        rhs_candidate_role=str(rhs_candidate_state.get("candidate_role")) if rhs_candidate_state.get("candidate_role") is not None else None,
+        lhs_candidate_role_group=_candidate_role_group(lhs_candidate_state.get("candidate_role")),
+        rhs_candidate_role_group=_candidate_role_group(rhs_candidate_state.get("candidate_role")),
         lhs_duration_ms=lhs.duration_ms,
         rhs_duration_ms=rhs.duration_ms,
         duration_delta_ms=(rhs.duration_ms - lhs.duration_ms) if lhs.duration_ms is not None and rhs.duration_ms is not None else None,
@@ -678,5 +1165,7 @@ def compare_runs(root: Path, lhs_ref: str, rhs_ref: str) -> RunComparison:
             (lhs_build_projection.get("artifact_hashes") or {}).get("sass"),
             (rhs_build_projection.get("artifact_hashes") or {}).get("sass"),
         ),
+        optimize_delta_summary=optimize_delta_summary,
+        recommended_next_actions=recommended_next_actions,
         summary_lines=summary_lines,
     )

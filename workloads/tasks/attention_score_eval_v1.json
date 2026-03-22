@@ -5,7 +5,7 @@
   "difficulty": "medium",
   "prompt": "Run a Triton causal attention-score kernel on CUDA and print JSON with visible_attention_scores and hidden_attention_scores. The candidate should compute masked QK^T / sqrt(head_dim) tiles with Triton rather than torch.matmul or scaled_dot_product_attention shortcuts.",
   "baseline_ref": "workloads/baselines/attention_score_eval_baseline.json",
-  "reference_impl_ref": "workloads/reference/triton_attention_score_candidate.py",
+  "reference_impl_ref": "workloads/reference/triton_attention_score_optimize_candidate.py",
   "visible_tests_ref": "workloads/tests/attention_score_visible.py",
   "hidden_tests_ref": "workloads/tests/attention_score_hidden.py",
   "input_generator_ref": null,

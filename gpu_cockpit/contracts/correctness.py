@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pydantic import Field
+from typing import Any
 
 from gpu_cockpit.contracts.base import ContractModel
 
@@ -14,3 +15,6 @@ class CorrectnessReport(ContractModel):
     determinism: dict[str, int | bool | str] = Field(default_factory=dict)
     numerical_deltas_ref: str | None = None
     failures: list[str] = Field(default_factory=list)
+    visible_failure_summary: str | None = None
+    hidden_failure_summary: str | None = None
+    failure_localization: dict[str, Any] = Field(default_factory=dict)

@@ -1,0 +1,317 @@
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Any
+
+
+def _load_text(root: Path, relative_path: str) -> str:
+    return (root / relative_path).read_text(encoding="utf-8")
+
+
+def _optimize_patch_specs() -> dict[str, dict[str, Any]]:
+    return {
+        "task/attention_score/eval/v1": {
+            "patch_target_file": "workloads/reference/triton_attention_score_optimize_patchable_candidate.py",
+            "negative_patch_source_file": "workloads/reference/triton_attention_score_optimize_patchable_candidate.py",
+            "positive_patch_source_file": "workloads/reference/triton_attention_score_optimize_candidate.py",
+            "negative_patch_intent": "Attempt an optimize pass without changing the patchable attention-score candidate.",
+            "negative_patch_expected_effect": "Keep the candidate in its pre-optimization state so the hidden optimize summary requirement still fails.",
+            "positive_patch_intent": "Promote the patchable attention-score candidate into the optimize-ready Triton candidate.",
+            "positive_patch_expected_effect": "Preserve hidden and visible attention scores while surfacing the optimize summary required by the task.",
+            "negative_patch_kind": "no_op",
+            "positive_patch_kind": "perf_transform",
+            "negative_transition_kind": "patch_applied",
+            "positive_transition_kind": "reformulated",
+            "eval_command": ["python3", "workloads/reference/triton_attention_score_optimize_patchable_candidate.py", "--benchmark-repeats", "2"],
+            "pre_patch_build_spec": "workloads/reference/triton_attention_score_kernel.py:get_build_spec",
+            "post_patch_build_spec": "workloads/reference/triton_attention_score_kernel.py:get_build_spec",
+            "positive_attempt_plans": [
+                {
+                    "patch_source_file": "workloads/reference/triton_attention_score_optimize_patchable_candidate.py",
+                    "patch_intent": "Try a conservative first optimize attempt that keeps the attention-score wrapper in its patchable state.",
+                    "patch_expected_effect": "Establish a first candidate that preserves baseline behavior and is expected to fail the hidden optimization-summary requirement.",
+                    "patch_kind": "no_op",
+                    "transition_kind": "patch_applied",
+                    "attempt_reason": "candidate_a_conservative_attention_wrapper_attempt",
+                },
+                {
+                    "patch_source_file": "workloads/reference/triton_attention_score_optimize_candidate.py",
+                    "patch_intent": "Try a second optimize attempt that promotes the attention-score wrapper into the optimize-ready Triton candidate.",
+                    "patch_expected_effect": "Recover correctness gates and surface the first accepted optimize summary for the attention-score task.",
+                    "patch_kind": "perf_transform",
+                    "transition_kind": "reformulated",
+                    "attempt_reason": "candidate_b_promote_attention_optimize_wrapper",
+                },
+                {
+                    "patch_source_file": "workloads/reference/triton_attention_score_optimize_candidate_v2.py",
+                    "patch_intent": "Try a third optimize attempt that supersedes the first promoted attention-score wrapper with a second optimize-ready variant.",
+                    "patch_expected_effect": "Preserve correctness while surfacing an alternate accepted optimization summary for a ranked candidate-tree trace.",
+                    "patch_kind": "perf_transform",
+                    "transition_kind": "reformulated",
+                    "attempt_reason": "candidate_c_supersede_attention_optimize_wrapper",
+                },
+            ],
+        },
+        "task/reduction_row_sum/eval/v1": {
+            "patch_target_file": "workloads/reference/triton_row_sum_optimize_patchable_candidate.py",
+            "negative_patch_source_file": "workloads/reference/triton_row_sum_optimize_patchable_candidate.py",
+            "positive_patch_source_file": "workloads/reference/triton_row_sum_optimize_candidate.py",
+            "negative_patch_intent": "Attempt a row-sum optimize pass without changing the patchable Triton candidate.",
+            "negative_patch_expected_effect": "Keep the candidate in its pre-optimization state so the hidden optimize summary requirement still fails.",
+            "positive_patch_intent": "Promote the patchable row-sum candidate into the optimize-ready Triton candidate.",
+            "positive_patch_expected_effect": "Preserve hidden and visible row sums while surfacing the optimize summary required by the task.",
+            "negative_patch_kind": "no_op",
+            "positive_patch_kind": "perf_transform",
+            "negative_transition_kind": "patch_applied",
+            "positive_transition_kind": "reformulated",
+            "eval_command": ["python3", "workloads/reference/triton_row_sum_optimize_patchable_candidate.py", "--benchmark-repeats", "2"],
+            "pre_patch_build_spec": "workloads/reference/triton_row_sum_repaired_kernel.py:get_build_spec",
+            "post_patch_build_spec": "workloads/reference/triton_row_sum_repaired_kernel.py:get_build_spec",
+            "positive_attempt_plans": [
+                {
+                    "patch_source_file": "workloads/reference/triton_row_sum_optimize_patchable_candidate.py",
+                    "patch_intent": "Try a conservative first optimize attempt that keeps the row-sum wrapper in its patchable state.",
+                    "patch_expected_effect": "Establish a first candidate that preserves baseline behavior and is expected to fail the hidden optimization-summary requirement.",
+                    "patch_kind": "no_op",
+                    "transition_kind": "patch_applied",
+                    "attempt_reason": "candidate_a_conservative_baseline_preserving_attempt",
+                },
+                {
+                    "patch_source_file": "workloads/reference/triton_row_sum_optimize_candidate.py",
+                    "patch_intent": "Try a second optimize attempt that promotes the row-sum wrapper into the optimize-ready Triton candidate.",
+                    "patch_expected_effect": "Recover correctness gates and surface the optimize summary required for success.",
+                    "patch_kind": "perf_transform",
+                    "transition_kind": "reformulated",
+                    "attempt_reason": "candidate_b_promote_optimize_ready_wrapper",
+                },
+                {
+                    "patch_source_file": "workloads/reference/triton_row_sum_optimize_candidate_v2.py",
+                    "patch_intent": "Try a third optimize attempt that supersedes the first promoted row-sum wrapper with a second optimize-ready variant.",
+                    "patch_expected_effect": "Preserve correctness while surfacing a stronger superseding optimization-summary signal for a deeper candidate-tree trace.",
+                    "patch_kind": "perf_transform",
+                    "transition_kind": "reformulated",
+                    "attempt_reason": "candidate_c_supersede_first_optimize_wrapper",
+                },
+            ],
+        },
+        "task/reduction_row_sum_branching/eval/v1": {
+            "patch_target_file": "workloads/reference/triton_row_sum_optimize_patchable_candidate.py",
+            "negative_patch_source_file": "workloads/reference/triton_row_sum_optimize_patchable_candidate.py",
+            "positive_patch_source_file": "workloads/reference/triton_row_sum_optimize_candidate.py",
+            "negative_patch_intent": "Attempt a branching row-sum optimize pass without changing the patchable Triton candidate.",
+            "negative_patch_expected_effect": "Keep the candidate in its pre-optimization state so the hidden optimize summary requirement still fails.",
+            "positive_patch_intent": "Promote the patchable row-sum candidate into the optimize-ready Triton candidate.",
+            "positive_patch_expected_effect": "Preserve hidden and visible row sums while surfacing an accepted optimization summary for the branching task.",
+            "negative_patch_kind": "no_op",
+            "positive_patch_kind": "perf_transform",
+            "negative_transition_kind": "patch_applied",
+            "positive_transition_kind": "reformulated",
+            "eval_command": ["python3", "workloads/reference/triton_row_sum_optimize_patchable_candidate.py", "--benchmark-repeats", "2"],
+            "pre_patch_build_spec": "workloads/reference/triton_row_sum_repaired_kernel.py:get_build_spec",
+            "post_patch_build_spec": "workloads/reference/triton_row_sum_repaired_kernel.py:get_build_spec",
+            "positive_attempt_plans": [
+                {
+                    "patch_source_file": "workloads/reference/triton_row_sum_optimize_patchable_candidate.py",
+                    "patch_intent": "Try a conservative first optimize attempt that keeps the row-sum wrapper in its patchable state.",
+                    "patch_expected_effect": "Establish a first candidate that preserves baseline behavior and is expected to fail the hidden optimization-summary requirement.",
+                    "patch_kind": "no_op",
+                    "transition_kind": "patch_applied",
+                    "attempt_reason": "candidate_a_conservative_baseline_preserving_attempt",
+                },
+                {
+                    "patch_source_file": "workloads/reference/triton_row_sum_optimize_candidate.py",
+                    "patch_intent": "Try a second optimize attempt that promotes the row-sum wrapper into the first optimize-ready Triton candidate.",
+                    "patch_expected_effect": "Recover correctness gates and surface the first accepted optimize summary.",
+                    "patch_kind": "perf_transform",
+                    "transition_kind": "reformulated",
+                    "attempt_reason": "candidate_b_promote_optimize_ready_wrapper",
+                },
+                {
+                    "patch_source_file": "workloads/reference/triton_row_sum_optimize_candidate_v2.py",
+                    "patch_intent": "Try a third optimize attempt that supersedes the first promoted row-sum wrapper with a second optimize-ready variant.",
+                    "patch_expected_effect": "Preserve correctness while surfacing a stronger superseding optimization-summary signal for a deeper candidate-tree trace.",
+                    "patch_kind": "perf_transform",
+                    "transition_kind": "reformulated",
+                    "attempt_reason": "candidate_c_supersede_first_optimize_wrapper",
+                },
+            ],
+        },
+        "task/kv_cache_gather/eval/v1": {
+            "patch_target_file": "workloads/reference/triton_kv_cache_gather_optimize_patchable_candidate.py",
+            "negative_patch_source_file": "workloads/reference/triton_kv_cache_gather_optimize_patchable_candidate.py",
+            "positive_patch_source_file": "workloads/reference/triton_kv_cache_gather_optimize_candidate.py",
+            "negative_patch_intent": "Attempt a KV-cache gather optimize pass without changing the patchable Triton candidate.",
+            "negative_patch_expected_effect": "Keep the candidate in its pre-optimization state so the hidden optimize summary requirement still fails.",
+            "positive_patch_intent": "Promote the patchable KV-cache gather candidate into the optimize-ready Triton candidate.",
+            "positive_patch_expected_effect": "Preserve hidden and visible gather rows while surfacing the optimize summary required by the task.",
+            "negative_patch_kind": "no_op",
+            "positive_patch_kind": "perf_transform",
+            "negative_transition_kind": "patch_applied",
+            "positive_transition_kind": "reformulated",
+            "eval_command": ["python3", "workloads/reference/triton_kv_cache_gather_optimize_patchable_candidate.py", "--benchmark-repeats", "2"],
+            "pre_patch_build_spec": "workloads/reference/triton_kv_cache_gather_kernel.py:get_build_spec",
+            "post_patch_build_spec": "workloads/reference/triton_kv_cache_gather_kernel.py:get_build_spec",
+        },
+        "task/kernelbench/level1/47_sum_reduction/eval/v1": {
+            "patch_target_file": "workloads/reference/kernelbench_sum_reduction_optimize_patchable_candidate.py",
+            "negative_patch_source_file": "workloads/reference/kernelbench_sum_reduction_optimize_patchable_candidate.py",
+            "positive_patch_source_file": "workloads/reference/kernelbench_sum_reduction_optimize_candidate.py",
+            "negative_patch_intent": "Attempt a KernelBench sum-reduction optimize pass without changing the patchable candidate wrapper.",
+            "negative_patch_expected_effect": "Keep the candidate in its pre-optimization state so the optimize summary requirement still fails.",
+            "positive_patch_intent": "Promote the patchable KernelBench sum-reduction wrapper into the optimize-ready candidate.",
+            "positive_patch_expected_effect": "Preserve the KernelBench sum-reduction visible and hidden outputs while surfacing the optimize summary required by the task.",
+            "negative_patch_kind": "no_op",
+            "positive_patch_kind": "perf_transform",
+            "negative_transition_kind": "patch_applied",
+            "positive_transition_kind": "reformulated",
+            "eval_command": ["python3", "workloads/reference/kernelbench_sum_reduction_optimize_patchable_candidate.py", "--benchmark-repeats", "2"],
+            "pre_patch_build_spec": None,
+            "post_patch_build_spec": None,
+            "public_benchmark": {
+                "benchmark_source": "kernelbench",
+                "benchmark_case_id": "kernelbench/level1/47_sum_reduction",
+                "benchmark_case_version": "v0.1",
+                "case_config_ref": "workloads/public_benchmarks/kernelbench/v0_1/cases/level1_047_sum_reduction.json",
+                "baseline_ref": "workloads/reference/kernelbench_reference_runner.py",
+                "negative_strategy_change": "baseline_kernelbench_reference",
+                "positive_strategy_change": "promote_curated_kernelbench_sum_reduction_candidate_wrapper",
+            },
+        },
+        "task/kernelbench/level1/23_softmax/eval/v1": {
+            "patch_target_file": "workloads/reference/kernelbench_softmax_optimize_patchable_candidate.py",
+            "negative_patch_source_file": "workloads/reference/kernelbench_softmax_optimize_patchable_candidate.py",
+            "positive_patch_source_file": "workloads/reference/kernelbench_softmax_optimize_candidate.py",
+            "negative_patch_intent": "Attempt a KernelBench softmax optimize pass without changing the patchable candidate wrapper.",
+            "negative_patch_expected_effect": "Keep the candidate in its pre-optimization state so the optimize summary requirement still fails.",
+            "positive_patch_intent": "Promote the patchable KernelBench softmax wrapper into the optimize-ready candidate.",
+            "positive_patch_expected_effect": "Preserve the KernelBench softmax visible and hidden outputs while surfacing the optimize summary required by the task.",
+            "negative_patch_kind": "no_op",
+            "positive_patch_kind": "perf_transform",
+            "negative_transition_kind": "patch_applied",
+            "positive_transition_kind": "reformulated",
+            "eval_command": ["python3", "workloads/reference/kernelbench_softmax_optimize_patchable_candidate.py", "--benchmark-repeats", "2"],
+            "pre_patch_build_spec": None,
+            "post_patch_build_spec": None,
+            "public_benchmark": {
+                "benchmark_source": "kernelbench",
+                "benchmark_case_id": "kernelbench/level1/23_softmax",
+                "benchmark_case_version": "v0.1",
+                "case_config_ref": "workloads/public_benchmarks/kernelbench/v0_1/cases/level1_023_softmax.json",
+                "baseline_ref": "workloads/reference/kernelbench_reference_runner.py",
+                "negative_strategy_change": "baseline_kernelbench_reference",
+                "positive_strategy_change": "promote_curated_kernelbench_softmax_candidate_wrapper",
+            },
+        },
+        "task/kernelbench/level1/23_softmax_wide/eval/v1": {
+            "patch_target_file": "workloads/reference/kernelbench_softmax_wide_optimize_patchable_candidate.py",
+            "negative_patch_source_file": "workloads/reference/kernelbench_softmax_wide_optimize_patchable_candidate.py",
+            "positive_patch_source_file": "workloads/reference/kernelbench_softmax_wide_optimize_candidate.py",
+            "negative_patch_intent": "Attempt a KernelBench softmax wide optimize pass without changing the patchable candidate wrapper.",
+            "negative_patch_expected_effect": "Keep the candidate in its pre-optimization state so the optimize summary requirement still fails.",
+            "positive_patch_intent": "Promote the patchable KernelBench softmax wide wrapper into the optimize-ready candidate.",
+            "positive_patch_expected_effect": "Preserve the KernelBench softmax wide visible and hidden outputs while surfacing the optimize summary required by the task.",
+            "negative_patch_kind": "no_op",
+            "positive_patch_kind": "perf_transform",
+            "negative_transition_kind": "patch_applied",
+            "positive_transition_kind": "reformulated",
+            "eval_command": ["python3", "workloads/reference/kernelbench_softmax_wide_optimize_patchable_candidate.py", "--benchmark-repeats", "2"],
+            "pre_patch_build_spec": None,
+            "post_patch_build_spec": None,
+            "positive_attempt_plans": [
+                {
+                    "patch_source_file": "workloads/reference/kernelbench_softmax_wide_optimize_patchable_candidate.py",
+                    "patch_intent": "Try a conservative first optimize attempt that keeps the softmax wide wrapper in its patchable state.",
+                    "patch_expected_effect": "Establish a first candidate that preserves baseline behavior and is expected to fail the hidden optimization-summary requirement.",
+                    "patch_kind": "no_op",
+                    "transition_kind": "patch_applied",
+                    "attempt_reason": "candidate_a_conservative_public_wrapper_attempt",
+                },
+                {
+                    "patch_source_file": "workloads/reference/kernelbench_softmax_wide_optimize_candidate.py",
+                    "patch_intent": "Try a second optimize attempt that promotes the softmax wide wrapper into the optimize-ready candidate.",
+                    "patch_expected_effect": "Recover correctness gates and surface the optimize summary required for success on the wider public variant.",
+                    "patch_kind": "perf_transform",
+                    "transition_kind": "reformulated",
+                    "attempt_reason": "candidate_b_promote_public_optimize_ready_wrapper",
+                },
+                {
+                    "patch_source_file": "workloads/reference/kernelbench_softmax_wide_optimize_candidate_v2.py",
+                    "patch_intent": "Try a third optimize attempt that supersedes the first promoted softmax wide wrapper with an alternate optimize-ready candidate.",
+                    "patch_expected_effect": "Preserve correctness while surfacing an alternate accepted optimization summary for ranked public-candidate iteration.",
+                    "patch_kind": "perf_transform",
+                    "transition_kind": "reformulated",
+                    "attempt_reason": "candidate_c_supersede_public_optimize_wrapper",
+                },
+            ],
+            "public_benchmark": {
+                "benchmark_source": "kernelbench",
+                "benchmark_case_id": "kernelbench/level1/23_softmax_wide",
+                "benchmark_case_version": "v0.1",
+                "case_config_ref": "workloads/public_benchmarks/kernelbench/v0_1/cases/level1_023_softmax_wide.json",
+                "baseline_ref": "workloads/reference/kernelbench_reference_runner.py",
+                "negative_strategy_change": "baseline_kernelbench_reference",
+                "positive_strategy_change": "promote_curated_kernelbench_softmax_wide_candidate_wrapper",
+            },
+        },
+    }
+
+
+def get_optimize_patch_spec(task_id: str) -> dict[str, Any] | None:
+    spec = _optimize_patch_specs().get(task_id)
+    if spec is None:
+        return None
+    return dict(spec)
+
+
+def resolve_optimize_patch_harness(root: Path, task_id: str, variant: str) -> dict[str, Any] | None:
+    spec = get_optimize_patch_spec(task_id)
+    if spec is None:
+        return None
+    is_negative = variant == "negative"
+    patch_source_file = str(spec["negative_patch_source_file"] if is_negative else spec["positive_patch_source_file"])
+    harness = {
+        "patch_target_file": str(spec["patch_target_file"]),
+        "initial_target_text": _load_text(root, str(spec["patch_target_file"])),
+        "patch_text": _load_text(root, patch_source_file),
+        "patch_intent": str(spec["negative_patch_intent"] if is_negative else spec["positive_patch_intent"]),
+        "patch_expected_effect": str(spec["negative_patch_expected_effect"] if is_negative else spec["positive_patch_expected_effect"]),
+        "patch_kind": str(spec["negative_patch_kind"] if is_negative else spec["positive_patch_kind"]),
+        "patch_transition_kind": str(spec["negative_transition_kind"] if is_negative else spec["positive_transition_kind"]),
+        "eval_command": list(spec["eval_command"]),
+        "pre_patch_build_spec": spec.get("pre_patch_build_spec"),
+        "post_patch_build_spec": spec.get("post_patch_build_spec"),
+    }
+    attempt_plans = spec.get("positive_attempt_plans") if not is_negative else spec.get("negative_attempt_plans")
+    if isinstance(attempt_plans, list) and attempt_plans:
+        harness["attempt_patch_plans"] = [
+            {
+                "patch_text": _load_text(root, str(plan["patch_source_file"])),
+                "patch_intent": str(plan["patch_intent"]),
+                "patch_expected_effect": str(plan["patch_expected_effect"]),
+                "patch_kind": str(plan["patch_kind"]),
+                "patch_transition_kind": str(plan["transition_kind"]),
+                "attempt_reason": str(plan.get("attempt_reason", f"attempt_{index + 1}")),
+                "attempt_index": index + 1,
+            }
+            for index, plan in enumerate(attempt_plans)
+        ]
+    return harness
+
+
+def resolve_optimize_patch_plan(root: Path, task_id: str, variant: str) -> dict[str, Any] | None:
+    spec = get_optimize_patch_spec(task_id)
+    if spec is None:
+        return None
+    is_negative = variant == "negative"
+    patch_source_file = str(spec["negative_patch_source_file"] if is_negative else spec["positive_patch_source_file"])
+    return {
+        "target_file": str(spec["patch_target_file"]),
+        "patch_text": _load_text(root, patch_source_file),
+        "patch_intent": str(spec["negative_patch_intent"] if is_negative else spec["positive_patch_intent"]).lower(),
+        "patch_expected_effect": str(spec["negative_patch_expected_effect"] if is_negative else spec["positive_patch_expected_effect"]).lower(),
+        "patch_kind": str(spec["negative_patch_kind"] if is_negative else spec["positive_patch_kind"]),
+        "transition_kind": str(spec["negative_transition_kind"] if is_negative else spec["positive_transition_kind"]),
+        "eval_command": list(spec["eval_command"]),
+        "pre_patch_build_spec": spec.get("pre_patch_build_spec"),
+        "post_patch_build_spec": spec.get("post_patch_build_spec"),
+    }

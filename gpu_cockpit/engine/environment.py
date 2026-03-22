@@ -10,7 +10,13 @@ from gpu_cockpit.contracts import (
     AgentEnvironmentState,
     BaselineSpec,
     EpisodeReadinessReport,
+    EvidenceQualityReport,
+    LearningRewardTrace,
+    OptimizeTraceSnapshot,
+    OptimizeTraceSnapshots,
     ReadinessDecision,
+    RewardLedger,
+    RewardLedgerEntry,
     RunSummary,
     TrajectoryAction,
     TrajectoryEpisode,
@@ -24,7 +30,8 @@ from gpu_cockpit.engine.evaluator import run_evaluation_hooks
 from gpu_cockpit.engine.indexer import list_runs
 from gpu_cockpit.engine.inspector import compare_runs, inspect_run, resolve_run_dir
 from gpu_cockpit.engine.knowledge import query_knowledge
-from gpu_cockpit.engine.patching import apply_patch_candidate
+from gpu_cockpit.engine.optimize_patch_registry import resolve_optimize_patch_plan
+from gpu_cockpit.engine.patching import apply_patch_candidate, branch_candidate, promote_candidate, revert_candidate
 from gpu_cockpit.engine.replay import validate_run_bundle, write_replay_pack
 from gpu_cockpit.engine.run_bundle import RunBundleWriter
 from gpu_cockpit.engine.runner import build_run_id, build_run_spec, run_task, write_run_summary, write_task_artifacts
@@ -108,6 +115,33 @@ ACTION_SPACE: tuple[AgentActionSpec, ...] = (
         cost_units=0.04,
         observation_focus="candidate_transition",
         recommended_verbs=["debug", "reformulate"],
+    ),
+    AgentActionSpec(
+        action_name="branch_candidate",
+        description="Create a new candidate branch from the current candidate lineage point.",
+        requires_task=True,
+        produces_run_bundle=True,
+        cost_units=0.02,
+        observation_focus="candidate_transition",
+        recommended_verbs=["optimize", "debug", "reformulate"],
+    ),
+    AgentActionSpec(
+        action_name="revert_candidate",
+        description="Revert candidate workspace state to an earlier text snapshot and emit candidate lineage artifacts.",
+        requires_task=True,
+        produces_run_bundle=True,
+        cost_units=0.03,
+        observation_focus="candidate_transition",
+        recommended_verbs=["optimize", "debug", "reformulate"],
+    ),
+    AgentActionSpec(
+        action_name="promote_candidate",
+        description="Promote the current candidate into a named ready state without applying a new patch.",
+        requires_task=True,
+        produces_run_bundle=True,
+        cost_units=0.02,
+        observation_focus="candidate_transition",
+        recommended_verbs=["optimize", "debug", "reformulate"],
     ),
     AgentActionSpec(
         action_name="compare",
@@ -198,7 +232,7 @@ def _tool_cost(action_name: str) -> float:
 def _step_label_for_action(action_name: str) -> str:
     if action_name in {"knowledge_query", "inspect", "inspect_build", "inspect_profile", "inspect_quality"}:
         return "diagnostic_action"
-    if action_name == "patch_candidate":
+    if action_name in {"patch_candidate", "branch_candidate", "revert_candidate", "promote_candidate"}:
         return "patch_action"
     if action_name in {"eval", "bench", "replay"}:
         return "verification_action"
@@ -238,6 +272,9 @@ def _recommended_actions_from_projection(observation_type: str, projection: dict
     if observation_type == "candidate_patch":
         return ["build", "eval", "compare", "replay"]
     if observation_type == "comparison":
+        raw = projection.get("recommended_next_actions")
+        if isinstance(raw, list):
+            return [str(item) for item in raw]
         return ["inspect_quality", "patch_candidate", "eval"]
     return []
 
@@ -265,6 +302,101 @@ def _update_state_after_info(state: AgentEnvironmentState) -> AgentEnvironmentSt
     )
 
 
+def _candidate_role_group(candidate_role: object | None) -> str | None:
+    role = str(candidate_role) if candidate_role is not None else None
+    if role is None:
+        return None
+    if role == "baseline_candidate":
+        return "baseline"
+    if role in {"working_candidate", "patched_candidate", "synthesized_candidate"}:
+        return "trial"
+    if role == "branched_candidate":
+        return "branch"
+    if role == "reverted_candidate":
+        return "reverted"
+    if role == "promoted_candidate":
+        return "promoted"
+    if role == "comparison_anchor":
+        return "anchor"
+    return role
+
+
+def _sibling_candidate_refs(state: AgentEnvironmentState, candidate_id: str | None, parent_candidate_id: str | None) -> list[str]:
+    if candidate_id is None or parent_candidate_id is None:
+        return []
+    sibling_ids: list[str] = []
+    for event in state.candidate_lineage_events:
+        if not isinstance(event, dict):
+            continue
+        if str(event.get("parent_candidate_id")) != parent_candidate_id:
+            continue
+        sibling_candidate_id = event.get("candidate_id")
+        if sibling_candidate_id is None:
+            continue
+        sibling_id = str(sibling_candidate_id)
+        if sibling_id != candidate_id and sibling_id not in sibling_ids:
+            sibling_ids.append(sibling_id)
+    return sibling_ids
+
+
+def _candidate_tree_brief(state: AgentEnvironmentState) -> dict[str, object]:
+    current_candidate_id = state.current_candidate_id
+    current_parent_candidate_id = state.current_candidate_parent_id
+    current_event = None
+    for raw_event in reversed(state.candidate_lineage_events):
+        if not isinstance(raw_event, dict):
+            continue
+        if raw_event.get("candidate_id") == current_candidate_id:
+            current_event = raw_event
+            break
+    candidate_role = current_event.get("candidate_role") if isinstance(current_event, dict) else None
+    sibling_refs = _sibling_candidate_refs(state, current_candidate_id, current_parent_candidate_id)
+    return {
+        "history_length": len(list(getattr(state, "candidate_history", []) or [])),
+        "current_candidate_id": current_candidate_id,
+        "current_parent_candidate_id": current_parent_candidate_id,
+        "current_status": state.current_candidate_status,
+        "current_candidate_attempt_index": state.current_candidate_attempt_index,
+        "current_candidate_ref": state.current_candidate_run_ref,
+        "candidate_role": candidate_role,
+        "candidate_role_group": _candidate_role_group(candidate_role),
+        "parent_candidate_ref": current_parent_candidate_id,
+        "sibling_candidate_refs": sibling_refs,
+        "why_this_candidate_exists": current_event.get("summary") if isinstance(current_event, dict) else None,
+        "recent_events": list(state.candidate_lineage_events[-3:]),
+        "best_known_candidate_id": state.best_known_candidate_id,
+        "best_known_candidate_parent_id": state.best_known_candidate_parent_id,
+        "best_known_candidate_run_ref": state.best_known_candidate_run_ref,
+        "best_known_candidate_reason": state.best_known_candidate_reason,
+    }
+
+
+def _update_best_known_candidate_from_compare(
+    state: AgentEnvironmentState,
+    payload: dict[str, object],
+) -> dict[str, object]:
+    updates: dict[str, object] = {}
+    if state.current_candidate_id is None or state.current_candidate_run_ref is None:
+        return updates
+    correctness_recovered = payload.get("correctness_recovered")
+    perf_improved = payload.get("perf_improved")
+    rhs_candidate_id = payload.get("rhs_candidate_id")
+    rhs_parent_candidate_id = payload.get("rhs_parent_candidate_id")
+    if rhs_candidate_id is None or str(rhs_candidate_id) != state.current_candidate_id:
+        return updates
+    if correctness_recovered is True or perf_improved is True or state.best_known_candidate_id is None:
+        updates["best_known_candidate_id"] = state.current_candidate_id
+        updates["best_known_candidate_parent_id"] = rhs_parent_candidate_id
+        updates["best_known_candidate_run_ref"] = state.current_candidate_run_ref
+        if correctness_recovered is True:
+            updates["best_known_candidate_reason"] = "correctness_recovered"
+        elif perf_improved is True:
+            updates["best_known_candidate_reason"] = "perf_improved"
+        else:
+            updates["best_known_candidate_reason"] = "first_candidate_anchor"
+    return updates
+
+
 def _lineage_from_candidate_state(root: Path, state: AgentEnvironmentState) -> dict[str, object]:
     if not state.current_candidate_run_ref:
         return {}
@@ -272,20 +404,69 @@ def _lineage_from_candidate_state(root: Path, state: AgentEnvironmentState) -> d
     transition_payload = inspect_run(root, str(run_dir), section="transition")
     candidate_projection = transition_payload.get("candidate_projection", {}) if isinstance(transition_payload, dict) else {}
     candidate_state = candidate_projection.get("candidate_state", {}) if isinstance(candidate_projection, dict) else {}
-    applied_patch = candidate_projection.get("applied_patch", {}) if isinstance(candidate_projection, dict) else {}
+    applied_patch = candidate_projection.get("applied_patch") if isinstance(candidate_projection, dict) else None
     transition = candidate_projection.get("transition", {}) if isinstance(candidate_projection, dict) else {}
+    operation = candidate_projection.get("operation", {}) if isinstance(candidate_projection, dict) else {}
+    candidate_diff_ref = None
+    if isinstance(applied_patch, dict):
+        candidate_diff_ref = applied_patch.get("diff_ref")
+    if candidate_diff_ref is None and isinstance(candidate_state, dict):
+        diff_summary = candidate_state.get("diff_summary")
+        if isinstance(diff_summary, dict):
+            candidate_diff_ref = diff_summary.get("diff_ref")
+    sibling_candidate_refs = _sibling_candidate_refs(
+        state,
+        str(candidate_state.get("candidate_id")) if candidate_state.get("candidate_id") is not None else None,
+        str(candidate_state.get("parent_candidate_id")) if candidate_state.get("parent_candidate_id") is not None else None,
+    )
     return {
         "parent_run_id": state.last_run_id,
         "candidate_id": candidate_state.get("candidate_id"),
         "parent_candidate_id": candidate_state.get("parent_candidate_id"),
+        "source_candidate_id": candidate_state.get("source_candidate_id"),
         "source_run_ref": state.current_candidate_run_ref,
-        "patch_ref": "patches/applied_patch.json" if applied_patch else None,
-        "diff_ref": applied_patch.get("diff_ref"),
+        "patch_ref": "patches/applied_patch.json" if isinstance(applied_patch, dict) else None,
+        "diff_ref": candidate_diff_ref,
         "transition_ref": "candidate/transition.json" if transition else None,
         "candidate_role": candidate_state.get("candidate_role"),
+        "candidate_role_group": _candidate_role_group(candidate_state.get("candidate_role")),
+        "candidate_status": candidate_state.get("status"),
+        "candidate_origin_kind": candidate_state.get("origin_kind"),
+        "candidate_operation_kind": operation.get("operation_kind") or candidate_state.get("last_operation_kind"),
+        "operation_ref": "candidate/operation.json" if operation else None,
         "transition_kind": transition.get("transition_kind"),
-        "patch_present": bool(applied_patch),
-        "patch_kind": applied_patch.get("patch_kind"),
+        "patch_present": isinstance(applied_patch, dict),
+        "patch_kind": applied_patch.get("patch_kind") if isinstance(applied_patch, dict) else None,
+        "sibling_candidate_refs": sibling_candidate_refs,
+    }
+
+
+def _candidate_lineage_event(
+    *,
+    action_name: str,
+    candidate_id: str,
+    parent_candidate_id: str | None,
+    run_ref: str,
+    status: str | None,
+    transition_kind: str | None,
+    summary: str | None,
+    candidate_role: str | None = None,
+    source_candidate_id: str | None = None,
+    candidate_attempt_index: int | None = None,
+    metadata: dict[str, object] | None = None,
+) -> dict[str, object]:
+    return {
+        "action_name": action_name,
+        "candidate_id": candidate_id,
+        "parent_candidate_id": parent_candidate_id,
+        "source_candidate_id": source_candidate_id,
+        "run_ref": run_ref,
+        "status": status,
+        "transition_kind": transition_kind,
+        "summary": summary,
+        "candidate_role": candidate_role,
+        "candidate_attempt_index": candidate_attempt_index,
+        "metadata": metadata or {},
     }
 
 
@@ -362,7 +543,7 @@ def _scripted_patch_plan(root: Path, task_id: str, *, variant: str = "positive")
             "pre_patch_build_spec": None,
             "post_patch_build_spec": "workloads/reference/triton_attention_score_kernel.py:get_build_spec",
         }
-    return None
+    return resolve_optimize_patch_plan(root, task_id, variant)
 
 
 def _finalize_budget(state: AgentEnvironmentState) -> AgentEnvironmentState:
@@ -501,6 +682,264 @@ def _derive_episode_training_readiness(
     )
 
 
+def _episode_optimize_trace_snapshots(steps: list[TrajectoryStep]) -> OptimizeTraceSnapshots | None:
+    candidate_snapshots: list[OptimizeTraceSnapshot] = []
+    compare_snapshots: list[OptimizeTraceSnapshot] = []
+    failure_localization_snapshots: list[OptimizeTraceSnapshot] = []
+    for step in steps:
+        projection = step.observation.projection if isinstance(step.observation.projection, dict) else {}
+        candidate_projection = projection.get("candidate_projection")
+        if isinstance(candidate_projection, dict) and candidate_projection:
+            candidate_snapshots.append(
+                OptimizeTraceSnapshot(
+                    step_index=step.step_index,
+                    action_type=step.action.action_type,
+                    snapshot_kind="candidate_state",
+                    run_id=step.observation.run_id,
+                    payload=candidate_projection,
+                )
+            )
+        if step.action.action_type == "compare":
+            compare_payload = {
+                key: projection.get(key)
+                for key in ["optimize_delta_summary", "candidate_delta_brief", "recommended_next_actions", "summary_lines"]
+                if projection.get(key) is not None
+            }
+            if compare_payload:
+                compare_snapshots.append(
+                    OptimizeTraceSnapshot(
+                        step_index=step.step_index,
+                        action_type=step.action.action_type,
+                        snapshot_kind="compare",
+                        run_id=step.observation.run_id,
+                        payload=compare_payload,
+                    )
+                )
+        failure_localization = projection.get("failure_localization")
+        if isinstance(failure_localization, dict) and failure_localization:
+            failure_localization_snapshots.append(
+                OptimizeTraceSnapshot(
+                    step_index=step.step_index,
+                    action_type=step.action.action_type,
+                    snapshot_kind="failure_localization",
+                    run_id=step.observation.run_id,
+                    payload=failure_localization,
+                )
+            )
+    if not candidate_snapshots and not compare_snapshots and not failure_localization_snapshots:
+        return None
+    return OptimizeTraceSnapshots(
+        candidate_snapshots=candidate_snapshots,
+        compare_snapshots=compare_snapshots,
+        failure_localization_snapshots=failure_localization_snapshots,
+    )
+
+
+def _trace_usability_from_terminal_state(terminal_state: str, *, task_success: bool, compare_used: bool, patch_bearing: bool) -> str:
+    if task_success:
+        return "trainable_positive"
+    if terminal_state in {"negative_trace_complete", "multi_candidate_negative_complete"} and compare_used and patch_bearing:
+        return "trainable_negative"
+    return "analysis_only"
+
+
+def _derive_reward_ledger(
+    *,
+    task_ref: str,
+    task_verb: str,
+    terminal_state: str,
+    steps: list[TrajectoryStep],
+    final_eval_envelope: dict[str, object],
+) -> RewardLedger:
+    correctness_passed = str(final_eval_envelope.get("correctness_gate", "fail")) == "pass"
+    determinism_passed = str(final_eval_envelope.get("determinism_gate", "fail")) == "pass"
+    perf_gate = str(final_eval_envelope.get("perf_gate", "not_run"))
+    task_success = terminal_state == "success"
+    compare_used = any(step.action.action_type == "compare" for step in steps)
+    patch_bearing = any(step.action.action_type == "patch_candidate" for step in steps)
+    trace_usability = _trace_usability_from_terminal_state(
+        terminal_state,
+        task_success=task_success,
+        compare_used=compare_used,
+        patch_bearing=patch_bearing,
+    )
+    total_reward_components = {
+        "task_success": 0.6 if task_success else 0.0,
+        "correctness": 0.25 if correctness_passed else 0.0,
+        "determinism": 0.1 if determinism_passed else 0.0,
+        "perf_improvement": 0.05 if perf_gate == "pass" else 0.0,
+    }
+    total_shaping_components = {
+        "tool_cost": 0.0,
+        "compare_use_bonus": 0.0,
+        "candidate_regression_penalty": 0.0,
+        "best_known_supersede_bonus": 0.0,
+        "revert_recovery_bonus": 0.0,
+        "promote_closeout_bonus": 0.0,
+        "near_miss_progress_bonus": 0.0,
+    }
+    entries: list[RewardLedgerEntry] = []
+    compare_bonus_remaining = 0.02 if task_verb in {"optimize", "reformulate"} else 0.0
+    regression_penalty_cap = -0.08
+    saw_regression_against_best_known = False
+    for step in steps:
+        reward_components: dict[str, float] = {}
+        shaping_components: dict[str, float] = {}
+        notes: list[str] = []
+        tool_cost = float(step.reward_components.get("tool_cost", 0.0))
+        if tool_cost:
+            shaping_components["tool_cost"] = round(tool_cost, 4)
+            total_shaping_components["tool_cost"] += shaping_components["tool_cost"]
+        if step.action.action_type == "compare":
+            if compare_bonus_remaining > 0:
+                shaping_components["compare_use_bonus"] = compare_bonus_remaining
+                total_shaping_components["compare_use_bonus"] += compare_bonus_remaining
+                notes.append("compare_bonus_awarded")
+                compare_bonus_remaining = 0.0
+            projection = step.observation.projection if isinstance(step.observation.projection, dict) else {}
+            optimize_delta = projection.get("optimize_delta_summary", {})
+            if isinstance(optimize_delta, dict):
+                correctness_change = str(optimize_delta.get("correctness_change", "unknown"))
+                perf_change = str(optimize_delta.get("perf_change", "unknown"))
+                penalty = 0.0
+                if correctness_change == "regressed":
+                    penalty -= 0.06
+                if perf_change == "regressed":
+                    penalty -= 0.02
+                if penalty:
+                    bounded_penalty = max(regression_penalty_cap - total_shaping_components["candidate_regression_penalty"], penalty)
+                    bounded_penalty = round(bounded_penalty, 4)
+                    shaping_components["candidate_regression_penalty"] = bounded_penalty
+                    total_shaping_components["candidate_regression_penalty"] += bounded_penalty
+                    notes.append("candidate_regression_penalty_applied")
+                    saw_regression_against_best_known = True
+                best_known_bonus = 0.0
+                if correctness_change == "recovered":
+                    best_known_bonus += 0.015
+                if perf_change == "improved":
+                    best_known_bonus += 0.01
+                if best_known_bonus:
+                    bounded_bonus = round(min(0.03 - total_shaping_components["best_known_supersede_bonus"], best_known_bonus), 4)
+                    if bounded_bonus > 0:
+                        shaping_components["best_known_supersede_bonus"] = bounded_bonus
+                        total_shaping_components["best_known_supersede_bonus"] += bounded_bonus
+                        notes.append("best_known_supersede_bonus_awarded")
+        if step.action.action_type == "branch_candidate":
+            notes.append("branch_effect_tracked")
+        if step.action.action_type == "revert_candidate":
+            notes.append("revert_effect_tracked")
+            if saw_regression_against_best_known:
+                shaping_components["revert_recovery_bonus"] = 0.01
+                total_shaping_components["revert_recovery_bonus"] += 0.01
+                notes.append("revert_recovery_bonus_awarded")
+                saw_regression_against_best_known = False
+        if step.action.action_type == "promote_candidate":
+            notes.append("promote_effect_tracked")
+            if task_success:
+                shaping_components["promote_closeout_bonus"] = 0.02
+                total_shaping_components["promote_closeout_bonus"] += 0.02
+                notes.append("promote_closeout_bonus_awarded")
+        if step.terminal:
+            if (
+                not task_success
+                and terminal_state in {"two_attempt_positive_complete", "three_attempt_positive_complete", "post_patch_eval_failed"}
+                and compare_used
+                and patch_bearing
+            ):
+                shaping_components["near_miss_progress_bonus"] = 0.03
+                total_shaping_components["near_miss_progress_bonus"] += 0.03
+                notes.append("near_miss_progress_bonus_awarded")
+            reward_components = dict(total_reward_components)
+            notes.append(f"terminal_state:{terminal_state}")
+        entries.append(
+            RewardLedgerEntry(
+                step_index=step.step_index,
+                action_type=step.action.action_type,
+                reward_components=reward_components,
+                shaping_components=shaping_components,
+                total_delta=round(sum(reward_components.values()) + sum(shaping_components.values()), 4),
+                notes=notes,
+            )
+        )
+    return RewardLedger(
+        task_id=task_ref,
+        task_verb=task_verb,
+        task_outcome="success" if task_success else terminal_state,
+        trace_usability=trace_usability,
+        entries=entries,
+        total_reward_components={key: round(value, 4) for key, value in total_reward_components.items()},
+        total_shaping_components={key: round(value, 4) for key, value in total_shaping_components.items()},
+        total_reward=round(sum(total_reward_components.values()) + sum(total_shaping_components.values()), 4),
+    )
+
+
+def _derive_episode_learning_reward(
+    *,
+    task_ref: str,
+    task_verb: str,
+    terminal_state: str,
+    steps: list[TrajectoryStep],
+    final_eval_envelope: dict[str, object],
+) -> LearningRewardTrace:
+    compare_used = any(step.action.action_type == "compare" for step in steps)
+    patch_bearing = any(step.action.action_type == "patch_candidate" for step in steps)
+    branch_count = sum(1 for step in steps if step.action.action_type == "branch_candidate")
+    revert_count = sum(1 for step in steps if step.action.action_type == "revert_candidate")
+    promote_count = sum(1 for step in steps if step.action.action_type == "promote_candidate")
+    correctness_passed = str(final_eval_envelope.get("correctness_gate", "fail")) == "pass"
+    determinism_passed = str(final_eval_envelope.get("determinism_gate", "fail")) == "pass"
+    anti_hack_passed = str(final_eval_envelope.get("anti_hack_gate", "fail")) == "pass"
+    perf_gate = str(final_eval_envelope.get("perf_gate", "not_run"))
+    task_success = terminal_state == "success"
+    reward_ledger = _derive_reward_ledger(
+        task_ref=task_ref,
+        task_verb=task_verb,
+        terminal_state=terminal_state,
+        steps=steps,
+        final_eval_envelope=final_eval_envelope,
+    )
+    reward_components = dict(reward_ledger.total_reward_components)
+    shaping_components = dict(reward_ledger.total_shaping_components)
+    notes: list[str] = []
+    if perf_gate in {"blocked", "not_run"}:
+        notes.append(f"perf_gate:{perf_gate}")
+    if task_verb in {"optimize", "reformulate"} and not compare_used:
+        notes.append("compare_missing")
+    return LearningRewardTrace(
+        task_id=task_ref,
+        task_verb=task_verb,
+        terminal_state=terminal_state,
+        task_success=task_success,
+        correctness_passed=correctness_passed,
+        determinism_passed=determinism_passed,
+        anti_hack_passed=anti_hack_passed,
+        perf_gate=perf_gate,
+        task_outcome="success" if task_success else terminal_state,
+        trace_usability=reward_ledger.trace_usability,
+        compare_used=compare_used,
+        patch_bearing=patch_bearing,
+        branch_count=branch_count,
+        revert_count=revert_count,
+        promote_count=promote_count,
+        reward_components=reward_components,
+        shaping_components=shaping_components,
+        excluded_governance_signals=[
+            "evidence_score",
+            "required_artifact_completeness",
+            "replay_completeness",
+            "build_completeness",
+            "profile_completeness",
+            "provenance_completeness",
+            "benchmark_reporting",
+            "sft_collection",
+            "rl_reward_trace_readiness",
+        ],
+        total_reward=reward_ledger.total_reward,
+        notes=notes,
+        reward_ledger=reward_ledger,
+    )
+
+
 def _execute_eval(
     root: Path,
     task_ref: str,
@@ -595,6 +1034,10 @@ def _execute_eval(
             patch_kind=str(lineage["patch_kind"]) if lineage.get("patch_kind") is not None else None,
             transition_kind=str(lineage["transition_kind"]) if lineage.get("transition_kind") is not None else None,
             candidate_role=str(lineage["candidate_role"]) if lineage.get("candidate_role") is not None else None,
+            candidate_status=str(lineage["candidate_status"]) if lineage.get("candidate_status") is not None else None,
+            candidate_origin_kind=str(lineage["candidate_origin_kind"]) if lineage.get("candidate_origin_kind") is not None else None,
+            candidate_operation_kind=str(lineage["candidate_operation_kind"]) if lineage.get("candidate_operation_kind") is not None else None,
+            candidate_diff_ref=str(lineage["diff_ref"]) if lineage.get("diff_ref") is not None else None,
             exit_code=command_summary.exit_code if command_summary is not None else None,
             duration_ms=command_summary.duration_ms if command_summary is not None else None,
             key_artifacts=key_artifacts,
@@ -621,7 +1064,11 @@ def _execute_eval(
             "patch_ref": lineage.get("patch_ref"),
             "diff_ref": lineage.get("diff_ref"),
             "transition_ref": lineage.get("transition_ref"),
+            "operation_ref": lineage.get("operation_ref"),
             "candidate_role": lineage.get("candidate_role"),
+            "candidate_status": lineage.get("candidate_status"),
+            "candidate_origin_kind": lineage.get("candidate_origin_kind"),
+            "candidate_operation_kind": lineage.get("candidate_operation_kind"),
             "transition_kind": lineage.get("transition_kind"),
         },
     )
@@ -690,6 +1137,10 @@ def _execute_bench(
             patch_kind=str(lineage["patch_kind"]) if lineage.get("patch_kind") is not None else None,
             transition_kind=str(lineage["transition_kind"]) if lineage.get("transition_kind") is not None else None,
             candidate_role=str(lineage["candidate_role"]) if lineage.get("candidate_role") is not None else None,
+            candidate_status=str(lineage["candidate_status"]) if lineage.get("candidate_status") is not None else None,
+            candidate_origin_kind=str(lineage["candidate_origin_kind"]) if lineage.get("candidate_origin_kind") is not None else None,
+            candidate_operation_kind=str(lineage["candidate_operation_kind"]) if lineage.get("candidate_operation_kind") is not None else None,
+            candidate_diff_ref=str(lineage["diff_ref"]) if lineage.get("diff_ref") is not None else None,
             exit_code=0,
             duration_ms=int(perf.steady_state_ms_p50),
             key_artifacts=key_artifacts,
@@ -717,7 +1168,11 @@ def _execute_bench(
             "patch_ref": lineage.get("patch_ref"),
             "diff_ref": lineage.get("diff_ref"),
             "transition_ref": lineage.get("transition_ref"),
+            "operation_ref": lineage.get("operation_ref"),
             "candidate_role": lineage.get("candidate_role"),
+            "candidate_status": lineage.get("candidate_status"),
+            "candidate_origin_kind": lineage.get("candidate_origin_kind"),
+            "candidate_operation_kind": lineage.get("candidate_operation_kind"),
             "transition_kind": lineage.get("transition_kind"),
         },
     )
@@ -745,6 +1200,11 @@ def step_environment(
     patch_expected_effect: str | None = None,
     patch_kind: str = "bug_fix",
     patch_transition_kind: str = "patch_applied",
+    candidate_attempt_index: int | None = None,
+    candidate_attempt_reason: str | None = None,
+    branch_label: str | None = None,
+    revert_target_candidate_id: str | None = None,
+    promote_label: str | None = None,
     triton_build_spec: str | None = None,
     backend: str | None = None,
     vendor: str | None = None,
@@ -886,6 +1346,8 @@ def step_environment(
         action_metadata["run_ref"] = str(run_dir)
         reward_total = sum(reward_components.values())
         next_state = _update_state_after_run(state, str(run_dir), str(summary_payload.get("run_id")))
+        if state.current_candidate_id is not None:
+            next_state = next_state.model_copy(update={"current_candidate_status": "build_passed"})
     elif action_name == "patch_candidate":
         effective_task_ref = task_ref or state.task_id
         if not patch_target_file or patch_text is None or not patch_intent:
@@ -940,12 +1402,288 @@ def step_environment(
         next_state = _update_state_after_run(state, str(run_dir), str(summary_payload.get("run_id"))).model_copy(
             update={
                 "current_candidate_id": candidate_state.candidate_id,
+                "current_candidate_parent_id": candidate_state.parent_candidate_id,
                 "current_candidate_run_ref": str(run_dir),
+                "current_candidate_status": candidate_state.status,
+                "current_candidate_attempt_index": candidate_attempt_index,
+                "candidate_history": [*state.candidate_history, candidate_state.candidate_id],
+                "candidate_run_history": [*state.candidate_run_history, str(run_dir)],
+                "candidate_lineage_events": [
+                    *state.candidate_lineage_events,
+                    _candidate_lineage_event(
+                        action_name="patch_candidate",
+                        candidate_id=candidate_state.candidate_id,
+                        parent_candidate_id=candidate_state.parent_candidate_id,
+                        source_candidate_id=candidate_state.source_candidate_id,
+                        run_ref=str(run_dir),
+                        status=candidate_state.status,
+                        transition_kind=transition.transition_kind,
+                        summary=patch_intent,
+                        candidate_role=candidate_state.candidate_role,
+                        candidate_attempt_index=candidate_attempt_index,
+                        metadata={
+                            "patch_kind": applied_patch.patch_kind,
+                            "patch_hash": applied_patch.patch_hash,
+                            "candidate_attempt_reason": candidate_attempt_reason,
+                        },
+                    ),
+                ],
                 "metadata": {
                     **state.metadata,
                     "last_patch_hash": applied_patch.patch_hash,
                     "last_patch_kind": applied_patch.patch_kind,
+                    "last_candidate_attempt_reason": candidate_attempt_reason,
                 },
+            }
+        )
+    elif action_name == "branch_candidate":
+        effective_task_ref = task_ref or state.task_id
+        branch_intent = patch_intent or "branch the current candidate to explore an alternate optimization path"
+        run_dir, candidate_state, transition = branch_candidate(
+            root,
+            task_ref=effective_task_ref,
+            intent=branch_intent,
+            branch_label=branch_label,
+            expected_effect=patch_expected_effect,
+            parent_run_ref=state.current_candidate_run_ref or state.last_run_ref,
+            parent_run_id=state.current_candidate_run_ref and Path(state.current_candidate_run_ref).name or state.last_run_id,
+            parent_candidate_id=state.current_candidate_id,
+            policy_pack=policy_pack,
+            backend=backend,
+            vendor=vendor,
+            executor=executor,
+        )
+        payload = inspect_run(root, str(run_dir), section="transition")
+        summary_payload = inspect_run(root, str(run_dir), section="summary")
+        artifact_refs = list(summary_payload.get("key_artifacts", []))
+        action_metadata.update(
+            {
+                "branch_label": branch_label,
+                "patch_intent": branch_intent,
+                "patch_expected_effect": patch_expected_effect,
+                "input_candidate_id": state.current_candidate_id,
+                "output_candidate_id": candidate_state.candidate_id,
+                "transition_kind": transition.transition_kind,
+            }
+        )
+        observation = TrajectoryObservation(
+            observation_type="candidate_branch",
+            run_id=str(summary_payload.get("run_id")),
+            task_id=str(summary_payload.get("task_id")),
+            status=str(summary_payload.get("status")),
+            backend=str(summary_payload.get("backend")),
+            vendor=str(summary_payload.get("vendor")),
+            summary_ref="candidate/transition.json",
+            artifact_refs=artifact_refs,
+            salient_artifact_refs=_salient_artifacts("candidate_patch", payload, artifact_refs),
+            projection=payload,
+        )
+        reward_components = {"tool_cost": -_tool_cost("branch_candidate")}
+        reward_total = reward_components["tool_cost"]
+        action_metadata["run_ref"] = str(run_dir)
+        next_state = _update_state_after_run(state, str(run_dir), str(summary_payload.get("run_id"))).model_copy(
+            update={
+                "current_candidate_id": candidate_state.candidate_id,
+                "current_candidate_parent_id": candidate_state.parent_candidate_id,
+                "current_candidate_run_ref": str(run_dir),
+                "current_candidate_status": candidate_state.status,
+                "current_candidate_attempt_index": state.current_candidate_attempt_index,
+                "candidate_history": [*state.candidate_history, candidate_state.candidate_id],
+                "candidate_run_history": [*state.candidate_run_history, str(run_dir)],
+                "candidate_lineage_events": [
+                    *state.candidate_lineage_events,
+                    _candidate_lineage_event(
+                        action_name="branch_candidate",
+                        candidate_id=candidate_state.candidate_id,
+                        parent_candidate_id=candidate_state.parent_candidate_id,
+                        source_candidate_id=candidate_state.source_candidate_id,
+                        run_ref=str(run_dir),
+                        status=candidate_state.status,
+                        transition_kind=transition.transition_kind,
+                        summary=branch_intent,
+                        candidate_role=candidate_state.candidate_role,
+                        candidate_attempt_index=state.current_candidate_attempt_index,
+                        metadata={"branch_label": branch_label},
+                    ),
+                ],
+                "metadata": {**state.metadata, "last_candidate_operation": "branch", "last_branch_label": branch_label},
+            }
+        )
+    elif action_name == "revert_candidate":
+        effective_task_ref = task_ref or state.task_id
+        revert_intent = patch_intent or "revert the candidate back to a prior workspace state"
+        effective_target_file = patch_target_file
+        effective_patch_text = patch_text
+        if (effective_target_file is None or effective_patch_text is None) and state.current_candidate_run_ref:
+            current_payload = inspect_run(root, state.current_candidate_run_ref, section="transition")
+            candidate_projection = current_payload.get("candidate_projection", {}) if isinstance(current_payload, dict) else {}
+            applied_patch = candidate_projection.get("applied_patch", {}) if isinstance(candidate_projection, dict) else {}
+            candidate_state_payload = candidate_projection.get("candidate_state", {}) if isinstance(candidate_projection, dict) else {}
+            if effective_target_file is None:
+                effective_target_file = applied_patch.get("target_file") if isinstance(applied_patch, dict) else None
+                if effective_target_file is None and isinstance(candidate_state_payload, dict):
+                    diff_summary = candidate_state_payload.get("diff_summary", {})
+                    if isinstance(diff_summary, dict):
+                        effective_target_file = diff_summary.get("primary_target_file")
+            if effective_patch_text is None and state.current_candidate_run_ref:
+                run_dir = resolve_run_dir(root, state.current_candidate_run_ref)
+                before_path = run_dir / "patches" / "before.txt"
+                if before_path.exists():
+                    effective_patch_text = before_path.read_text(encoding="utf-8")
+                else:
+                    before_candidate_path = run_dir / "candidate" / "before.txt"
+                    if before_candidate_path.exists():
+                        effective_patch_text = before_candidate_path.read_text(encoding="utf-8")
+        if not effective_target_file or effective_patch_text is None:
+            raise RuntimeError("revert_candidate requires a target file and replacement text, or a revertable current candidate state.")
+        run_dir, candidate_state, transition = revert_candidate(
+            root,
+            task_ref=effective_task_ref,
+            target_file=effective_target_file,
+            replacement_text=effective_patch_text,
+            intent=revert_intent,
+            expected_effect=patch_expected_effect,
+            revert_target_candidate_id=revert_target_candidate_id,
+            parent_run_ref=state.current_candidate_run_ref or state.last_run_ref,
+            parent_run_id=state.current_candidate_run_ref and Path(state.current_candidate_run_ref).name or state.last_run_id,
+            parent_candidate_id=state.current_candidate_id,
+            policy_pack=policy_pack,
+            backend=backend,
+            vendor=vendor,
+            executor=executor,
+        )
+        payload = inspect_run(root, str(run_dir), section="transition")
+        summary_payload = inspect_run(root, str(run_dir), section="summary")
+        artifact_refs = list(summary_payload.get("key_artifacts", []))
+        action_metadata.update(
+            {
+                "patch_target_file": effective_target_file,
+                "patch_intent": revert_intent,
+                "patch_expected_effect": patch_expected_effect,
+                "input_candidate_id": state.current_candidate_id,
+                "output_candidate_id": candidate_state.candidate_id,
+                "transition_kind": transition.transition_kind,
+                "revert_target_candidate_id": revert_target_candidate_id,
+            }
+        )
+        observation = TrajectoryObservation(
+            observation_type="candidate_revert",
+            run_id=str(summary_payload.get("run_id")),
+            task_id=str(summary_payload.get("task_id")),
+            status=str(summary_payload.get("status")),
+            backend=str(summary_payload.get("backend")),
+            vendor=str(summary_payload.get("vendor")),
+            summary_ref="candidate/transition.json",
+            artifact_refs=artifact_refs,
+            salient_artifact_refs=_salient_artifacts("candidate_patch", payload, artifact_refs),
+            projection=payload,
+        )
+        reward_components = {"tool_cost": -_tool_cost("revert_candidate")}
+        reward_total = reward_components["tool_cost"]
+        action_metadata["run_ref"] = str(run_dir)
+        next_state = _update_state_after_run(state, str(run_dir), str(summary_payload.get("run_id"))).model_copy(
+            update={
+                "current_candidate_id": candidate_state.candidate_id,
+                "current_candidate_parent_id": candidate_state.parent_candidate_id,
+                "current_candidate_run_ref": str(run_dir),
+                "current_candidate_status": candidate_state.status,
+                "current_candidate_attempt_index": state.current_candidate_attempt_index,
+                "candidate_history": [*state.candidate_history, candidate_state.candidate_id],
+                "candidate_run_history": [*state.candidate_run_history, str(run_dir)],
+                "candidate_lineage_events": [
+                    *state.candidate_lineage_events,
+                    _candidate_lineage_event(
+                        action_name="revert_candidate",
+                        candidate_id=candidate_state.candidate_id,
+                        parent_candidate_id=candidate_state.parent_candidate_id,
+                        source_candidate_id=candidate_state.source_candidate_id,
+                        run_ref=str(run_dir),
+                        status=candidate_state.status,
+                        transition_kind=transition.transition_kind,
+                        summary=revert_intent,
+                        candidate_role=candidate_state.candidate_role,
+                        candidate_attempt_index=state.current_candidate_attempt_index,
+                        metadata={"revert_target_candidate_id": revert_target_candidate_id, "target_file": effective_target_file},
+                    ),
+                ],
+                "metadata": {
+                    **state.metadata,
+                    "last_candidate_operation": "revert",
+                    "last_revert_target_candidate_id": revert_target_candidate_id,
+                },
+            }
+        )
+    elif action_name == "promote_candidate":
+        effective_task_ref = task_ref or state.task_id
+        promote_intent = patch_intent or "promote the current candidate as the preferred ready state"
+        run_dir, candidate_state, transition = promote_candidate(
+            root,
+            task_ref=effective_task_ref,
+            intent=promote_intent,
+            promotion_label=promote_label,
+            expected_effect=patch_expected_effect,
+            parent_run_ref=state.current_candidate_run_ref or state.last_run_ref,
+            parent_run_id=state.current_candidate_run_ref and Path(state.current_candidate_run_ref).name or state.last_run_id,
+            parent_candidate_id=state.current_candidate_id,
+            policy_pack=policy_pack,
+            backend=backend,
+            vendor=vendor,
+            executor=executor,
+        )
+        payload = inspect_run(root, str(run_dir), section="transition")
+        summary_payload = inspect_run(root, str(run_dir), section="summary")
+        artifact_refs = list(summary_payload.get("key_artifacts", []))
+        action_metadata.update(
+            {
+                "patch_intent": promote_intent,
+                "patch_expected_effect": patch_expected_effect,
+                "input_candidate_id": state.current_candidate_id,
+                "output_candidate_id": candidate_state.candidate_id,
+                "transition_kind": transition.transition_kind,
+                "promote_label": promote_label,
+            }
+        )
+        observation = TrajectoryObservation(
+            observation_type="candidate_promote",
+            run_id=str(summary_payload.get("run_id")),
+            task_id=str(summary_payload.get("task_id")),
+            status=str(summary_payload.get("status")),
+            backend=str(summary_payload.get("backend")),
+            vendor=str(summary_payload.get("vendor")),
+            summary_ref="candidate/transition.json",
+            artifact_refs=artifact_refs,
+            salient_artifact_refs=_salient_artifacts("candidate_patch", payload, artifact_refs),
+            projection=payload,
+        )
+        reward_components = {"tool_cost": -_tool_cost("promote_candidate")}
+        reward_total = reward_components["tool_cost"]
+        action_metadata["run_ref"] = str(run_dir)
+        next_state = _update_state_after_run(state, str(run_dir), str(summary_payload.get("run_id"))).model_copy(
+            update={
+                "current_candidate_id": candidate_state.candidate_id,
+                "current_candidate_parent_id": candidate_state.parent_candidate_id,
+                "current_candidate_run_ref": str(run_dir),
+                "current_candidate_status": candidate_state.status,
+                "current_candidate_attempt_index": state.current_candidate_attempt_index,
+                "candidate_history": [*state.candidate_history, candidate_state.candidate_id],
+                "candidate_run_history": [*state.candidate_run_history, str(run_dir)],
+                "candidate_lineage_events": [
+                    *state.candidate_lineage_events,
+                    _candidate_lineage_event(
+                        action_name="promote_candidate",
+                        candidate_id=candidate_state.candidate_id,
+                        parent_candidate_id=candidate_state.parent_candidate_id,
+                        source_candidate_id=candidate_state.source_candidate_id,
+                        run_ref=str(run_dir),
+                        status=candidate_state.status,
+                        transition_kind=transition.transition_kind,
+                        summary=promote_intent,
+                        candidate_role=candidate_state.candidate_role,
+                        candidate_attempt_index=state.current_candidate_attempt_index,
+                        metadata={"promote_label": promote_label},
+                    ),
+                ],
+                "metadata": {**state.metadata, "last_candidate_operation": "promote", "last_promote_label": promote_label},
             }
         )
     elif action_name == "eval":
@@ -988,6 +1726,20 @@ def step_environment(
                 "comparison_anchor_label": state.comparison_anchor_label or "primary_eval",
             }
         )
+        if state.current_candidate_id is not None:
+            next_state = next_state.model_copy(
+                update={
+                    "current_candidate_status": "eval_passed" if summary_payload.get("status") == "ok" else "eval_failed",
+                    "best_known_candidate_id": state.current_candidate_id if summary_payload.get("status") == "ok" else state.best_known_candidate_id,
+                    "best_known_candidate_parent_id": state.current_candidate_parent_id
+                    if summary_payload.get("status") == "ok"
+                    else state.best_known_candidate_parent_id,
+                    "best_known_candidate_run_ref": state.current_candidate_run_ref
+                    if summary_payload.get("status") == "ok"
+                    else state.best_known_candidate_run_ref,
+                    "best_known_candidate_reason": "eval_success" if summary_payload.get("status") == "ok" else state.best_known_candidate_reason,
+                }
+            )
     elif action_name == "bench":
         if not task_ref or not command:
             raise RuntimeError("bench requires task_ref and command.")
@@ -1019,6 +1771,15 @@ def step_environment(
         action_metadata["run_ref"] = str(run_dir)
         reward_total = sum(reward_components.values())
         next_state = _update_state_after_run(state, str(run_dir), str(payload.get("run_id")))
+        if state.current_candidate_id is None and state.comparison_anchor_run_ref is None:
+            next_state = next_state.model_copy(
+                update={
+                    "comparison_anchor_run_ref": str(run_dir),
+                    "comparison_anchor_label": "baseline_bench",
+                }
+            )
+        if state.current_candidate_id is not None:
+            next_state = next_state.model_copy(update={"current_candidate_status": "benchmarked"})
     elif action_name == "inspect":
         target_run_ref = run_ref or state.last_run_ref
         if not target_run_ref:
@@ -1041,12 +1802,26 @@ def step_environment(
         reward_components = {"tool_cost": -_tool_cost(inspect_action_name)}
         reward_total = reward_components["tool_cost"]
         next_state = _update_state_after_info(state)
+        best_known_updates = _update_best_known_candidate_from_compare(state, payload)
+        if best_known_updates:
+            next_state = next_state.model_copy(update=best_known_updates)
     elif action_name == "compare":
         lhs = lhs_run_ref or state.last_run_ref
         rhs = rhs_run_ref
         if not lhs or not rhs:
             raise RuntimeError("compare requires lhs_run_ref and rhs_run_ref, or an existing last_run_ref plus rhs_run_ref.")
         payload = compare_runs(root, lhs, rhs).model_dump(mode="json")
+        best_known_updates = _update_best_known_candidate_from_compare(state, payload)
+        current_worse_than_best_known = False
+        if state.best_known_candidate_run_ref and lhs == state.best_known_candidate_run_ref:
+            optimize_delta = payload.get("optimize_delta_summary", {})
+            if isinstance(optimize_delta, dict):
+                current_worse_than_best_known = (
+                    str(optimize_delta.get("correctness_change", "unknown")) == "regressed"
+                    or str(optimize_delta.get("perf_change", "unknown")) == "regressed"
+                )
+        payload["regression_against_best_known"] = current_worse_than_best_known
+        payload["best_known_candidate_reason"] = state.best_known_candidate_reason
         action_metadata.update({"lhs_run_ref": lhs, "rhs_run_ref": rhs})
         observation = TrajectoryObservation(
             observation_type="comparison",
@@ -1057,7 +1832,17 @@ def step_environment(
         )
         reward_components = {"tool_cost": -_tool_cost("compare")}
         reward_total = reward_components["tool_cost"]
-        next_state = _update_state_after_info(state)
+        next_state = _update_state_after_info(state).model_copy(
+            update={
+                "metadata": {
+                    **state.metadata,
+                    "last_compare_regression_against_best_known": current_worse_than_best_known,
+                    "last_compare_anchor_run_ref": lhs,
+                }
+            }
+        )
+        if best_known_updates:
+            next_state = next_state.model_copy(update=best_known_updates)
     elif action_name == "replay":
         target_run_ref = run_ref or state.last_run_ref
         if not target_run_ref:
@@ -1130,12 +1915,14 @@ def run_scripted_reference_episode(
 ) -> TrajectoryEpisode:
     task = _resolve_task(root, task_ref)
     steps: list[TrajectoryStep] = []
-    patch_variant = "negative" if workflow in {"debug_negative", "reformulate_negative"} else "positive"
+    patch_variant = "negative" if workflow in {"debug_negative", "reformulate_negative", "optimize_negative"} else "positive"
     scripted_patch_plan = _scripted_patch_plan(root, task.task_id, variant=patch_variant)
     selected_workflow = workflow
     if selected_workflow == "auto":
         if task.verb == "reformulate":
             selected_workflow = "reformulate"
+        elif task.verb == "optimize" and scripted_patch_plan:
+            selected_workflow = "optimize_patch"
         elif task.verb == "debug":
             selected_workflow = "debug"
         elif task.verb == "diagnose":
@@ -1149,9 +1936,13 @@ def run_scripted_reference_episode(
     elif selected_workflow == "reformulate":
         # Reformulate flows need enough room for baseline, patch, verify, and compare.
         minimum_budget = 10
+    elif selected_workflow == "optimize_patch":
+        minimum_budget = 10
     elif selected_workflow == "debug_negative":
         minimum_budget = 11
     elif selected_workflow == "reformulate_negative":
+        minimum_budget = 10
+    elif selected_workflow == "optimize_negative":
         minimum_budget = 10
     state = initialize_environment_state(root, task_ref, policy_id=policy_id, step_budget=max(step_budget, minimum_budget))
 
@@ -1199,7 +1990,7 @@ def run_scripted_reference_episode(
             )
             steps.append(step)
 
-    if selected_workflow in {"reformulate", "reformulate_negative"} and baseline and state.step_budget_remaining > 0:
+    if selected_workflow in {"reformulate", "reformulate_negative", "optimize_patch", "optimize_negative"} and baseline and state.step_budget_remaining > 0:
         state, step = step_environment(
             root,
             state,
@@ -1234,7 +2025,7 @@ def run_scripted_reference_episode(
         )
         steps.append(step)
 
-    if selected_workflow in {"debug", "reformulate", "debug_negative", "reformulate_negative"} and state.last_run_ref and state.step_budget_remaining > 0:
+    if selected_workflow in {"debug", "reformulate", "optimize_patch", "debug_negative", "reformulate_negative", "optimize_negative"} and state.last_run_ref and state.step_budget_remaining > 0:
         state, step = step_environment(
             root,
             state,
@@ -1244,7 +2035,7 @@ def run_scripted_reference_episode(
         )
         steps.append(step)
 
-    if selected_workflow in {"debug", "reformulate", "debug_negative", "reformulate_negative"} and scripted_patch_plan and state.step_budget_remaining > 0:
+    if selected_workflow in {"debug", "reformulate", "optimize_patch", "debug_negative", "reformulate_negative", "optimize_negative"} and scripted_patch_plan and state.step_budget_remaining > 0:
         state, step = step_environment(
             root,
             state,
@@ -1263,7 +2054,7 @@ def run_scripted_reference_episode(
         )
         steps.append(step)
 
-    if selected_workflow in {"debug", "reformulate", "debug_negative", "reformulate_negative"} and scripted_patch_plan and state.step_budget_remaining > 0:
+    if selected_workflow in {"debug", "reformulate", "optimize_patch", "debug_negative", "reformulate_negative", "optimize_negative"} and scripted_patch_plan and state.step_budget_remaining > 0:
         post_patch_build_spec = scripted_patch_plan.get("post_patch_build_spec")
         if post_patch_build_spec is not None:
             state, step = step_environment(
@@ -1281,7 +2072,7 @@ def run_scripted_reference_episode(
             )
             steps.append(step)
 
-    if selected_workflow in {"reformulate", "reformulate_negative"} and scripted_patch_plan and state.step_budget_remaining > 0:
+    if selected_workflow in {"reformulate", "reformulate_negative", "optimize_patch", "optimize_negative"} and scripted_patch_plan and state.step_budget_remaining > 0:
         state, step = step_environment(
             root,
             state,
@@ -1294,7 +2085,7 @@ def run_scripted_reference_episode(
         )
         steps.append(step)
 
-    if selected_workflow in {"debug_negative", "reformulate_negative"} and state.last_run_ref and state.step_budget_remaining > 0:
+    if selected_workflow in {"debug_negative", "reformulate_negative", "optimize_negative"} and state.last_run_ref and state.step_budget_remaining > 0:
         state, step = step_environment(
             root,
             state,
@@ -1311,7 +2102,7 @@ def run_scripted_reference_episode(
             action_name="eval",
             task_ref=task.task_id,
             command=list(scripted_patch_plan["eval_command"])
-            if scripted_patch_plan and selected_workflow in {"debug", "reformulate", "debug_negative", "reformulate_negative"}
+            if scripted_patch_plan and selected_workflow in {"debug", "reformulate", "optimize_patch", "debug_negative", "reformulate_negative", "optimize_negative"}
             else command,
             section="eval",
             backend=backend,
@@ -1326,9 +2117,9 @@ def run_scripted_reference_episode(
         state, step = step_environment(
             root,
             state,
-            action_name="inspect_quality" if selected_workflow in {"debug", "reformulate", "debug_negative", "reformulate_negative"} else "inspect",
+            action_name="inspect_quality" if selected_workflow in {"debug", "reformulate", "optimize_patch", "debug_negative", "reformulate_negative", "optimize_negative"} else "inspect",
             run_ref=state.last_run_ref,
-            section="quality" if selected_workflow in {"debug", "reformulate", "debug_negative", "reformulate_negative"} else section,
+            section="quality" if selected_workflow in {"debug", "reformulate", "optimize_patch", "debug_negative", "reformulate_negative", "optimize_negative"} else section,
         )
         steps.append(step)
 
@@ -1381,16 +2172,34 @@ def run_scripted_reference_episode(
     verification_steps = [step for step in steps if step.step_label == "verification_action"]
     source_run_dir = resolve_run_dir(root, state.last_run_ref) if state.last_run_ref else root
     final_readiness: dict[str, object] = {}
+    governance_score: EvidenceQualityReport | None = None
+    final_eval_envelope: dict[str, object] = {}
     if state.last_run_ref:
         quality_payload = inspect_run(root, state.last_run_ref, section="quality")
         if isinstance(quality_payload, dict):
             final_readiness = dict(quality_payload.get("evidence_quality", {}))
+            governance_payload = quality_payload.get("governance_score")
+            if isinstance(governance_payload, dict):
+                governance_score = EvidenceQualityReport.model_validate(governance_payload)
+        eval_payload = inspect_run(root, state.last_run_ref, section="eval")
+        if isinstance(eval_payload, dict):
+            eval_envelope = eval_payload.get("eval_envelope")
+            if isinstance(eval_envelope, dict):
+                final_eval_envelope = dict(eval_envelope)
     episode_readiness = _derive_episode_training_readiness(
         task_verb=task.verb,
         terminal_state=terminal_state,
         final_readiness=final_readiness,
         steps=steps,
     )
+    learning_reward_trace = _derive_episode_learning_reward(
+        task_ref=task.task_id,
+        task_verb=task.verb,
+        terminal_state=terminal_state,
+        steps=steps,
+        final_eval_envelope=final_eval_envelope,
+    )
+    optimize_trace_snapshots = _episode_optimize_trace_snapshots(steps)
     return TrajectoryEpisode(
         episode_id=state.episode_id,
         created_at=datetime.now(tz=UTC),
@@ -1406,6 +2215,9 @@ def run_scripted_reference_episode(
         terminal_state=terminal_state,
         artifact_refs=artifact_refs,
         governance=episode_readiness,
+        governance_score=governance_score,
+        learning_reward_trace=learning_reward_trace,
+        optimize_trace_snapshots=optimize_trace_snapshots,
         metadata={
             **state.metadata,
             "workflow": selected_workflow,
@@ -1425,11 +2237,14 @@ def run_scripted_reference_episode(
             "episode_governance_kind": episode_readiness.episode_governance_kind,
             "episode_governance_reasons": list(episode_readiness.reasons),
             "evidence_score": final_readiness.get("overall_score", 0.0),
+            "governance_score_kind": governance_score.score_kind if governance_score is not None else "governance",
             "benchmark_ready": episode_readiness.benchmark_collection.eligible,
             "sft_ready": episode_readiness.sft_collection.eligible,
             "rl_trace_ready": episode_readiness.rl_reward_trace.eligible,
             "episode_build_evidence": episode_readiness.has_build_evidence,
             "episode_profile_evidence": episode_readiness.has_profile_evidence,
             "episode_patch_bearing": episode_readiness.patch_bearing,
+            "learning_reward_schema_id": learning_reward_trace.schema_id,
+            "learning_reward_total": learning_reward_trace.total_reward,
         },
     )

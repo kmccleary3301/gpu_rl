@@ -199,6 +199,7 @@ These documents freeze the semantics and boundaries that matter for the first tr
 | [`docs/DATA_GOVERNANCE.md`](./docs/DATA_GOVERNANCE.md) | Run-level readiness versus episode-level governance and training-example semantics |
 | [`docs/POLICY_INTERFACE.md`](./docs/POLICY_INTERFACE.md) | First-wave action surface, observation model, and rollout semantics |
 | [`docs/RETRIEVAL_GUIDE.md`](./docs/RETRIEVAL_GUIDE.md) | Retrieval corpus structure and recommended query patterns |
+| [`docs/REMOTE_SANDBOX_ABSTRACTION.md`](./docs/REMOTE_SANDBOX_ABSTRACTION.md) | Neutral remote-session contract, sync policy, and artifact transfer boundary |
 
 ## Installation and Environment
 
@@ -325,7 +326,7 @@ gpc run \
   --sanitize-tool memcheck \
   --emit-disassembly \
   --triton-build-spec workloads/reference/triton_attention_score_kernel.py:get_build_spec \
-  -- python3 workloads/reference/triton_attention_score_candidate.py --benchmark-repeats 5
+  -- python3 workloads/reference/triton_attention_score_optimize_candidate.py --benchmark-repeats 5
 ```
 
 ### Example: bounded scripted environment episode

@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+import json
 from pathlib import Path
+import subprocess
 import shutil
 import sys
 import unittest
+from types import SimpleNamespace
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -68,6 +72,57 @@ class TritonBuildTests(unittest.TestCase):
         self.assertTrue((self.writer.run_dir / "build" / "source_map_summary.json").exists())
         tri_view = (self.writer.run_dir / "build" / "tri_view.json").read_text(encoding="utf-8")
         self.assertIn('"correlation_method": "ptx_loc_source_map_v1"', tri_view)
+
+    def test_compile_triton_build_spec_degrades_when_sass_extraction_fails(self) -> None:
+        class FakeAsm(dict):
+            def __getitem__(self, key: str):
+                if key == "sass":
+                    raise subprocess.CalledProcessError(1, ["cuobjdump", "-sass", "/tmp/fake.cubin"])
+                return super().__getitem__(key)
+
+        class FakeKernel:
+            __name__ = "fake_kernel"
+
+            def warmup(self, *args, **kwargs):
+                del args, kwargs
+                return SimpleNamespace(
+                    asm=FakeAsm(
+                        {
+                            "ptx": "// ptx\n",
+                            "ttir": "// ttir\n",
+                            "ttgir": "// ttgir\n",
+                            "llir": "; llir\n",
+                        }
+                    ),
+                    name="fake_kernel",
+                    metadata=SimpleNamespace(_asdict=lambda: {"shared": 0}),
+                )
+
+        fake_module = SimpleNamespace(
+            get_build_spec=lambda: {
+                "kernel": FakeKernel(),
+                "warmup_args": [],
+                "grid": [1],
+                "kwargs": {},
+                "source_file": "workloads/reference/triton_row_sum_kernel.py",
+            },
+            __triton_version__="3.6.0",
+        )
+
+        with patch("gpu_cockpit.backends.triton.build._load_module", return_value=fake_module):
+            record = compile_triton_build_spec(
+                self.writer,
+                ROOT,
+                "workloads/reference/triton_row_sum_kernel.py:get_build_spec",
+            )
+
+        self.assertEqual(record.status, "partial")
+        self.assertTrue((self.writer.run_dir / "build" / "tri_view.json").exists())
+        self.assertTrue((self.writer.run_dir / "build" / "ptx.txt").exists())
+        self.assertFalse((self.writer.run_dir / "build" / "sass.txt").exists())
+        metadata = json.loads((self.writer.run_dir / "build" / "triton_compile_metadata.json").read_text(encoding="utf-8"))
+        self.assertEqual(len(metadata["warnings"]), 1)
+        self.assertIn("sass extraction unavailable", metadata["warnings"][0])
 
 
 if __name__ == "__main__":

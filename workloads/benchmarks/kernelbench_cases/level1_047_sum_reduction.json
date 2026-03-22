@@ -12,9 +12,7 @@
   "feature_requirements": ["torch"],
   "default_command": [
     "python3",
-    "workloads/reference/kernelbench_reference_runner.py",
-    "--case-config",
-    "workloads/public_benchmarks/kernelbench/v0_1/cases/level1_047_sum_reduction.json",
+    "workloads/reference/kernelbench_sum_reduction_optimize_candidate.py",
     "--benchmark-repeats",
     "20"
   ],

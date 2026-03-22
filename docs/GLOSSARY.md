@@ -8,6 +8,15 @@ A concrete code state associated with a run, patch, or build/eval outcome.
 ### Candidate lineage
 The parent-child relationship between candidates across patch, repair, revert, or reformulate steps.
 
+### Candidate operation
+A first-class lifecycle event over a candidate, such as `patch_apply`, `branch`, `revert`, `promote`, `build`, or `eval`.
+
+### Candidate origin
+The way a candidate entered the lineage, such as `baseline`, `patch`, `branch`, `revert`, or `synthesis`.
+
+### Candidate status
+The current lifecycle state of a candidate, such as `patched`, `build_passed`, `eval_failed`, or `promoted`.
+
 ### Run bundle
 A directory of structured artifacts for one executed run or projection, including summaries, evaluation outputs, build outputs, and replay metadata.
 

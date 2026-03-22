@@ -1,0 +1,18 @@
+{
+  "config_id": "cfg/rollout/debug_repair_heldout/modal_v1",
+  "policy_id": "scripted_reference_v1",
+  "task_refs": [
+    "task/reduction_debug/eval/v1",
+    "task/profile_diagnose/eval/v1",
+    "task/attention_reformulate/eval/v1"
+  ],
+  "step_budget": 12,
+  "determinism_runs": 2,
+  "workflow": "auto",
+  "executor": "modal",
+  "reward_weights": {},
+  "notes": [
+    "Modal-backed held-out rollout path.",
+    "Requires Modal auth and a remote runtime that can satisfy the GPU-heavy task dependencies."
+  ]
+}

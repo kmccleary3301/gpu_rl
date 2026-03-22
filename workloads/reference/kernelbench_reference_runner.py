@@ -69,6 +69,30 @@ def _benchmark(problem_path: Path, case: dict[str, Any], repeats: int, device: t
             torch.cuda.synchronize()
 
 
+def build_case_payload(
+    case_config_path: Path,
+    *,
+    benchmark_repeats: int,
+    extra_payload: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    case = _load_case_config(case_config_path)
+    problem_path = (case_config_path.parent / case["problem_relpath"]).resolve()
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    _benchmark(problem_path, case, benchmark_repeats, device)
+    payload = {
+        "benchmark_source": "kernelbench",
+        "benchmark_case_id": case["benchmark_case_id"],
+        "benchmark_case_version": case["benchmark_case_version"],
+        "problem_path": str(problem_path),
+        "case_config_path": str(case_config_path),
+        "visible_result": _run_case(problem_path, case, "visible", device),
+        "hidden_result": _run_case(problem_path, case, "hidden", device),
+    }
+    if extra_payload:
+        payload.update(extra_payload)
+    return payload
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--case-config", required=True)
@@ -76,24 +100,7 @@ def main() -> None:
     args = parser.parse_args()
 
     case_config_path = Path(args.case_config).resolve()
-    case = _load_case_config(case_config_path)
-    problem_path = (case_config_path.parent / case["problem_relpath"]).resolve()
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    _benchmark(problem_path, case, args.benchmark_repeats, device)
-    print(
-        json.dumps(
-            {
-                "benchmark_source": "kernelbench",
-                "benchmark_case_id": case["benchmark_case_id"],
-                "benchmark_case_version": case["benchmark_case_version"],
-                "problem_path": str(problem_path),
-                "case_config_path": str(case_config_path),
-                "visible_result": _run_case(problem_path, case, "visible", device),
-                "hidden_result": _run_case(problem_path, case, "hidden", device),
-            },
-            sort_keys=True,
-        )
-    )
+    print(json.dumps(build_case_payload(case_config_path, benchmark_repeats=args.benchmark_repeats), sort_keys=True))
 
 
 if __name__ == "__main__":

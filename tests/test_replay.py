@@ -89,9 +89,17 @@ class ReplayTests(unittest.TestCase):
         self.assertEqual(replay_pack["transition_kind"], "repaired")
         self.assertEqual(replay_pack["patch_ref"], "patches/applied_patch.json")
         self.assertEqual(replay_pack["diff_ref"], "patches/unified_diff.patch")
+        self.assertEqual(replay_pack["operation_ref"], "candidate/operation.json")
+        self.assertEqual(replay_pack["candidate_status"], "patched")
+        self.assertEqual(replay_pack["candidate_origin_kind"], "patch")
+        self.assertEqual(replay_pack["candidate_operation_kind"], "patch_apply")
+        self.assertEqual(replay_pack["candidate_role_group"], "trial")
+        self.assertEqual(replay_pack["source_candidate_id"], None)
+        self.assertEqual(replay_pack["sibling_candidate_refs"], [])
         self.assertTrue(payload["checks"]["patch_ref"])
         self.assertTrue(payload["checks"]["diff_ref"])
         self.assertTrue(payload["checks"]["transition_ref"])
+        self.assertTrue(payload["checks"]["operation_ref"])
         self.assertTrue(payload["checks"]["candidate_lineage_present"])
 
     def test_validate_checked_in_patch_transition_fixture(self) -> None:
@@ -116,6 +124,7 @@ class ReplayTests(unittest.TestCase):
             names = set(archive.namelist())
         self.assertIn("candidate/state.json", names)
         self.assertIn("candidate/transition.json", names)
+        self.assertIn("candidate/operation.json", names)
         self.assertIn("patches/applied_patch.json", names)
         self.assertIn("patches/unified_diff.patch", names)
 

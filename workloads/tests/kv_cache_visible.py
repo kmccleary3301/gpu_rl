@@ -3,6 +3,13 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+import sys
+
+
+def _emit_failure(code: str, message: str, **details: object) -> None:
+    payload = {"code": code, **details}
+    print(f"GPC_FAILURE_JSON:{json.dumps(payload, sort_keys=True)}", file=sys.stderr)
+    raise SystemExit(message)
 
 
 def _load_payload() -> dict[str, object]:
@@ -15,14 +22,33 @@ def _load_payload() -> dict[str, object]:
 
 def _assert_rows_close(actual: object, expected: list[list[float]]) -> None:
     if not isinstance(actual, list) or len(actual) != len(expected):
-        raise SystemExit(f"Unexpected visible kv rows: {actual}")
+        _emit_failure(
+            "visible_kv_shape_mismatch",
+            f"Unexpected visible kv rows: {actual}",
+            section="visible_tests",
+            expected_rows=len(expected),
+            actual_rows=len(actual) if isinstance(actual, list) else None,
+        )
     for row_index, (actual_row, expected_row) in enumerate(zip(actual, expected, strict=True)):
         if not isinstance(actual_row, list) or len(actual_row) != len(expected_row):
-            raise SystemExit(f"Unexpected visible row shape at row {row_index}: {actual_row}")
+            _emit_failure(
+                "visible_kv_row_shape_mismatch",
+                f"Unexpected visible row shape at row {row_index}: {actual_row}",
+                section="visible_tests",
+                row_index=row_index,
+                expected_cols=len(expected_row),
+                actual_cols=len(actual_row) if isinstance(actual_row, list) else None,
+            )
         for col_index, (actual_value, expected_value) in enumerate(zip(actual_row, expected_row, strict=True)):
             if abs(float(actual_value) - expected_value) > 1e-6:
-                raise SystemExit(
-                    f"Unexpected visible kv row value at row {row_index}, col {col_index}: {actual_value} != {expected_value}"
+                _emit_failure(
+                    "visible_kv_value_mismatch",
+                    f"Unexpected visible kv row value at row {row_index}, col {col_index}: {actual_value} != {expected_value}",
+                    section="visible_tests",
+                    row_index=row_index,
+                    col_index=col_index,
+                    actual=float(actual_value),
+                    expected=expected_value,
                 )
 
 

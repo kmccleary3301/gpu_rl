@@ -3,6 +3,13 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+import sys
+
+
+def _emit_failure(code: str, message: str, **details: object) -> None:
+    payload = {"code": code, **details}
+    print(f"GPC_FAILURE_JSON:{json.dumps(payload, sort_keys=True)}", file=sys.stderr)
+    raise SystemExit(message)
 
 
 def _load_payload() -> dict[str, object]:
@@ -17,7 +24,37 @@ def main() -> None:
     payload = _load_payload()
     expected = [8.0, 3.0, 6.0]
     if payload.get("hidden_row_sum") != expected:
-        raise SystemExit(f"Unexpected hidden row sums: {payload.get('hidden_row_sum')} != {expected}")
+        _emit_failure(
+            "hidden_row_sum_mismatch",
+            f"Unexpected hidden row sums: {payload.get('hidden_row_sum')} != {expected}",
+            section="hidden_tests",
+            expected=expected,
+            observed=payload.get("hidden_row_sum"),
+        )
+    summary = payload.get("optimization_summary")
+    if not isinstance(summary, dict):
+        _emit_failure(
+            "missing_optimization_summary",
+            "Missing optimization_summary",
+            section="hidden_tests",
+            expected_any_of=["optimization_summary"],
+        )
+    strategy_change = summary.get("strategy_change")
+    candidate_ref = summary.get("candidate_ref")
+    if strategy_change != "replace_cpu_reference_path_with_triton_row_sum_kernel":
+        _emit_failure(
+            "unexpected_optimization_strategy_change",
+            f"Unexpected optimization strategy change: {strategy_change}",
+            section="hidden_tests",
+            observed=strategy_change,
+        )
+    if candidate_ref != "workloads/reference/triton_row_sum_optimize_candidate.py":
+        _emit_failure(
+            "unexpected_optimize_candidate_ref",
+            f"Unexpected optimize candidate ref: {candidate_ref}",
+            section="hidden_tests",
+            observed=candidate_ref,
+        )
 
 
 if __name__ == "__main__":

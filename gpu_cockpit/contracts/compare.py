@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 from pydantic import Field
 
 from gpu_cockpit.contracts.base import ContractModel
@@ -10,6 +12,14 @@ class RunComparison(ContractModel):
     rhs_run_id: str
     lhs_status: str
     rhs_status: str
+    optimize_delta_summary: dict[str, Any] = Field(default_factory=dict)
+    candidate_delta_brief: dict[str, Any] = Field(default_factory=dict)
+    recommended_next_actions: list[str] = Field(default_factory=list)
+    summary_lines: list[str] = Field(default_factory=list)
+    lhs_candidate_role: str | None = None
+    rhs_candidate_role: str | None = None
+    lhs_candidate_role_group: str | None = None
+    rhs_candidate_role_group: str | None = None
     lhs_duration_ms: int | None = None
     rhs_duration_ms: int | None = None
     duration_delta_ms: int | None = None
@@ -120,4 +130,3 @@ class RunComparison(ContractModel):
     lhs_build_sass_hash: str | None = None
     rhs_build_sass_hash: str | None = None
     build_sass_hash_changed: bool | None = None
-    summary_lines: list[str] = Field(default_factory=list)

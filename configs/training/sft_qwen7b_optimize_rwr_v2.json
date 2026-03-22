@@ -1,0 +1,38 @@
+{
+  "config_id": "cfg/rl/qwen7b/optimize_rwr/v2",
+  "model_id": "Qwen/Qwen2.5-Coder-7B-Instruct",
+  "tokenizer_id": "Qwen/Qwen2.5-Coder-7B-Instruct",
+  "adapter_mode": "qlora",
+  "dataset_refs": [
+    {
+      "dataset_kind": "sft",
+      "path": "datasets/optimize_rwr_train_v2",
+      "split": "train",
+      "required": true,
+      "notes": [
+        "Filtered reward-weighted regression dataset built from the strongest base_v3 optimize episodes only."
+      ]
+    },
+    {
+      "dataset_kind": "sft",
+      "path": "datasets/optimize_rwr_dev_v2",
+      "split": "dev",
+      "required": true,
+      "notes": [
+        "Held-out strongest positive reward-weighted optimize episode from the same rollout pool."
+      ]
+    }
+  ],
+  "eval_dataset_refs": [],
+  "context_length": 4096,
+  "per_device_batch_size": 1,
+  "gradient_accumulation_steps": 8,
+  "learning_rate": 2e-05,
+  "num_epochs": 1,
+  "max_steps": 12,
+  "output_dir": "artifacts/training/qwen7b_optimize_rwr_v2",
+  "notes": [
+    "Second bounded local reward-weighted regression update on optimize tasks.",
+    "Filters out weak budget-exhausted traces after the first RWR run failed to improve over base_v3."
+  ]
+}

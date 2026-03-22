@@ -1,0 +1,47 @@
+{
+  "task_id": "task/reduction_row_sum_semioopen/eval/v1",
+  "verb": "optimize",
+  "operator_family": "reduction_sum",
+  "difficulty": "medium_plus",
+  "prompt": "Author the Triton kernel file for a CUDA row-sum reduction from a constrained semioopen template, then run the candidate and print JSON with visible_row_sum and hidden_row_sum lists plus an optimization_summary. The candidate must use Triton for the kernel path and avoid torch.sum in the candidate source.",
+  "baseline_ref": "workloads/baselines/reduction_row_sum_eval_baseline.json",
+  "reference_impl_ref": "workloads/reference/triton_row_sum_semioopen_candidate.py",
+  "visible_tests_ref": "workloads/tests/reduction_visible.py",
+  "hidden_tests_ref": "workloads/tests/reduction_semioopen_hidden.py",
+  "input_generator_ref": null,
+  "deterministic_mode": true,
+  "feature_requirements": [
+    "cuda",
+    "torch",
+    "triton"
+  ],
+  "numerical_policy": {
+    "dtype_matrix": [
+      "fp32"
+    ],
+    "rtol": 1e-05,
+    "atol": 1e-06
+  },
+  "perf_protocol": {
+    "warmups": 1,
+    "repeats": 3,
+    "timer": "wall_clock",
+    "split_compile_from_run": true
+  },
+  "allowed_backends": [
+    "triton"
+  ],
+  "forbidden_patterns": [
+    "torch.sum("
+  ],
+  "required_artifacts": [
+    "meta/doctor_report.json",
+    "prompt/task_spec.json",
+    "correctness/correctness.json",
+    "correctness/determinism.json",
+    "eval/anti_hack_report.json",
+    "eval/eval_envelope.json",
+    "perf/benchmark.json",
+    "perf/raw_timings.json"
+  ]
+}

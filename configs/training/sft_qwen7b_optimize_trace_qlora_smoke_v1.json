@@ -1,0 +1,48 @@
+{
+  "config_id": "cfg/sft/qwen7b/optimize_trace_qlora_smoke/v1",
+  "model_id": "Qwen/Qwen2.5-Coder-7B-Instruct",
+  "tokenizer_id": "Qwen/Qwen2.5-Coder-7B-Instruct",
+  "adapter_mode": "qlora",
+  "dataset_refs": [
+    {
+      "dataset_kind": "sft",
+      "path": "datasets/optimize_trace_sft_train_v1",
+      "split": "train",
+      "required": true,
+      "notes": [
+        "Curated GPT-5.4 optimize-trace training split."
+      ]
+    },
+    {
+      "dataset_kind": "sft",
+      "path": "datasets/optimize_trace_sft_dev_v1",
+      "split": "dev",
+      "required": true,
+      "notes": [
+        "Curated GPT-5.4 optimize-trace dev split."
+      ]
+    }
+  ],
+  "eval_dataset_refs": [
+    {
+      "dataset_kind": "trajectory",
+      "path": "datasets/optimize_trace_transition_dev_v1",
+      "split": "dev",
+      "required": true,
+      "notes": [
+        "Trajectory-format optimize traces for smoke evaluation sanity."
+      ]
+    }
+  ],
+  "context_length": 4096,
+  "per_device_batch_size": 1,
+  "gradient_accumulation_steps": 8,
+  "learning_rate": 2e-05,
+  "num_epochs": 1,
+  "max_steps": 1,
+  "output_dir": "artifacts/training/qwen7b_optimize_trace_qlora_smoke_v1",
+  "notes": [
+    "Smoke fine-tune on converted GPT-5.4 optimize traces.",
+    "Used to validate that the new optimize-lane traces are consumable by the existing local 7B QLoRA training stack."
+  ]
+}

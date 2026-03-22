@@ -1,0 +1,67 @@
+{
+  "config_id": "cfg/sft/qwen7b/debug_repair_qlora_spark_pilot/v1",
+  "model_id": "Qwen/Qwen2.5-Coder-7B-Instruct",
+  "tokenizer_id": "Qwen/Qwen2.5-Coder-7B-Instruct",
+  "adapter_mode": "qlora",
+  "dataset_refs": [
+    {
+      "dataset_kind": "sft",
+      "path": "datasets/first_target_sft_train_v1",
+      "split": "train",
+      "required": true,
+      "notes": [
+        "Primary Spark fallback pilot train split."
+      ]
+    },
+    {
+      "dataset_kind": "sft",
+      "path": "datasets/first_target_sft_dev_v1",
+      "split": "dev",
+      "required": true,
+      "notes": [
+        "Primary Spark fallback pilot dev split."
+      ]
+    },
+    {
+      "dataset_kind": "sft",
+      "path": "tests/golden_datasets/transition_sft_v1",
+      "split": "train",
+      "required": true,
+      "notes": [
+        "Retained as a stable smoke-style sanity reference."
+      ]
+    }
+  ],
+  "eval_dataset_refs": [
+    {
+      "dataset_kind": "trajectory",
+      "path": "datasets/first_target_transition_dev_v1",
+      "split": "dev",
+      "required": true,
+      "notes": [
+        "Primary Spark fallback held-out proxy evaluation set."
+      ]
+    },
+    {
+      "dataset_kind": "trajectory",
+      "path": "tests/golden_datasets/transition_collection_v1",
+      "split": "eval",
+      "required": true,
+      "notes": [
+        "Retained as a fixed evaluation guardrail."
+      ]
+    }
+  ],
+  "context_length": 4096,
+  "per_device_batch_size": 1,
+  "gradient_accumulation_steps": 16,
+  "learning_rate": 1.5e-05,
+  "num_epochs": 1,
+  "max_steps": 200,
+  "output_dir": "artifacts/training/qwen7b_debug_repair_qlora_spark_pilot_v1",
+  "notes": [
+    "Spark-specific fallback pilot config skeleton.",
+    "This only becomes active if the fallback smoke path reaches a real bounded train step.",
+    "The purpose is to validate the Spark stack with the same-family smaller target before any deeper 32B revisit."
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "config_id": "cfg/sft/qwen7b/optimize_trace_qlora_pilot/v1",
+  "model_id": "Qwen/Qwen2.5-Coder-7B-Instruct",
+  "tokenizer_id": "Qwen/Qwen2.5-Coder-7B-Instruct",
+  "adapter_mode": "qlora",
+  "dataset_refs": [
+    {
+      "dataset_kind": "sft",
+      "path": "datasets/optimize_trace_sft_train_v2",
+      "split": "train",
+      "required": true,
+      "notes": [
+        "Expanded optimize-trace training split with branch-capable positives and usable negatives."
+      ]
+    },
+    {
+      "dataset_kind": "sft",
+      "path": "datasets/optimize_trace_sft_dev_v2",
+      "split": "dev",
+      "required": true,
+      "notes": [
+        "Expanded optimize-trace dev split including a harder near-miss attention example."
+      ]
+    }
+  ],
+  "eval_dataset_refs": [
+    {
+      "dataset_kind": "trajectory",
+      "path": "datasets/optimize_trace_transition_dev_v2",
+      "split": "dev",
+      "required": true,
+      "notes": [
+        "Trajectory-format optimize traces for pilot sanity checks."
+      ]
+    }
+  ],
+  "context_length": 4096,
+  "per_device_batch_size": 1,
+  "gradient_accumulation_steps": 8,
+  "learning_rate": 2e-05,
+  "num_epochs": 1,
+  "max_steps": 8,
+  "output_dir": "artifacts/training/qwen7b_optimize_trace_qlora_pilot_v1",
+  "notes": [
+    "Non-smoke local 7B QLoRA pilot on the expanded optimize-trace v2 dataset.",
+    "Intended to establish the first real tuned-agent checkpoint for bounded optimize lanes."
+  ]
+}

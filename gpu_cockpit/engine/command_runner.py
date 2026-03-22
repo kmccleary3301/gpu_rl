@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import json
+import os
 
 from gpu_cockpit.contracts import SystemTraceSummary
 from gpu_cockpit.executors import CommandExecutor, LocalHostToolExecutor
+from gpu_cockpit.engine.command_utils import local_python_build_env, normalize_python_command
 from gpu_cockpit.engine.run_bundle import RunBundleWriter
 
 
@@ -14,8 +16,11 @@ def run_command(
     executor: CommandExecutor | None = None,
 ) -> SystemTraceSummary:
     executor = executor or LocalHostToolExecutor()
-    completed = writer.append_event(scope=scope, kind="started", payload={"command": command})
-    result = executor.run(command, cwd=writer.root)
+    normalized_command = normalize_python_command(command)
+    completed = writer.append_event(scope=scope, kind="started", payload={"command": normalized_command})
+    run_env = os.environ.copy()
+    run_env.update(local_python_build_env(writer.root))
+    result = executor.run(normalized_command, cwd=writer.root, env=run_env)
     stdout_artifact = writer.write_artifact(
         relative_path="command/stdout.txt",
         kind="command_stdout",
@@ -34,7 +39,7 @@ def run_command(
     )
     summary = SystemTraceSummary(
         backend="subprocess",
-        command=command,
+        command=normalized_command,
         trace_enabled=False,
         exit_code=result.exit_code,
         duration_ms=result.duration_ms,

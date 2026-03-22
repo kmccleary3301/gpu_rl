@@ -1,7 +1,7 @@
 {
   "config_id": "cfg/sft/qwen32b/debug_repair_lora/v1",
-  "model_id": "Qwen/Qwen3.5-Coder-32B",
-  "tokenizer_id": "Qwen/Qwen3.5-Coder-32B",
+  "model_id": "Qwen/Qwen2.5-Coder-32B-Instruct",
+  "tokenizer_id": "Qwen/Qwen2.5-Coder-32B-Instruct",
   "adapter_mode": "lora",
   "dataset_refs": [
     {

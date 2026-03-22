@@ -14,11 +14,11 @@ This document classifies the current task surface into the categories that matte
 
 | Task family | Verb | Role |
 | --- | --- | --- |
-| `reduction_sum` | `optimize` | Transfer-phase optimization target |
+| `reduction_sum` | `optimize` | Transfer-phase optimization target and second bounded optimize-candidate editing lane |
 | `routing_argmax` | `optimize` | Transfer-phase Triton indexing/routing workload |
 | `topk_router` | `optimize` | Transfer-phase routing workload |
-| `attention_score` | `optimize` | Transfer-phase attention kernel target |
-| `kv_cache_gather` | `optimize` | Transfer-phase attention-adjacent memory target |
+| `attention_score` | `optimize` | Transfer-phase attention kernel target and first bounded optimize-candidate editing lane |
+| `kv_cache_gather` | `optimize` | Transfer-phase attention-adjacent memory target and third bounded optimize-candidate editing lane |
 
 ## Diagnostic / Substrate Tasks
 

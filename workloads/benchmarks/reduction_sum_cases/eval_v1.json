@@ -15,7 +15,7 @@
   ],
   "default_command": [
     "python3",
-    "workloads/reference/triton_row_sum_candidate.py",
+    "workloads/reference/triton_row_sum_optimize_candidate.py",
     "--benchmark-repeats",
     "50"
   ],

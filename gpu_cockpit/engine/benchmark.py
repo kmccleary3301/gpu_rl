@@ -4,9 +4,12 @@ import json
 import math
 from pathlib import Path
 import statistics
+import sys
+import os
 
 from gpu_cockpit.contracts import BaselineSpec, PerfReport, TaskSpec
 from gpu_cockpit.executors import CommandExecutor, LocalHostToolExecutor
+from gpu_cockpit.engine.command_utils import local_python_build_env, normalize_python_command
 from gpu_cockpit.engine.run_bundle import RunBundleWriter
 
 
@@ -32,13 +35,16 @@ def _measure_command(
     repeats: int,
     cwd: Path | None = None,
 ) -> tuple[list[float], list[int]]:
+    normalized_command = normalize_python_command(command)
+    run_env = os.environ.copy()
+    run_env.update(local_python_build_env(cwd))
     for _ in range(warmups):
-        executor.run(command, cwd=cwd)
+        executor.run(normalized_command, cwd=cwd, env=run_env)
 
     timings: list[float] = []
     exit_codes: list[int] = []
     for _ in range(repeats):
-        result = executor.run(command, cwd=cwd)
+        result = executor.run(normalized_command, cwd=cwd, env=run_env)
         timings.append(float(result.duration_ms))
         exit_codes.append(result.exit_code)
     return timings, exit_codes
@@ -52,7 +58,7 @@ def resolve_baseline_spec(root: Path, baseline_ref: str) -> BaselineSpec:
     if path.suffix == ".json":
         return BaselineSpec.model_validate_json(path.read_text(encoding="utf-8"))
     if path.suffix == ".py":
-        return BaselineSpec(baseline_id=path.stem, command=["python3", str(path)])
+        return BaselineSpec(baseline_id=path.stem, command=[sys.executable, str(path)])
     if path.suffix == ".sh":
         return BaselineSpec(baseline_id=path.stem, command=["bash", str(path)])
     return BaselineSpec(baseline_id=path.stem, command=[str(path)])
@@ -69,18 +75,20 @@ def run_subprocess_benchmark(
     baseline_command: list[str] | None = None,
 ) -> PerfReport:
     executor = executor or LocalHostToolExecutor()
+    normalized_command = normalize_python_command(command)
+    normalized_baseline_command = normalize_python_command(baseline_command) if baseline_command is not None else None
     started = writer.append_event(
         scope=scope,
         kind="started",
         payload={
-            "command": command,
+            "command": normalized_command,
             "warmups": warmups,
             "repeats": repeats,
             "baseline_id": baseline_id,
-            "baseline_command": baseline_command,
+            "baseline_command": normalized_baseline_command,
         },
     )
-    timings, exit_codes = _measure_command(executor, command, warmups=warmups, repeats=repeats, cwd=writer.root)
+    timings, exit_codes = _measure_command(executor, normalized_command, warmups=warmups, repeats=repeats, cwd=writer.root)
 
     if any(code != 0 for code in exit_codes):
         writer.append_event(scope=scope, kind="failed", payload={"exit_codes": exit_codes})
@@ -88,8 +96,8 @@ def run_subprocess_benchmark(
 
     baseline_timings: list[float] = []
     baseline_exit_codes: list[int] = []
-    if baseline_command is not None:
-        baseline_timings, baseline_exit_codes = _measure_command(executor, baseline_command, warmups=warmups, repeats=repeats, cwd=writer.root)
+    if normalized_baseline_command is not None:
+        baseline_timings, baseline_exit_codes = _measure_command(executor, normalized_baseline_command, warmups=warmups, repeats=repeats, cwd=writer.root)
         if any(code != 0 for code in baseline_exit_codes):
             writer.append_event(scope=scope, kind="failed", payload={"baseline_exit_codes": baseline_exit_codes})
             raise RuntimeError(f"Baseline benchmark command failed with exit codes: {baseline_exit_codes}")
@@ -118,10 +126,10 @@ def run_subprocess_benchmark(
         kind="benchmark_timings",
         content=json.dumps(
             {
-                "candidate": {"command": command, "timings_ms": timings, "exit_codes": exit_codes},
+                "candidate": {"command": normalized_command, "timings_ms": timings, "exit_codes": exit_codes},
                 "baseline": {
                     "baseline_id": baseline_id,
-                    "command": baseline_command,
+                    "command": normalized_baseline_command,
                     "timings_ms": baseline_timings,
                     "exit_codes": baseline_exit_codes,
                 },

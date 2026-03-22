@@ -16,11 +16,13 @@ from gpu_cockpit.contracts.event import Event
 from gpu_cockpit.contracts.hardware import HardwareFingerprint
 from gpu_cockpit.contracts.hook import HookExecution
 from gpu_cockpit.contracts.knowledge import KnowledgeEntry, KnowledgeIndexManifest
-from gpu_cockpit.contracts.patch import AppliedPatch, CandidateState, CandidateTransition, PatchRequest
+from gpu_cockpit.contracts.patch import AppliedPatch, CandidateDiffSummary, CandidateOperation, CandidateState, CandidateTransition, PatchRequest
 from gpu_cockpit.contracts.perf import PerfReport
 from gpu_cockpit.contracts.profile import KernelProfileMetric, KernelProfileRecord, ProfileReport
+from gpu_cockpit.contracts.reward import LearningRewardTrace, OptimizeTraceSnapshot, OptimizeTraceSnapshots, RewardLedger, RewardLedgerEntry
 from gpu_cockpit.contracts.replay import ReplayPack
 from gpu_cockpit.contracts.reports import EvalEnvelope
+from gpu_cockpit.contracts.remote_session import ArtifactTransferPolicy, RemoteSessionIdentity, RemoteSyncPolicy, RemoteTimeoutPolicy
 from gpu_cockpit.contracts.run import RunSpec
 from gpu_cockpit.contracts.sanitize import SanitizerFinding, SanitizerReport
 from gpu_cockpit.contracts.sft import SFTDatasetManifest, SFTExample
@@ -61,14 +63,25 @@ __all__ = [
     "KnowledgeEntry",
     "KnowledgeIndexManifest",
     "AppliedPatch",
+    "CandidateDiffSummary",
+    "CandidateOperation",
+    "ArtifactTransferPolicy",
     "CandidateState",
     "CandidateTransition",
     "KernelProfileMetric",
     "KernelProfileRecord",
+    "LearningRewardTrace",
+    "OptimizeTraceSnapshot",
+    "OptimizeTraceSnapshots",
+    "RewardLedger",
+    "RewardLedgerEntry",
     "PatchRequest",
     "PerfReport",
     "ProfileReport",
     "ReadinessDecision",
+    "RemoteSessionIdentity",
+    "RemoteSyncPolicy",
+    "RemoteTimeoutPolicy",
     "ReplayPack",
     "RunComparison",
     "RunSpec",

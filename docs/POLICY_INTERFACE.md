@@ -6,6 +6,8 @@ This document freezes the intended first-wave agent interface.
 
 The first policy is a bounded tool-use policy over GPU-agent tasks, not an unconstrained code-generation policy.
 
+The bounded optimize lane now covers `attention_score`, `reduction_row_sum`, `kv_cache_gather`, and `kernelbench/level1/47_sum_reduction`: baseline bench, scripted candidate patch, candidate bench, compare, and eval.
+
 ## First-Wave Action Set
 
 | Action | Purpose |
@@ -18,7 +20,7 @@ The first policy is a bounded tool-use policy over GPU-agent tasks, not an uncon
 | `inspect_build` | Focused build/disassembly inspection |
 | `inspect_profile` | Focused profile/bottleneck inspection |
 | `inspect_quality` | Focused evidence / trainworthiness inspection |
-| `patch_candidate` | Apply a scripted patch and emit candidate-transition artifacts |
+| `patch_candidate` | Apply a scripted patch and emit candidate state, transition, and operation artifacts |
 | `compare` | Compare two run bundles |
 | `replay` | Validate replay completeness |
 | `adapter_show` | Load a benchmark case plus derived task |
@@ -44,6 +46,7 @@ Observations should be:
 - replay validation
 - knowledge results
 - candidate transition summary
+- candidate lifecycle summary
 
 ## Terminal States
 

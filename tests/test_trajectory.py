@@ -11,9 +11,9 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from gpu_cockpit.contracts import EpisodeReadinessReport, ReadinessDecision, TrajectoryEpisode
+from gpu_cockpit.contracts import EpisodeReadinessReport, ReadinessDecision, TrajectoryAction, TrajectoryEpisode, TrajectoryObservation, TrajectoryStep
 from gpu_cockpit.engine.runner import run_task
-from gpu_cockpit.engine.environment import initialize_environment_state, run_scripted_reference_episode, step_environment
+from gpu_cockpit.engine.environment import _episode_optimize_trace_snapshots, initialize_environment_state, run_scripted_reference_episode, step_environment
 from gpu_cockpit.engine.knowledge import build_knowledge_index
 from gpu_cockpit.engine.trajectory import capture_run_episode, export_episode_dataset, export_trajectory_dataset, validate_trajectory_dataset
 
@@ -45,6 +45,9 @@ class TrajectoryTests(unittest.TestCase):
         self.assertEqual(episode.steps[0].action.action_type, "run")
         self.assertEqual(episode.steps[0].observation.projection["run"]["status"], "ok")
         self.assertIsNotNone(episode.governance)
+        self.assertIsNotNone(episode.governance_score)
+        self.assertIsNotNone(episode.learning_reward_trace)
+        self.assertIsNotNone(episode.reward_ledger)
 
     def test_export_and_validate_dataset(self) -> None:
         run_dir = run_task(
@@ -170,6 +173,68 @@ class TrajectoryTests(unittest.TestCase):
         self.assertEqual(manifest["patch_bearing_negative_episode_count"], 1)
         self.assertEqual(manifest["usable_negative_episode_count"], 1)
         self.assertEqual(manifest["episode_governance_counts"]["usable_negative_transition"], 1)
+
+    def test_optimize_episode_surfaces_reward_trace_and_snapshots(self) -> None:
+        candidate_step = TrajectoryStep(
+            step_index=0,
+            action=TrajectoryAction(action_type="patch_candidate"),
+            observation=TrajectoryObservation(
+                observation_type="projection",
+                run_id="run_candidate_001",
+                projection={"candidate_projection": {"candidate_state": {"candidate_id": "cand_001"}}},
+            ),
+            reward_components={},
+            reward_total=0.0,
+        )
+        compare_step = TrajectoryStep(
+            step_index=1,
+            action=TrajectoryAction(action_type="compare"),
+            observation=TrajectoryObservation(
+                observation_type="projection",
+                run_id="cmp_001",
+                projection={
+                    "candidate_delta_brief": {"lineage_relationship": "same_parent"},
+                    "optimize_delta_summary": {"correctness_change": "preserved_fail"},
+                    "recommended_next_actions": ["patch_candidate", "eval"],
+                    "summary_lines": ["Both runs still fail correctness."],
+                },
+            ),
+            reward_components={},
+            reward_total=0.0,
+        )
+        failure_step = TrajectoryStep(
+            step_index=2,
+            action=TrajectoryAction(action_type="inspect_quality"),
+            observation=TrajectoryObservation(
+                observation_type="projection",
+                run_id="run_eval_001",
+                projection={
+                    "failure_localization": {
+                        "hidden_tests": {"code": "hidden_attention_score_mismatch", "next_actions": ["patch_candidate", "eval"]}
+                    }
+                },
+            ),
+            reward_components={},
+            reward_total=0.0,
+        )
+        snapshots = _episode_optimize_trace_snapshots([candidate_step, compare_step, failure_step])
+        self.assertIsNotNone(snapshots)
+        assert snapshots is not None
+        self.assertEqual(len(snapshots.candidate_snapshots), 1)
+        self.assertEqual(len(snapshots.compare_snapshots), 1)
+        self.assertEqual(len(snapshots.failure_localization_snapshots), 1)
+
+    def test_capture_run_episode_surfaces_reward_ledger(self) -> None:
+        run_dir = run_task(
+            root=self.tmp_root,
+            task_ref="task/smoke/eval/v1",
+            command=["python3", "-c", "print('GPU_COCKPIT_SMOKE_OK')"],
+            trace_system=False,
+        )
+        episode = capture_run_episode(self.tmp_root, str(run_dir), section="quality")
+        self.assertIsNotNone(episode.reward_ledger)
+        assert episode.reward_ledger is not None
+        self.assertEqual(episode.reward_ledger.entries[0].action_type, "run")
 
     def test_validate_dataset_flags_broken_candidate_lineage(self) -> None:
         episode = run_scripted_reference_episode(

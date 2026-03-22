@@ -19,6 +19,10 @@ class RunSummary(ContractModel):
     patch_kind: str | None = None
     transition_kind: str | None = None
     candidate_role: str | None = None
+    candidate_status: str | None = None
+    candidate_origin_kind: str | None = None
+    candidate_operation_kind: str | None = None
+    candidate_diff_ref: str | None = None
     exit_code: int | None = None
     duration_ms: int | None = None
     key_artifacts: list[str] = Field(default_factory=list)

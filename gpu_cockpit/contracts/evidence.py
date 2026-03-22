@@ -11,6 +11,7 @@ class ReadinessDecision(ContractModel):
 
 
 class EvidenceQualityReport(ContractModel):
+    score_kind: str = "governance"
     run_id: str
     task_id: str | None = None
     required_artifact_count: int = 0

@@ -15,7 +15,7 @@
   ],
   "default_command": [
     "python3",
-    "workloads/reference/triton_kv_cache_gather_candidate.py",
+    "workloads/reference/triton_kv_cache_gather_optimize_candidate.py",
     "--benchmark-repeats",
     "50"
   ],

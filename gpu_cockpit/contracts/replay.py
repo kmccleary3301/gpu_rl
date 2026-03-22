@@ -17,10 +17,17 @@ class ReplayPack(ContractModel):
     commands_ref: str | None = None
     candidate_id: str | None = None
     parent_candidate_id: str | None = None
+    source_candidate_id: str | None = None
     source_run_ref: str | None = None
     patch_ref: str | None = None
     diff_ref: str | None = None
     transition_ref: str | None = None
+    operation_ref: str | None = None
     candidate_role: str | None = None
+    candidate_role_group: str | None = None
+    candidate_status: str | None = None
+    candidate_origin_kind: str | None = None
+    candidate_operation_kind: str | None = None
     transition_kind: str | None = None
+    sibling_candidate_refs: list[str] = Field(default_factory=list)
     required_artifacts: list[str] = Field(default_factory=list)

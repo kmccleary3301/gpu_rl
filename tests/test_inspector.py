@@ -11,7 +11,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from gpu_cockpit.engine.indexer import list_runs
-from gpu_cockpit.engine.patching import apply_patch_candidate
+from gpu_cockpit.engine.patching import apply_patch_candidate, branch_candidate, promote_candidate
 from gpu_cockpit.engine.inspector import compare_runs, inspect_run
 from gpu_cockpit.engine.runner import run_task
 
@@ -238,6 +238,110 @@ class InspectorTests(unittest.TestCase):
         self.assertIn("profile_triage", section)
         self.assertEqual(section["training_readiness"]["training_example_kind"], "unusable")
 
+    def test_compare_surfaces_public_benchmark_optimize_digest(self) -> None:
+        lhs = run_task(
+            root=self.tmp_root,
+            task_ref="task/smoke/eval/v1",
+            command=["python3", "-c", "print('lhs public benchmark')"],
+            trace_system=False,
+        )
+        rhs = run_task(
+            root=self.tmp_root,
+            task_ref="task/smoke/eval/v1",
+            command=["python3", "-c", "print('rhs public benchmark')"],
+            trace_system=False,
+        )
+        (lhs / "command").mkdir(parents=True, exist_ok=True)
+        (rhs / "command").mkdir(parents=True, exist_ok=True)
+        (lhs / "command" / "stdout.txt").write_text(
+            '{"benchmark_source":"kernelbench","benchmark_case_id":"kernelbench/level1/23_softmax","benchmark_case_version":"v0.1","case_config_path":"/tmp/softmax_case.json","problem_path":"/tmp/softmax.py","optimization_summary":{"strategy_change":"baseline_kernelbench_reference","candidate_ref":"workloads/reference/kernelbench_reference_runner.py","baseline_ref":"workloads/reference/kernelbench_reference_runner.py","case_config_ref":"workloads/public_benchmarks/kernelbench/v0_1/cases/level1_023_softmax.json"}}\n',
+            encoding="utf-8",
+        )
+        (rhs / "command" / "stdout.txt").write_text(
+            '{"benchmark_source":"kernelbench","benchmark_case_id":"kernelbench/level1/23_softmax","benchmark_case_version":"v0.1","case_config_path":"/tmp/softmax_case.json","problem_path":"/tmp/softmax.py","optimization_summary":{"strategy_change":"promote_curated_kernelbench_softmax_candidate_wrapper","candidate_ref":"workloads/reference/kernelbench_softmax_optimize_candidate.py","baseline_ref":"workloads/reference/kernelbench_reference_runner.py","case_config_ref":"workloads/public_benchmarks/kernelbench/v0_1/cases/level1_023_softmax.json"}}\n',
+            encoding="utf-8",
+        )
+        (lhs / "eval").mkdir(parents=True, exist_ok=True)
+        (rhs / "eval").mkdir(parents=True, exist_ok=True)
+        (lhs / "perf").mkdir(parents=True, exist_ok=True)
+        (rhs / "perf").mkdir(parents=True, exist_ok=True)
+        (lhs / "eval" / "eval_envelope.json").write_text('{"correctness_gate":"pass","final_score":0.8}\n', encoding="utf-8")
+        (rhs / "eval" / "eval_envelope.json").write_text('{"correctness_gate":"pass","final_score":1.0}\n', encoding="utf-8")
+        (lhs / "perf" / "benchmark.json").write_text('{"steady_state_ms_p50":10.0}\n', encoding="utf-8")
+        (rhs / "perf" / "benchmark.json").write_text('{"steady_state_ms_p50":8.0}\n', encoding="utf-8")
+
+        comparison = compare_runs(self.tmp_root, str(lhs), str(rhs))
+
+        self.assertEqual(comparison.optimize_delta_summary["benchmark_case_id"], "kernelbench/level1/23_softmax")
+        self.assertEqual(comparison.optimize_delta_summary["benchmark_source"], "kernelbench")
+        self.assertEqual(
+            comparison.optimize_delta_summary["optimization_strategy_change"],
+            "promote_curated_kernelbench_softmax_candidate_wrapper",
+        )
+        self.assertEqual(
+            comparison.optimize_delta_summary["candidate_ref"],
+            "workloads/reference/kernelbench_softmax_optimize_candidate.py",
+        )
+        self.assertIn("Compare is anchored to public benchmark case `kernelbench/level1/23_softmax`.", comparison.summary_lines)
+        self.assertIn(
+            "Optimization strategy changed from `baseline_kernelbench_reference` to `promote_curated_kernelbench_softmax_candidate_wrapper`.",
+            comparison.summary_lines,
+        )
+
+    def test_compare_inherits_candidate_lineage_and_optimize_summary_from_parent_patch_run(self) -> None:
+        lhs = run_task(
+            root=self.tmp_root,
+            task_ref="task/smoke/eval/v1",
+            command=["python3", "-c", "print('{}')"],
+            trace_system=False,
+        )
+        replacement_text = (self.tmp_root / "workloads" / "reference" / "triton_attention_score_optimize_candidate_v2.py").read_text(
+            encoding="utf-8"
+        )
+        patch_run, _, candidate_state, _ = apply_patch_candidate(
+            self.tmp_root,
+            task_ref="task/smoke/eval/v1",
+            target_file="workloads/reference/triton_attention_score_optimize_patchable_candidate.py",
+            replacement_text=replacement_text,
+            intent="promote the attention candidate into the ranked optimize variant",
+            expected_effect="surface the ranked optimization summary in downstream bench runs",
+            patch_kind="perf_transform",
+            transition_kind="reformulated",
+        )
+        rhs = run_task(
+            root=self.tmp_root,
+            task_ref="task/smoke/eval/v1",
+            command=[
+                "python3",
+                "-c",
+                (
+                    "import json; "
+                    "print(json.dumps({'optimization_summary': {"
+                    "'strategy_change': 'supersede_tiled_triton_kernel_candidate_with_ranked_variant', "
+                    "'candidate_ref': 'workloads/reference/triton_attention_score_optimize_candidate_v2.py', "
+                    "'baseline_ref': 'workloads/reference/triton_attention_score_baseline.py', "
+                    "'supersedes_candidate_ref': 'workloads/reference/triton_attention_score_optimize_candidate.py'"
+                    "}}, sort_keys=True))"
+                ),
+            ],
+            trace_system=False,
+            lineage={"parent_run_id": patch_run.name},
+        )
+
+        comparison = compare_runs(self.tmp_root, str(lhs), str(rhs))
+
+        self.assertEqual(comparison.rhs_candidate_id, candidate_state.candidate_id)
+        self.assertEqual(comparison.rhs_parent_candidate_id, candidate_state.parent_candidate_id)
+        self.assertEqual(
+            comparison.optimize_delta_summary["optimization_strategy_change"],
+            "supersede_tiled_triton_kernel_candidate_with_ranked_variant",
+        )
+        self.assertEqual(
+            comparison.optimize_delta_summary["candidate_ref"],
+            "workloads/reference/triton_attention_score_optimize_candidate_v2.py",
+        )
+        self.assertEqual(comparison.candidate_delta_brief["rhs_candidate_id"], candidate_state.candidate_id)
+
     def test_compare_golden_reformulate_pair_surfaces_training_transition(self) -> None:
         comparison = compare_runs(
             ROOT,
@@ -249,6 +353,8 @@ class InspectorTests(unittest.TestCase):
         self.assertTrue(comparison.rhs_benchmark_ready)
         self.assertFalse(comparison.rhs_rl_trace_ready)
         self.assertTrue(any("Trainworthiness changed" in line for line in comparison.summary_lines))
+        self.assertEqual(comparison.optimize_delta_summary["correctness_change"], "unknown")
+        self.assertIn("inspect_quality", comparison.recommended_next_actions)
 
     def test_inspect_golden_debug_bundle_surfaces_failure_triage(self) -> None:
         section = inspect_run(ROOT, str(ROOT / "tests" / "golden_runs" / "reduction_debug_bundle_v1"), section="quality")
@@ -315,6 +421,127 @@ class InspectorTests(unittest.TestCase):
         self.assertEqual(comparison.lineage_relationship, "lhs_parent_of_rhs")
         self.assertTrue(comparison.parent_child_related)
         self.assertEqual(comparison.rhs_parent_candidate_id, lhs_candidate.candidate_id)
+
+    def test_compare_surfaces_optimize_delta_summary_and_actions(self) -> None:
+        lhs = run_task(
+            root=self.tmp_root,
+            task_ref="task/smoke/eval/v1",
+            command=["python3", "-c", "print('GPU_COCKPIT_SMOKE_OK')"],
+            trace_system=False,
+        )
+        rhs = run_task(
+            root=self.tmp_root,
+            task_ref="task/smoke/eval/v1",
+            command=["python3", "-c", "print('GPU_COCKPIT_SMOKE_OK')"],
+            trace_system=False,
+        )
+        (lhs / "eval").mkdir(parents=True, exist_ok=True)
+        (rhs / "eval").mkdir(parents=True, exist_ok=True)
+        (lhs / "eval" / "eval_envelope.json").write_text(
+            '{"correctness_gate":"fail","final_score":0.0,"determinism_gate":"pass","perf_gate":"blocked"}\n',
+            encoding="utf-8",
+        )
+        (rhs / "eval" / "eval_envelope.json").write_text(
+            '{"correctness_gate":"pass","final_score":0.8,"determinism_gate":"pass","perf_gate":"fail"}\n',
+            encoding="utf-8",
+        )
+        (lhs / "perf").mkdir(parents=True, exist_ok=True)
+        (rhs / "perf").mkdir(parents=True, exist_ok=True)
+        (lhs / "perf" / "benchmark.json").write_text('{"steady_state_ms_p50":10.0}\n', encoding="utf-8")
+        (rhs / "perf" / "benchmark.json").write_text('{"steady_state_ms_p50":12.5}\n', encoding="utf-8")
+        (rhs / "candidate").mkdir(parents=True, exist_ok=True)
+        (rhs / "candidate" / "state.json").write_text(
+            '{"candidate_id":"cand_rhs","parent_candidate_id":"cand_lhs","status":"patched","origin_kind":"patch"}\n',
+            encoding="utf-8",
+        )
+        (rhs / "candidate" / "transition.json").write_text(
+            '{"transition_kind":"reformulated"}\n',
+            encoding="utf-8",
+        )
+        (rhs / "patches").mkdir(parents=True, exist_ok=True)
+        (rhs / "patches" / "applied_patch.json").write_text(
+            '{"patch_kind":"perf_transform","patch_hash":"abc123"}\n',
+            encoding="utf-8",
+        )
+
+        comparison = compare_runs(self.tmp_root, str(lhs), str(rhs))
+
+        self.assertEqual(comparison.optimize_delta_summary["correctness_change"], "recovered")
+        self.assertEqual(comparison.optimize_delta_summary["perf_change"], "regressed")
+        self.assertEqual(comparison.optimize_delta_summary["patch_change"], "none->perf_transform")
+        self.assertEqual(comparison.recommended_next_actions, ["inspect_quality", "patch_candidate", "bench"])
+        self.assertTrue(any("Correctness recovered" in line for line in comparison.summary_lines))
+
+    def test_compare_candidate_siblings_surfaces_same_parent_lineage(self) -> None:
+        repaired_text = (self.tmp_root / "workloads" / "reference" / "triton_row_sum_repaired_kernel.py").read_text(encoding="utf-8")
+        patch_run_dir, _, patched_candidate, _ = apply_patch_candidate(
+            self.tmp_root,
+            task_ref="task/reduction_debug/eval/v1",
+            target_file="workloads/reference/triton_row_sum_broken_kernel.py",
+            replacement_text=repaired_text,
+            intent="repair the row-sum kernel",
+            expected_effect="restore full-column coverage",
+            patch_kind="bug_fix",
+            transition_kind="repaired",
+        )
+        branch_run_dir, branch_candidate_state, _ = branch_candidate(
+            self.tmp_root,
+            task_ref="task/reduction_debug/eval/v1",
+            intent="branch for alternate reduction tuning",
+            branch_label="sibling_a",
+            parent_run_ref=str(patch_run_dir),
+            parent_run_id=patch_run_dir.name,
+            parent_candidate_id=patched_candidate.candidate_id,
+        )
+        promote_run_dir, promoted_candidate_state, _ = promote_candidate(
+            self.tmp_root,
+            task_ref="task/reduction_debug/eval/v1",
+            intent="promote a second sibling candidate",
+            promotion_label="sibling_b",
+            parent_run_ref=str(patch_run_dir),
+            parent_run_id=patch_run_dir.name,
+            parent_candidate_id=patched_candidate.candidate_id,
+        )
+
+        comparison = compare_runs(self.tmp_root, str(branch_run_dir), str(promote_run_dir))
+
+        self.assertEqual(comparison.lineage_relationship, "same_parent")
+        self.assertFalse(comparison.parent_child_related)
+        self.assertEqual(comparison.lhs_parent_candidate_id, patched_candidate.candidate_id)
+        self.assertEqual(comparison.rhs_parent_candidate_id, patched_candidate.candidate_id)
+        self.assertEqual(comparison.lhs_candidate_id, branch_candidate_state.candidate_id)
+        self.assertEqual(comparison.rhs_candidate_id, promoted_candidate_state.candidate_id)
+        self.assertEqual(comparison.candidate_delta_brief["lineage_relationship"], "same_parent")
+        self.assertEqual(comparison.candidate_delta_brief["lhs_transition_kind"], "branched")
+        self.assertEqual(comparison.candidate_delta_brief["rhs_transition_kind"], "promoted")
+        self.assertEqual(comparison.candidate_delta_brief["lhs_candidate_role"], "branched_candidate")
+        self.assertEqual(comparison.candidate_delta_brief["rhs_candidate_role"], "promoted_candidate")
+        self.assertEqual(comparison.candidate_delta_brief["lhs_candidate_role_group"], "branch")
+        self.assertEqual(comparison.candidate_delta_brief["rhs_candidate_role_group"], "promoted")
+        self.assertEqual(
+            comparison.candidate_delta_brief["sibling_candidate_refs"],
+            [branch_candidate_state.candidate_id, promoted_candidate_state.candidate_id],
+        )
+        self.assertEqual(comparison.lhs_candidate_role_group, "branch")
+        self.assertEqual(comparison.rhs_candidate_role_group, "promoted")
+        self.assertTrue(comparison.optimize_delta_summary["lineage_scopes"]["sibling_delta"]["available"])
+
+    def test_inspect_run_prefers_localized_next_actions(self) -> None:
+        run_dir = run_task(
+            root=self.tmp_root,
+            task_ref="task/smoke/eval/v1",
+            command=["python3", "-c", "print('GPU_COCKPIT_SMOKE_OK')"],
+            trace_system=False,
+        )
+        (run_dir / "correctness").mkdir(parents=True, exist_ok=True)
+        (run_dir / "correctness" / "failure_localization.json").write_text(
+            '{"hidden_tests":{"code":"kernelbench_hidden_sum_mismatch","fix_family":"numerical_mismatch","likely_next_actions":["inspect_quality","patch_candidate","eval"]}}\n',
+            encoding="utf-8",
+        )
+
+        inspected = inspect_run(self.tmp_root, str(run_dir), section="quality")
+
+        self.assertEqual(inspected["recommended_next_actions"], ["inspect_quality", "patch_candidate", "eval"])
 
 
 if __name__ == "__main__":

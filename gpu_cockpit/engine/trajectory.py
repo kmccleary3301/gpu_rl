@@ -8,6 +8,10 @@ from typing import Any
 
 from gpu_cockpit.contracts import (
     EpisodeReadinessReport,
+    EvidenceQualityReport,
+    LearningRewardTrace,
+    OptimizeTraceSnapshot,
+    OptimizeTraceSnapshots,
     ReadinessDecision,
     TrajectoryAction,
     TrajectoryDatasetManifest,
@@ -52,6 +56,23 @@ def _infer_action_type(run_id: str) -> str:
 
 
 def _derive_reward(summary_payload: dict[str, Any], run_dir: Path) -> tuple[dict[str, float], float]:
+    learning_reward_trace = _load_optional_json(run_dir / "eval" / "learning_reward_trace.json") or {}
+    reward_components = learning_reward_trace.get("reward_components")
+    shaping_components = learning_reward_trace.get("shaping_components")
+    if isinstance(reward_components, dict) or isinstance(shaping_components, dict):
+        normalized: dict[str, float] = {}
+        for source in (reward_components, shaping_components):
+            if isinstance(source, dict):
+                normalized.update(
+                    {
+                        str(key): float(value)
+                        for key, value in source.items()
+                        if isinstance(value, (int, float))
+                    }
+                )
+        total_reward = learning_reward_trace.get("total_reward")
+        if isinstance(total_reward, (int, float)):
+            return normalized, float(total_reward)
     envelope = _load_optional_json(run_dir / "eval" / "eval_envelope.json") or {}
     reward_components = envelope.get("reward_components")
     if isinstance(reward_components, dict):
@@ -66,6 +87,131 @@ def _derive_reward(summary_payload: dict[str, Any], run_dir: Path) -> tuple[dict
     if isinstance(final_score, (int, float)):
         return normalized, float(final_score)
     return normalized or {"completion": 1.0 if summary_payload.get("status") == "ok" else 0.0}, 1.0 if summary_payload.get("status") == "ok" else 0.0
+
+
+def _load_learning_reward_trace(run_dir: Path) -> LearningRewardTrace | None:
+    payload = _load_optional_json(run_dir / "eval" / "learning_reward_trace.json")
+    if not isinstance(payload, dict):
+        return None
+    return LearningRewardTrace.model_validate(payload)
+
+
+def _fallback_learning_reward_trace(
+    *,
+    summary_payload: dict[str, Any],
+    reward_components: dict[str, float],
+    final_reward: float,
+    task_id: str,
+    task_verb: str | None,
+) -> LearningRewardTrace:
+    status = str(summary_payload.get("status", "unknown"))
+    task_outcome = "success" if status == "ok" else "failure"
+    return LearningRewardTrace(
+        task_id=task_id,
+        task_verb=task_verb,
+        terminal_state=task_outcome,
+        task_outcome=task_outcome,
+        trace_usability="trainable_positive" if status == "ok" else "analysis_only",
+        task_success=status == "ok",
+        correctness_passed=status == "ok",
+        determinism_passed=True,
+        anti_hack_passed=True,
+        perf_gate="not_run",
+        reward_components=reward_components,
+        shaping_components={},
+        excluded_governance_signals=[
+            "evidence_score",
+            "required_artifact_completeness",
+            "replay_completeness",
+            "build_completeness",
+            "profile_completeness",
+            "provenance_completeness",
+            "benchmark_reporting",
+            "sft_collection",
+            "rl_reward_trace_readiness",
+        ],
+        total_reward=final_reward,
+        notes=["fallback_reward_trace_from_summary"],
+        reward_ledger={
+            "task_id": task_id,
+            "task_verb": task_verb,
+            "task_outcome": task_outcome,
+            "trace_usability": "trainable_positive" if status == "ok" else "analysis_only",
+            "entries": [
+                {
+                    "step_index": 0,
+                    "action_type": "run",
+                    "reward_components": reward_components,
+                    "shaping_components": {},
+                    "total_delta": final_reward,
+                    "notes": ["fallback_reward_trace_from_summary"],
+                }
+            ],
+            "total_reward_components": reward_components,
+            "total_shaping_components": {},
+            "total_reward": final_reward,
+        },
+    )
+
+
+def _governance_score_from_projection(projection: dict[str, Any]) -> EvidenceQualityReport | None:
+    payload = projection.get("evidence_quality")
+    if not isinstance(payload, dict):
+        return None
+    return EvidenceQualityReport.model_validate(payload)
+
+
+def _optimize_trace_snapshots_from_steps(steps: list[TrajectoryStep]) -> OptimizeTraceSnapshots | None:
+    candidate_snapshots: list[OptimizeTraceSnapshot] = []
+    compare_snapshots: list[OptimizeTraceSnapshot] = []
+    failure_localization_snapshots: list[OptimizeTraceSnapshot] = []
+    for step in steps:
+        projection = step.observation.projection if isinstance(step.observation.projection, dict) else {}
+        candidate_projection = projection.get("candidate_projection")
+        if isinstance(candidate_projection, dict) and candidate_projection:
+            candidate_snapshots.append(
+                OptimizeTraceSnapshot(
+                    step_index=step.step_index,
+                    action_type=step.action.action_type,
+                    snapshot_kind="candidate_state",
+                    run_id=step.observation.run_id,
+                    payload=candidate_projection,
+                )
+            )
+        if step.action.action_type == "compare":
+            compare_payload = {
+                key: projection.get(key)
+                for key in ["optimize_delta_summary", "candidate_delta_brief", "recommended_next_actions", "summary_lines"]
+                if projection.get(key) is not None
+            }
+            if compare_payload:
+                compare_snapshots.append(
+                    OptimizeTraceSnapshot(
+                        step_index=step.step_index,
+                        action_type=step.action.action_type,
+                        snapshot_kind="compare",
+                        run_id=step.observation.run_id,
+                        payload=compare_payload,
+                    )
+                )
+        failure_localization = projection.get("failure_localization")
+        if isinstance(failure_localization, dict) and failure_localization:
+            failure_localization_snapshots.append(
+                OptimizeTraceSnapshot(
+                    step_index=step.step_index,
+                    action_type=step.action.action_type,
+                    snapshot_kind="failure_localization",
+                    run_id=step.observation.run_id,
+                    payload=failure_localization,
+                )
+            )
+    if not candidate_snapshots and not compare_snapshots and not failure_localization_snapshots:
+        return None
+    return OptimizeTraceSnapshots(
+        candidate_snapshots=candidate_snapshots,
+        compare_snapshots=compare_snapshots,
+        failure_localization_snapshots=failure_localization_snapshots,
+    )
 
 
 def _select_projection_section(summary_payload: dict[str, Any], section: str) -> dict[str, Any]:
@@ -92,6 +238,10 @@ def _select_projection_section(summary_payload: dict[str, Any], section: str) ->
                     "patch_kind",
                     "transition_kind",
                     "candidate_role",
+                    "candidate_status",
+                    "candidate_origin_kind",
+                    "candidate_operation_kind",
+                    "candidate_diff_ref",
                     "exit_code",
                     "duration_ms",
                     "key_artifacts",
@@ -103,7 +253,7 @@ def _select_projection_section(summary_payload: dict[str, Any], section: str) ->
         "eval": ["correctness_summary", "determinism_summary", "anti_hack_summary", "eval_envelope", "gate_summary"],
         "profile": ["profile_summary", "sanitizer_summary", "bottleneck_card"],
         "replay": ["replay_validation", "replay_pack"],
-        "quality": ["evidence_quality", "training_readiness"],
+        "quality": ["evidence_quality", "governance_score", "learning_reward_trace", "training_readiness", "training_trace_triage", "failure_localization"],
     }
     keys = section_map.get(section)
     if keys is None:
@@ -284,8 +434,18 @@ def capture_run_episode(root: Path, run_ref: str, *, policy_id: str = "reference
     if not isinstance(command, list):
         command = []
     reward_components, final_reward = _derive_reward(summary_payload, run_dir)
-    evidence_quality = summary_payload.get("projection", {}).get("evidence_quality", {})
+    projection = summary_payload.get("projection", {})
+    evidence_quality = projection.get("evidence_quality", {})
     governance = _governance_from_run_evidence(evidence_quality)
+    governance_score = _governance_score_from_projection(projection)
+    task = TaskRegistry(root).get(str(summary_payload.get("task_id")))
+    learning_reward_trace = _load_learning_reward_trace(run_dir) or _fallback_learning_reward_trace(
+        summary_payload=summary_payload,
+        reward_components=reward_components,
+        final_reward=final_reward,
+        task_id=str(summary_payload.get("task_id")),
+        task_verb=task.verb,
+    )
     key_artifacts = summary_payload.get("key_artifacts", [])
     if not isinstance(key_artifacts, list):
         key_artifacts = []
@@ -331,9 +491,8 @@ def capture_run_episode(root: Path, run_ref: str, *, policy_id: str = "reference
         },
     )
     terminal_state = "success" if summary_payload.get("status") == "ok" else "failure"
-    task = TaskRegistry(root).get(str(summary_payload.get("task_id")))
-    final_reward = sum(float(value) for value in reward_components.values())
-    return TrajectoryEpisode(
+    final_reward = learning_reward_trace.total_reward
+    episode = TrajectoryEpisode(
         episode_id=f"episode_{summary_payload.get('run_id')}",
         created_at=datetime.now(tz=UTC),
         policy_id=policy_id,
@@ -362,6 +521,9 @@ def capture_run_episode(root: Path, run_ref: str, *, policy_id: str = "reference
         environment_hash=_environment_hash(run_dir),
         artifact_refs=artifact_refs,
         governance=governance,
+        governance_score=governance_score,
+        learning_reward_trace=learning_reward_trace,
+        reward_ledger=learning_reward_trace.reward_ledger,
         metadata={
             "section": section,
             "run_status": summary_payload.get("status"),
@@ -372,6 +534,8 @@ def capture_run_episode(root: Path, run_ref: str, *, policy_id: str = "reference
             "evidence_score": evidence_quality.get("overall_score", 0.0),
         },
     )
+    episode.optimize_trace_snapshots = _optimize_trace_snapshots_from_steps(episode.steps)
+    return episode
 
 
 def write_trajectory_episode(root: Path, run_ref: str, out_path: Path, *, policy_id: str = "reference_policy_v1", section: str = "full") -> Path:

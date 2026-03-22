@@ -39,6 +39,7 @@ class RLRolloutConfig(ContractModel):
     step_budget: int = 10
     determinism_runs: int = 2
     workflow: str = "auto"
+    executor: str = "local_host"
     reward_weights: dict[str, float] = Field(default_factory=dict)
     notes: list[str] = Field(default_factory=list)
 
