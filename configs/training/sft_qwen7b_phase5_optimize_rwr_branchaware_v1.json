@@ -1,0 +1,38 @@
+{
+  "config_id": "cfg/rl/qwen7b/phase5_optimize_rwr/branchaware_v1",
+  "model_id": "Qwen/Qwen2.5-Coder-7B-Instruct",
+  "tokenizer_id": "Qwen/Qwen2.5-Coder-7B-Instruct",
+  "adapter_mode": "qlora",
+  "dataset_refs": [
+    {
+      "dataset_kind": "sft",
+      "path": "datasets/phase5_optimize_rwr_branchaware_train_v1",
+      "split": "train",
+      "required": true,
+      "notes": [
+        "Branch-aware reward-weighted regression dataset built from the tranche-1 artifact-distill eval batch."
+      ]
+    },
+    {
+      "dataset_kind": "sft",
+      "path": "datasets/phase5_optimize_rwr_branchaware_dev_v1",
+      "split": "dev",
+      "required": true,
+      "notes": [
+        "Held-out strongest branch-aware-scored episode from the same tranche-1 artifact-distill eval batch."
+      ]
+    }
+  ],
+  "eval_dataset_refs": [],
+  "context_length": 4096,
+  "per_device_batch_size": 1,
+  "gradient_accumulation_steps": 8,
+  "learning_rate": 2e-05,
+  "num_epochs": 1,
+  "max_steps": 8,
+  "output_dir": "artifacts/training/qwen7b_phase5_optimize_rwr_branchaware_v1",
+  "notes": [
+    "Narrow Phase 5 branch-aware RWR comparison on the tranche-1 artifact-distill eval batch.",
+    "Adds explicit credit for branch depth, useful near-misses, and successful promote closeout."
+  ]
+}

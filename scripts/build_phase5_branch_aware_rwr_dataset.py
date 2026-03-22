@@ -33,34 +33,43 @@ def _episode_score(payload: dict[str, object]) -> tuple[float, list[str]]:
     score = 0.0
     reasons: list[str] = []
     if success:
-        score += 3.0
+        score += 3.5
         reasons.append("success")
     elif terminal_reason in {"negative_trace_complete", "multi_candidate_negative_complete"}:
-        score += 1.5
+        score += 1.75
         reasons.append("usable_negative")
     elif terminal_reason in {"two_attempt_positive_complete", "three_attempt_positive_complete", "post_patch_eval_failed"}:
-        score += 1.0
+        score += 1.25
         reasons.append("near_miss")
+    elif terminal_reason == "budget_exhausted" and int(counters.get("patches", 0)) > 0 and int(counters.get("compares", 0)) > 0:
+        score += 1.0
+        reasons.append("branch_budget_near_miss")
     else:
-        score += 0.25
+        score += 0.15
         reasons.append("weak_trace")
     if int(counters.get("compares", 0)) > 0:
-        score += 0.2
+        score += 0.25
         reasons.append("compare_used")
     if int(counters.get("branches", 0)) > 0:
-        score += 0.2
+        score += 0.35
         reasons.append("branch_used")
     if int(counters.get("reverts", 0)) > 0:
-        score += 0.1
+        score += 0.2
         reasons.append("revert_used")
     if int(counters.get("promotes", 0)) > 0 and success:
-        score += 0.2
+        score += 0.35
         reasons.append("promote_closeout")
+    if int(counters.get("branches", 0)) > 0 and int(counters.get("compares", 0)) >= 2:
+        score += 0.2
+        reasons.append("branch_compare_depth")
+    if terminal_reason == "budget_exhausted" and int(counters.get("eval_actions", 0)) == 0:
+        score -= 0.2
+        reasons.append("no_eval_closeout_penalty")
     return round(score, 4), reasons
 
 
 def _duplication_count(score: float) -> int:
-    if score >= 3.3:
+    if score >= 3.8:
         return 4
     if score >= 2.0:
         return 3
@@ -99,7 +108,7 @@ def _build_example(
         f"Observation packet:\n{json.dumps(observation_packet, indent=2, sort_keys=True)}"
     )
     return SFTExample(
-        example_id=f"rwr_{Path(source_episode_ref).stem}_{dup_index}_{turn_index}",
+        example_id=f"phase5_rwr_branchaware_{Path(source_episode_ref).stem}_{dup_index}_{turn_index}",
         created_at=datetime.now(tz=UTC),
         split=split,
         task_id=task_id,
@@ -114,6 +123,7 @@ def _build_example(
             "selected_action": turn.get("selected_action"),
             "model": turn.get("model"),
             "provider": turn.get("provider"),
+            "scoring_policy": "phase5_branch_aware_rwr_v1",
         },
     )
 
@@ -123,7 +133,7 @@ def main() -> int:
     parser.add_argument("batch_dir", type=Path)
     parser.add_argument("--out-train-dir", type=Path, required=True)
     parser.add_argument("--out-dev-dir", type=Path, required=True)
-    parser.add_argument("--min-score", type=float, default=0.0)
+    parser.add_argument("--min-score", type=float, default=0.75)
     parser.add_argument("--dev-episode-name", type=str, default=None)
     args = parser.parse_args()
 
@@ -131,9 +141,9 @@ def main() -> int:
     if not episode_paths:
         raise SystemExit(f"No episode artifacts found in {args.batch_dir}")
 
-    episode_payloads = [(path, _read_json(path)) for path in episode_paths]
     scored = []
-    for path, payload in episode_payloads:
+    for path in episode_paths:
+        payload = _read_json(path)
         score, reasons = _episode_score(payload)
         if score >= args.min_score:
             scored.append((path, payload, score, reasons))
@@ -147,7 +157,6 @@ def main() -> int:
             raise SystemExit(f"Requested dev episode {args.dev_episode_name} not found in scored set")
         dev_path = matching[0]
     else:
-        # Hold out the strongest successful episode as dev when possible.
         dev_path = ranked[0][0]
 
     for out_dir, split in ((args.out_train_dir, "train"), (args.out_dev_dir, "dev")):
@@ -184,7 +193,7 @@ def main() -> int:
             example_path.write_text(json.dumps(example.model_dump(mode="json"), indent=2) + "\n", encoding="utf-8")
             example_refs.append(str(example_path.relative_to(out_dir)))
         manifest = SFTDatasetManifest(
-            dataset_id=f"optimize_rwr_dataset_{split}_{datetime.now(tz=UTC).strftime('%Y%m%d_%H%M%S')}",
+            dataset_id=f"phase5_branchaware_rwr_dataset_{split}_{datetime.now(tz=UTC).strftime('%Y%m%d_%H%M%S')}",
             created_at=datetime.now(tz=UTC),
             split=split,
             example_count=len(example_refs),
@@ -192,7 +201,7 @@ def main() -> int:
             task_ids=sorted({example.task_id for example in examples}),
             metadata={
                 "source_batch_dir": str(args.batch_dir),
-                "scoring_policy": "reward_weighted_regression_v1",
+                "scoring_policy": "phase5_branch_aware_rwr_v1",
                 "min_score": args.min_score,
                 "dev_episode_name": args.dev_episode_name,
                 "episode_scores": {
@@ -208,9 +217,9 @@ def main() -> int:
         )
         (out_dir / "sft_dataset_manifest.json").write_text(json.dumps(manifest.model_dump(mode="json"), indent=2) + "\n", encoding="utf-8")
 
-    dataset_suffix = args.out_train_dir.name.removeprefix("optimize_rwr_train_") or "custom"
+    dataset_suffix = args.out_train_dir.name.removeprefix("phase5_optimize_rwr_branchaware_train_") or "custom"
     reward_report = {
-        "report_id": f"optimize_rwr_reward_report_{dataset_suffix}",
+        "report_id": f"phase5_branchaware_rwr_reward_report_{dataset_suffix}",
         "created_at": datetime.now(tz=UTC).isoformat(),
         "source_batch_dir": str(args.batch_dir),
         "min_score": args.min_score,
@@ -225,7 +234,7 @@ def main() -> int:
             for path, payload, score, reasons in scored
         ],
     }
-    report_path = args.out_train_dir.parent / f"optimize_rwr_reward_report_{dataset_suffix}.json"
+    report_path = args.out_train_dir.parent / f"phase5_branchaware_rwr_reward_report_{dataset_suffix}.json"
     report_path.write_text(json.dumps(reward_report, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({"train_dir": str(args.out_train_dir), "dev_dir": str(args.out_dev_dir), "report": str(report_path)}, indent=2))
     return 0
