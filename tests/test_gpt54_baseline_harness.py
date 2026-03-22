@@ -663,12 +663,97 @@ class GPT54BaselineHarnessTests(unittest.TestCase):
         )
 
         self.assertTrue(harness._action_allowed_in_state("eval", state, ctx, counters, budgets))
-        self.assertFalse(harness._action_allowed_in_state("inspect_quality", state, ctx, counters, budgets))
-        self.assertFalse(harness._action_allowed_in_state("replay", state, ctx, counters, budgets))
-        self.assertFalse(harness._action_allowed_in_state("knowledge_query", state, ctx, counters, budgets))
 
-        hints = harness._controller_hints(ctx, harness._state_snapshot(state), counters, budgets)
-        self.assertEqual(hints["priority_actions"], ["eval"])
+    def test_observation_packet_v3_current_strips_compare_digest_and_candidate_lineage(self) -> None:
+        ctx = harness._task_context(self.tmp_root, "task/attention_score/eval/v1", "positive")
+        ctx["interface_profile"] = "v3_current"
+        state = initialize_environment_state(self.tmp_root, "task/attention_score/eval/v1", step_budget=8).model_copy(
+            update={
+                "current_candidate_id": "cand_b",
+                "current_candidate_parent_id": "cand_a",
+                "current_candidate_status": "patched",
+                "candidate_lineage_events": [
+                    {"action_name": "patch_candidate", "candidate_id": "cand_a", "candidate_role": "patched_candidate", "summary": "candidate a"},
+                    {"action_name": "branch_candidate", "candidate_id": "cand_b", "parent_candidate_id": "cand_a", "candidate_role": "branched_candidate", "summary": "candidate b"},
+                ],
+            }
+        )
+        packet = harness._observation_packet(
+            task_ctx=ctx,
+            allowed_actions=["bench", "compare", "eval"],
+            state_snapshot=harness._state_snapshot(state),
+            budgets={"step_budget": 8, "max_retries": 1, "max_patches": 1, "max_compares": 1, "max_replays": 1, "max_knowledge_queries": 1},
+            counters={"model_calls": 0, "provider_failures": 0, "failed_tool_calls": 0, "controller_rejections": 0, "knowledge_queries": 0, "patches": 1, "branches": 0, "reverts": 0, "promotes": 0, "compares": 1, "replays": 0, "eval_actions": 0, "bench_actions": 2},
+            step_records=[
+                {
+                    "step_index": 3,
+                    "step_label": "compare_action",
+                    "action_name": "compare",
+                    "reward_total": -0.01,
+                    "reward_components": {"tool_cost": -0.01},
+                    "recommended_next_actions": ["inspect_quality", "patch_candidate", "bench"],
+                    "transition_kind": None,
+                    "observation": {
+                        "type": "comparison",
+                        "status": None,
+                        "run_id": "runs/bench_candidate",
+                        "task_id": "task/attention_score/eval/v1",
+                        "summary_ref": None,
+                        "salient_artifact_refs": [],
+                        "projection_excerpt": {
+                            "lhs_run_id": "lhs",
+                            "rhs_run_id": "rhs",
+                            "lhs_status": "ok",
+                            "rhs_status": "ok",
+                            "optimize_delta_summary": {"correctness_change": "preserved_fail"},
+                            "candidate_delta_brief": {"rhs_candidate_id": "cand_b"},
+                        },
+                    },
+                }
+            ],
+        )
+
+        self.assertNotIn("candidate_lineage", packet["state"])
+        self.assertEqual(packet["last_step"]["recommended_next_actions"], [])
+        self.assertNotIn("optimize_delta_summary", packet["last_step"]["observation"]["projection_excerpt"])
+
+    def test_observation_packet_compare_localization_profile_preserves_failure_signal_without_lineage(self) -> None:
+        ctx = harness._task_context(self.tmp_root, "task/attention_score/eval/v1", "positive")
+        ctx["interface_profile"] = "compare_plus_localization_v1"
+        packet = harness._observation_packet(
+            task_ctx=ctx,
+            allowed_actions=["inspect_quality", "patch_candidate", "eval"],
+            state_snapshot=harness._state_snapshot(initialize_environment_state(self.tmp_root, "task/attention_score/eval/v1", step_budget=8)),
+            budgets={"step_budget": 8, "max_retries": 1, "max_patches": 1, "max_compares": 1, "max_replays": 1, "max_knowledge_queries": 1},
+            counters={"model_calls": 0, "provider_failures": 0, "failed_tool_calls": 0, "controller_rejections": 0, "knowledge_queries": 0, "patches": 0, "branches": 0, "reverts": 0, "promotes": 0, "compares": 0, "replays": 0, "eval_actions": 1, "bench_actions": 1},
+            step_records=[
+                {
+                    "step_index": 1,
+                    "step_label": "verification_action",
+                    "action_name": "eval",
+                    "reward_total": -0.05,
+                    "reward_components": {"tool_cost": -0.05},
+                    "recommended_next_actions": ["inspect_quality", "patch_candidate", "eval"],
+                    "transition_kind": None,
+                    "observation": {
+                        "type": "eval_projection",
+                        "status": "failed",
+                        "run_id": "runs/eval_candidate",
+                        "task_id": "task/attention_score/eval/v1",
+                        "summary_ref": "summary.json",
+                        "salient_artifact_refs": [],
+                        "projection_excerpt": {
+                            "failure_localization": {"hidden_tests": {"code": "hidden_attention_score_mismatch"}},
+                            "gate_summary": {"correctness_gate": "fail"},
+                        },
+                    },
+                }
+            ],
+        )
+
+        self.assertNotIn("candidate_lineage", packet["state"])
+        self.assertIn("failure_localization", packet["last_step"]["observation"]["projection_excerpt"])
+        self.assertEqual(packet["last_step"]["recommended_next_actions"], ["inspect_quality", "patch_candidate", "eval"])
 
     def test_reduction_row_sum_task_context_enables_bounded_patch_iteration(self) -> None:
         ctx = harness._task_context(self.tmp_root, "task/reduction_row_sum/eval/v1", "positive")

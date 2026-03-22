@@ -251,6 +251,72 @@ def _candidate_tree_brief_from_state(state: Any) -> dict[str, Any]:
     }
 
 
+def _interface_profile_settings(task_ctx: dict[str, Any]) -> dict[str, Any]:
+    profile = str(task_ctx.get("interface_profile") or "compare_plus_localization_plus_branch_v1")
+    settings = {
+        "profile": profile,
+        "compare_packet": False,
+        "failure_localization": False,
+        "candidate_lineage": False,
+    }
+    if profile == "compare_packet_v1":
+        settings["compare_packet"] = True
+    elif profile == "compare_plus_localization_v1":
+        settings["compare_packet"] = True
+        settings["failure_localization"] = True
+    elif profile == "compare_plus_localization_plus_branch_v1":
+        settings["compare_packet"] = True
+        settings["failure_localization"] = True
+        settings["candidate_lineage"] = True
+    return settings
+
+
+def _filter_projection_excerpt_for_profile(
+    observation_type: str,
+    projection_excerpt: Any,
+    settings: dict[str, Any],
+) -> Any:
+    if not isinstance(projection_excerpt, dict):
+        return projection_excerpt
+    filtered = dict(projection_excerpt)
+    if observation_type == "comparison" and not settings.get("compare_packet"):
+        return {
+            "lhs_run_id": filtered.get("lhs_run_id"),
+            "rhs_run_id": filtered.get("rhs_run_id"),
+            "lhs_status": filtered.get("lhs_status"),
+            "rhs_status": filtered.get("rhs_status"),
+        }
+    if not settings.get("failure_localization"):
+        filtered.pop("failure_localization", None)
+    return filtered
+
+
+def _filter_step_record_for_profile(step_record: dict[str, Any], task_ctx: dict[str, Any]) -> dict[str, Any]:
+    settings = _interface_profile_settings(task_ctx)
+    filtered = json.loads(json.dumps(step_record))
+    observation = filtered.get("observation")
+    if isinstance(observation, dict):
+        observation_type = str(observation.get("type", ""))
+        observation["projection_excerpt"] = _filter_projection_excerpt_for_profile(
+            observation_type,
+            observation.get("projection_excerpt"),
+            settings,
+        )
+        if observation_type == "comparison" and not settings.get("compare_packet"):
+            filtered["recommended_next_actions"] = []
+        if observation_type in {"eval_projection", "inspection"} and not settings.get("failure_localization"):
+            filtered["recommended_next_actions"] = []
+    return filtered
+
+
+def _filter_state_snapshot_for_profile(state_snapshot: dict[str, Any], task_ctx: dict[str, Any]) -> dict[str, Any]:
+    settings = _interface_profile_settings(task_ctx)
+    filtered = json.loads(json.dumps(state_snapshot))
+    if not settings.get("candidate_lineage"):
+        filtered.pop("candidate_lineage", None)
+    return filtered
+
+
 def _task_context(root: Path, task_ref: str, variant: str) -> dict[str, Any]:
     task = TaskRegistry(root).get(task_ref)
     baseline_payload = None
@@ -274,6 +340,7 @@ def _task_context(root: Path, task_ref: str, variant: str) -> dict[str, Any]:
         "baseline_command": baseline_command,
         "variant": variant,
         "multi_candidate_mode": None,
+        "interface_profile": "compare_plus_localization_plus_branch_v1",
     }
     if task.task_id == "task/reduction_debug/eval/v1":
         if variant == "negative":
@@ -427,6 +494,7 @@ def _task_summary(task_ctx: dict[str, Any]) -> dict[str, Any]:
         "patch_kind": patch.get("patch_kind") if isinstance(patch, dict) else None,
         "candidate_edit_mode": "bounded_patch" if isinstance(patch, dict) else None,
         "multi_candidate_mode": task_ctx.get("multi_candidate_mode"),
+        "interface_profile": task_ctx.get("interface_profile"),
     }
 
 
@@ -563,6 +631,9 @@ def _observation_packet(
     step_records: list[dict[str, Any]],
 ) -> dict[str, Any]:
     last_step = step_records[-1] if step_records else None
+    filtered_state = _filter_state_snapshot_for_profile(state_snapshot, task_ctx)
+    filtered_last_step = _filter_step_record_for_profile(last_step, task_ctx) if isinstance(last_step, dict) else last_step
+    filtered_recent_history = [_filter_step_record_for_profile(step, task_ctx) for step in step_records[-3:]]
     return {
         "task": _task_summary(task_ctx),
         "allowed_actions": allowed_actions,
@@ -577,9 +648,9 @@ def _observation_packet(
             "max_knowledge_queries": budgets["max_knowledge_queries"],
         },
         "counters": counters,
-        "state": state_snapshot,
-        "last_step": last_step,
-        "recent_history": step_records[-3:],
+        "state": filtered_state,
+        "last_step": filtered_last_step,
+        "recent_history": filtered_recent_history,
     }
 
 
@@ -1111,7 +1182,7 @@ def _run_episode(
 ) -> dict[str, Any]:
     budgets = {key: int(value) for key, value in config["budgets"].items()}
     task_ctx = _task_context(root, str(task_spec["task_ref"]), str(task_spec["variant"]))
-    for extra_key in ("multi_candidate_mode",):
+    for extra_key in ("multi_candidate_mode", "interface_profile"):
         if extra_key in task_spec:
             task_ctx[extra_key] = task_spec[extra_key]
     workspace_snapshot = _capture_restore_targets(task_ctx)
