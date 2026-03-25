@@ -1,0 +1,30 @@
+{
+  "case_id": "case/kernelbench_v3/level1/23_softmax_official/v3_1",
+  "adapter": "kernelbench_v3",
+  "task_ref": "task/kernelbench_v3/level1/23_softmax_official/eval/v1",
+  "description": "Official held-out KernelBench-v3 Level 1 Softmax case.",
+  "source_benchmark": "KernelBench-v3",
+  "source_case_ref": "problems/level1/23_Softmax.py",
+  "source_case_version": "v3.1",
+  "operator_family": "activation_softmax",
+  "difficulty": "level1",
+  "allowed_backends": ["cuda"],
+  "feature_requirements": ["torch"],
+  "default_command": [
+    "python3",
+    "workloads/reference/kernelbench_v3_softmax_official_candidate.py",
+    "--benchmark-repeats",
+    "20"
+  ],
+  "tags": ["public-benchmark", "kernelbench-v3", "level1", "activation", "held-out", "official"],
+  "metadata": {
+    "benchmark_level": "level1",
+    "official_problem_id": 23,
+    "official_track": "open",
+    "provenance_kind": "official-heldout",
+    "trainable": false,
+    "held_out": true,
+    "hardware_targets": ["RTX3090", "H100", "B200"],
+    "source_commit": "abb0a50e9444021761955d9ac44021e9e9dfe63c"
+  }
+}

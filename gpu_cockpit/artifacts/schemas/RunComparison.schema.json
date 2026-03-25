@@ -22,6 +22,100 @@
       "title": "Rhs Status",
       "type": "string"
     },
+    "compare_type": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Compare Type"
+    },
+    "optimize_delta_summary": {
+      "additionalProperties": true,
+      "title": "Optimize Delta Summary",
+      "type": "object"
+    },
+    "candidate_delta_brief": {
+      "additionalProperties": true,
+      "title": "Candidate Delta Brief",
+      "type": "object"
+    },
+    "benchmark_provenance": {
+      "additionalProperties": true,
+      "title": "Benchmark Provenance",
+      "type": "object"
+    },
+    "perf_localization": {
+      "additionalProperties": true,
+      "title": "Perf Localization",
+      "type": "object"
+    },
+    "recommended_next_actions": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Recommended Next Actions",
+      "type": "array"
+    },
+    "summary_lines": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Summary Lines",
+      "type": "array"
+    },
+    "lhs_candidate_role": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Lhs Candidate Role"
+    },
+    "rhs_candidate_role": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rhs Candidate Role"
+    },
+    "lhs_candidate_role_group": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Lhs Candidate Role Group"
+    },
+    "rhs_candidate_role_group": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rhs Candidate Role Group"
+    },
     "lhs_duration_ms": {
       "anyOf": [
         {
@@ -1301,13 +1395,6 @@
       ],
       "default": null,
       "title": "Build Sass Hash Changed"
-    },
-    "summary_lines": {
-      "items": {
-        "type": "string"
-      },
-      "title": "Summary Lines",
-      "type": "array"
     }
   },
   "required": [

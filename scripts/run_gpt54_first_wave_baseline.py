@@ -232,6 +232,9 @@ def _candidate_tree_brief_from_state(state: Any) -> dict[str, Any]:
             sibling_id = event.get("candidate_id")
             if sibling_id and sibling_id != current_candidate_id and sibling_id not in sibling_candidate_refs:
                 sibling_candidate_refs.append(str(sibling_id))
+    candidate_role = getattr(state, "current_candidate_role", None)
+    if candidate_role is None and isinstance(current_event, dict):
+        candidate_role = current_event.get("candidate_role")
     return {
         "history_length": len(list(getattr(state, "candidate_history", []) or [])),
         "current_candidate_id": current_candidate_id,
@@ -239,15 +242,26 @@ def _candidate_tree_brief_from_state(state: Any) -> dict[str, Any]:
         "current_status": getattr(state, "current_candidate_status", None),
         "current_candidate_attempt_index": getattr(state, "current_candidate_attempt_index", None),
         "current_candidate_ref": getattr(state, "current_candidate_run_ref", None),
-        "candidate_role": current_event.get("candidate_role") if isinstance(current_event, dict) else None,
+        "candidate_role": candidate_role,
+        "candidate_role_group": getattr(state, "current_candidate_role_group", None),
+        "tree_depth": getattr(state, "current_candidate_tree_depth", None),
+        "branch_state": getattr(state, "current_branch_state", None),
+        "promote_state": getattr(state, "current_promote_state", None),
+        "revert_state": getattr(state, "current_revert_state", None),
         "parent_candidate_ref": current_parent_candidate_id,
         "sibling_candidate_refs": sibling_candidate_refs,
         "why_this_candidate_exists": current_event.get("summary") if isinstance(current_event, dict) else None,
+        "supersede_reason": getattr(state, "current_supersede_reason", None),
+        "endgame_recommendation": getattr(state, "current_endgame_recommendation", None),
+        "legal_next_actions": list(getattr(state, "current_legal_next_actions", []) or []),
         "recent_events": _first_projection_excerpt(lineage_events[-3:]),
         "best_known_candidate_id": getattr(state, "best_known_candidate_id", None),
         "best_known_candidate_parent_id": getattr(state, "best_known_candidate_parent_id", None),
         "best_known_candidate_run_ref": getattr(state, "best_known_candidate_run_ref", None),
         "best_known_candidate_reason": getattr(state, "best_known_candidate_reason", None),
+        "dominated_candidate_ids": list(getattr(state, "dominated_candidate_ids", []) or []),
+        "active_candidate_ids": list(getattr(state, "active_candidate_ids", []) or []),
+        "archived_candidate_ids": list(getattr(state, "archived_candidate_ids", []) or []),
     }
 
 
@@ -634,19 +648,71 @@ def _observation_packet(
     filtered_state = _filter_state_snapshot_for_profile(state_snapshot, task_ctx)
     filtered_last_step = _filter_step_record_for_profile(last_step, task_ctx) if isinstance(last_step, dict) else last_step
     filtered_recent_history = [_filter_step_record_for_profile(step, task_ctx) for step in step_records[-3:]]
+    candidate_lineage = filtered_state.get("candidate_lineage") if isinstance(filtered_state, dict) else {}
+    task_card = {
+        "task_ref": task_ctx["task_ref"],
+        "variant": task_ctx["variant"],
+        "verb": task_ctx["verb"],
+        "operator_family": task_ctx["operator_family"],
+        "allowed_backends": task_ctx["allowed_backends"],
+        "default_command": task_ctx["default_command"],
+        "baseline_command": task_ctx.get("baseline_command"),
+        "closeout_rule": "compare_before_eval" if task_ctx["verb"] == "optimize" and task_ctx.get("patch") else "eval_driven",
+    }
+    candidate_brief = {
+        "candidate_id": filtered_state.get("current_candidate_id"),
+        "parent_candidate_id": filtered_state.get("current_candidate_parent_id"),
+        "candidate_status": filtered_state.get("current_candidate_status"),
+        "candidate_attempt_index": filtered_state.get("current_candidate_attempt_index"),
+        "candidate_run_ref": filtered_state.get("current_candidate_run_ref"),
+        "best_known_candidate_id": filtered_state.get("best_known_candidate_id"),
+        "best_known_candidate_reason": filtered_state.get("best_known_candidate_reason"),
+    }
+    budget_brief = {
+        "step_budget_total": budgets["step_budget"],
+        "step_budget_remaining": state_snapshot["step_budget_remaining"],
+        "max_retries": budgets["max_retries"],
+        "max_patches": budgets["max_patches"],
+        "max_compares": budgets["max_compares"],
+        "max_replays": budgets["max_replays"],
+        "max_knowledge_queries": budgets["max_knowledge_queries"],
+    }
+    compare_brief: dict[str, Any] | None = None
+    localization_brief: dict[str, Any] | None = None
+    if isinstance(filtered_last_step, dict):
+        observation = filtered_last_step.get("observation")
+        if isinstance(observation, dict):
+            projection_excerpt = observation.get("projection_excerpt")
+            if isinstance(projection_excerpt, dict):
+                if observation.get("type") == "comparison":
+                    compare_brief = {
+                        key: projection_excerpt.get(key)
+                        for key in [
+                            "compare_type",
+                            "candidate_delta_brief",
+                            "optimize_delta_summary",
+                            "recommended_next_actions",
+                            "perf_localization",
+                            "benchmark_provenance",
+                        ]
+                        if key in projection_excerpt
+                    }
+                localization_brief = {
+                    key: projection_excerpt.get(key)
+                    for key in ["failure_localization", "perf_localization", "recommended_next_actions"]
+                    if key in projection_excerpt
+                } or None
     return {
+        "task_card": task_card,
+        "candidate_brief": candidate_brief,
+        "candidate_tree_brief": candidate_lineage,
+        "compare_brief": compare_brief,
+        "localization_brief": localization_brief,
+        "budget_brief": budget_brief,
         "task": _task_summary(task_ctx),
         "allowed_actions": allowed_actions,
         "controller_hints": _controller_hints(task_ctx, state_snapshot, counters, budgets),
-        "limits": {
-            "step_budget_total": budgets["step_budget"],
-            "step_budget_remaining": state_snapshot["step_budget_remaining"],
-            "max_retries": budgets["max_retries"],
-            "max_patches": budgets["max_patches"],
-            "max_compares": budgets["max_compares"],
-            "max_replays": budgets["max_replays"],
-            "max_knowledge_queries": budgets["max_knowledge_queries"],
-        },
+        "limits": budget_brief,
         "counters": counters,
         "state": filtered_state,
         "last_step": filtered_last_step,

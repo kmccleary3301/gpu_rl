@@ -1,0 +1,28 @@
+{
+  "benchmark_name": "KernelBench-v3",
+  "benchmark_version": "v3.1",
+  "source_repo": "https://github.com/Infatoshi/KernelBench-v3",
+  "source_commit": "abb0a50e9444021761955d9ac44021e9e9dfe63c",
+  "source_subtree": "problems/level1",
+  "curation_batch": "kernelbench_v3_initial_slice",
+  "case_count": 2,
+  "included_cases": [
+    {
+      "official_problem_id": 23,
+      "source_case_ref": "problems/level1/23_Softmax.py",
+      "operator_family": "activation_softmax",
+      "provenance_kind": "official-heldout",
+      "official_track": "open",
+      "held_out": true
+    },
+    {
+      "official_problem_id": 23,
+      "source_case_ref": "problems/level1/23_Softmax.py",
+      "operator_family": "activation_softmax",
+      "provenance_kind": "curated-derivative",
+      "official_track": "open",
+      "variant_kind": "wide-logit-mixture",
+      "held_out": false
+    }
+  ]
+}

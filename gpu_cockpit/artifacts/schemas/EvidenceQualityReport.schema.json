@@ -34,6 +34,11 @@
       "title": "Schema Version",
       "type": "string"
     },
+    "score_kind": {
+      "default": "governance",
+      "title": "Score Kind",
+      "type": "string"
+    },
     "run_id": {
       "title": "Run Id",
       "type": "string"

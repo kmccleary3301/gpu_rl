@@ -267,8 +267,14 @@ class InspectorTests(unittest.TestCase):
         (rhs / "perf").mkdir(parents=True, exist_ok=True)
         (lhs / "eval" / "eval_envelope.json").write_text('{"correctness_gate":"pass","final_score":0.8}\n', encoding="utf-8")
         (rhs / "eval" / "eval_envelope.json").write_text('{"correctness_gate":"pass","final_score":1.0}\n', encoding="utf-8")
-        (lhs / "perf" / "benchmark.json").write_text('{"steady_state_ms_p50":10.0}\n', encoding="utf-8")
-        (rhs / "perf" / "benchmark.json").write_text('{"steady_state_ms_p50":8.0}\n', encoding="utf-8")
+        (lhs / "perf" / "benchmark.json").write_text(
+            '{"steady_state_ms_p50":10.0,"timing_method":"wall_clock","split_compile_from_run":true,"benchmark_scope":"tool.run_benchmark","candidate_command_sha256":"lhs_sha"}\n',
+            encoding="utf-8",
+        )
+        (rhs / "perf" / "benchmark.json").write_text(
+            '{"steady_state_ms_p50":8.0,"timing_method":"wall_clock","split_compile_from_run":true,"benchmark_scope":"tool.run_benchmark","candidate_command_sha256":"rhs_sha"}\n',
+            encoding="utf-8",
+        )
 
         comparison = compare_runs(self.tmp_root, str(lhs), str(rhs))
 
@@ -282,6 +288,12 @@ class InspectorTests(unittest.TestCase):
             comparison.optimize_delta_summary["candidate_ref"],
             "workloads/reference/kernelbench_softmax_optimize_candidate.py",
         )
+        self.assertEqual(comparison.compare_type, "baseline_to_candidate")
+        self.assertEqual(comparison.benchmark_provenance["benchmark_case_id"], "kernelbench/level1/23_softmax")
+        self.assertEqual(comparison.benchmark_provenance["benchmark_source"], "kernelbench")
+        self.assertEqual(comparison.perf_localization["rhs"]["timing_method"], "wall_clock")
+        self.assertEqual(comparison.perf_localization["rhs"]["benchmark_scope"], "tool.run_benchmark")
+        self.assertEqual(comparison.perf_localization["rhs"]["candidate_command_sha256"], "rhs_sha")
         self.assertIn("Compare is anchored to public benchmark case `kernelbench/level1/23_softmax`.", comparison.summary_lines)
         self.assertIn(
             "Optimization strategy changed from `baseline_kernelbench_reference` to `promote_curated_kernelbench_softmax_candidate_wrapper`.",
@@ -361,6 +373,7 @@ class InspectorTests(unittest.TestCase):
         self.assertEqual(section["failure_triage"]["task_verb"], "debug")
         self.assertIn("correctness/correctness.json", section["failure_triage"]["likely_artifacts"])
         self.assertIn("summary_lines", section["profile_triage"])
+        self.assertIn("perf_localization", section)
 
     def test_compare_golden_public_benchmark_bundles(self) -> None:
         comparison = compare_runs(
@@ -418,6 +431,8 @@ class InspectorTests(unittest.TestCase):
         self.assertEqual(comparison.lhs_transition_kind, "repaired")
         self.assertEqual(comparison.rhs_transition_kind, "reverted")
         self.assertTrue(comparison.patch_hash_changed)
+        self.assertIn("lhs", comparison.perf_localization)
+        self.assertIn("rhs", comparison.perf_localization)
         self.assertEqual(comparison.lineage_relationship, "lhs_parent_of_rhs")
         self.assertTrue(comparison.parent_child_related)
         self.assertEqual(comparison.rhs_parent_candidate_id, lhs_candidate.candidate_id)

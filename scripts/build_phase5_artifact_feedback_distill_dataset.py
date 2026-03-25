@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import json
 from datetime import UTC, datetime
 from pathlib import Path
@@ -13,13 +14,6 @@ if str(ROOT) not in sys.path:
 import run_gpt54_first_wave_baseline as harness
 
 from gpu_cockpit.contracts import SFTDatasetManifest, SFTExample
-
-
-FREEZE_DIR = ROOT / "artifacts" / "training" / "phase5_hard_trace_freeze_v1"
-MANIFEST_PATH = FREEZE_DIR / "optimize_trace_manifest.json"
-REPORT_PATH = FREEZE_DIR / "artifact_feedback_distill_dataset_report.json"
-TRAIN_OUT_DIR = ROOT / "datasets" / "phase5_artifact_feedback_distill_train_v1"
-DEV_OUT_DIR = ROOT / "datasets" / "phase5_artifact_feedback_distill_dev_v1"
 
 
 def _read_json(path: Path) -> dict[str, Any]:
@@ -113,6 +107,7 @@ def _write_dataset(
     rows: list[dict[str, Any]],
     split: str,
     out_dir: Path,
+    source_manifest_path: Path,
 ) -> SFTDatasetManifest:
     out_dir.mkdir(parents=True, exist_ok=True)
     examples_dir = out_dir / "examples"
@@ -133,7 +128,7 @@ def _write_dataset(
         example_refs=example_refs,
         task_ids=sorted({example.task_id for example in examples}),
         metadata={
-            "source_freeze_manifest": str(MANIFEST_PATH.relative_to(ROOT)),
+            "source_freeze_manifest": str(source_manifest_path.relative_to(ROOT)),
             "quality_counts": _count_examples_by(examples, "quality_bucket"),
             "slice_role_counts": _count_examples_by(examples, "slice_role"),
             "source_block_counts": _count_examples_by(examples, "source_block"),
@@ -153,22 +148,52 @@ def _count_examples_by(examples: list[SFTExample], key: str) -> dict[str, int]:
 
 
 def main() -> int:
-    manifest = _read_json(MANIFEST_PATH)
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--freeze-dir",
+        type=Path,
+        default=ROOT / "artifacts" / "training" / "phase5_hard_trace_freeze_v2",
+    )
+    parser.add_argument(
+        "--train-out-dir",
+        type=Path,
+        default=ROOT / "datasets" / "phase5_artifact_feedback_distill_train_v2",
+    )
+    parser.add_argument(
+        "--dev-out-dir",
+        type=Path,
+        default=ROOT / "datasets" / "phase5_artifact_feedback_distill_dev_v2",
+    )
+    args = parser.parse_args()
+
+    manifest_path = args.freeze_dir / "optimize_trace_manifest.json"
+    report_path = args.freeze_dir / "artifact_feedback_distill_dataset_report.json"
+    manifest = _read_json(manifest_path)
     rows = manifest.get("episodes", [])
     if not isinstance(rows, list):
-        raise SystemExit(f"Invalid manifest rows in {MANIFEST_PATH}")
+        raise SystemExit(f"Invalid manifest rows in {manifest_path}")
     train_rows = [row for row in rows if isinstance(row, dict) and row.get("split") == "train"]
     dev_rows = [row for row in rows if isinstance(row, dict) and row.get("split") == "dev"]
 
-    train_manifest = _write_dataset(rows=train_rows, split="train", out_dir=TRAIN_OUT_DIR)
-    dev_manifest = _write_dataset(rows=dev_rows, split="dev", out_dir=DEV_OUT_DIR)
+    train_manifest = _write_dataset(
+        rows=train_rows,
+        split="train",
+        out_dir=args.train_out_dir,
+        source_manifest_path=manifest_path,
+    )
+    dev_manifest = _write_dataset(
+        rows=dev_rows,
+        split="dev",
+        out_dir=args.dev_out_dir,
+        source_manifest_path=manifest_path,
+    )
 
     report = {
-        "report_id": "phase5_artifact_feedback_distill_dataset_v1",
+        "report_id": f"{args.freeze_dir.name}_artifact_feedback_distill_dataset",
         "created_at": datetime.now(tz=UTC).isoformat(),
-        "source_manifest": str(MANIFEST_PATH.relative_to(ROOT)),
-        "train_manifest": str((TRAIN_OUT_DIR / "sft_dataset_manifest.json").relative_to(ROOT)),
-        "dev_manifest": str((DEV_OUT_DIR / "sft_dataset_manifest.json").relative_to(ROOT)),
+        "source_manifest": str(manifest_path.relative_to(ROOT)),
+        "train_manifest": str((args.train_out_dir / "sft_dataset_manifest.json").relative_to(ROOT)),
+        "dev_manifest": str((args.dev_out_dir / "sft_dataset_manifest.json").relative_to(ROOT)),
         "train_example_count": train_manifest.example_count,
         "dev_example_count": dev_manifest.example_count,
         "train_task_ids": train_manifest.task_ids,
@@ -179,7 +204,7 @@ def main() -> int:
             "Train split duplicates hard positives and near-misses to keep the tiny tranche informative.",
         ],
     }
-    REPORT_PATH.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    report_path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(report, indent=2))
     return 0
 

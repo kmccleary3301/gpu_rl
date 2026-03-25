@@ -24,6 +24,7 @@ class AdapterRegistryTests(unittest.TestCase):
         kv_cache = next(row for row in adapters if row["name"] == "kv_cache_gather")
         diagnose = next(row for row in adapters if row["name"] == "profile_diagnose")
         kernelbench = next(row for row in adapters if row["name"] == "kernelbench")
+        kernelbench_v3 = next(row for row in adapters if row["name"] == "kernelbench_v3")
         computeeval = next(row for row in adapters if row["name"] == "computeeval")
         self.assertEqual(smoke["case_count"], 2)
         self.assertIn("case/smoke/eval/v1", smoke["cases"])
@@ -46,6 +47,9 @@ class AdapterRegistryTests(unittest.TestCase):
         self.assertEqual(kernelbench["case_count"], 11)
         self.assertIn("case/kernelbench/level1/32_hardtanh/v0_1", kernelbench["cases"])
         self.assertIn("case/kernelbench/level1/23_softmax_wide/v0_1", kernelbench["cases"])
+        self.assertEqual(kernelbench_v3["case_count"], 2)
+        self.assertIn("case/kernelbench_v3/level1/23_softmax_official/v3_1", kernelbench_v3["cases"])
+        self.assertIn("case/kernelbench_v3/level1/23_softmax_wide/v3_1", kernelbench_v3["cases"])
         self.assertEqual(computeeval["case_count"], 8)
         self.assertIn("case/computeeval/2025_1/cuda_10/v1", computeeval["cases"])
         self.assertIn("case/computeeval/2025_1/cuda_16_streams_audit/v1", computeeval["cases"])
@@ -143,6 +147,24 @@ class AdapterRegistryTests(unittest.TestCase):
         self.assertGreaterEqual(summary["by_eval_type"]["correctness-heavy"], 9)
         self.assertGreaterEqual(summary["by_tag"]["attention-adjacent"], 1)
         self.assertEqual(summary["by_tag"]["curated-variant"], 3)
+
+    def test_load_kernelbench_v3_case_and_task(self) -> None:
+        adapter = get_adapter("kernelbench_v3")
+        case = adapter.load_case(ROOT, "case/kernelbench_v3/level1/23_softmax_official/v3_1")
+        task = adapter.load_task(ROOT, "case/kernelbench_v3/level1/23_softmax_official/v3_1")
+        self.assertEqual(case.source_benchmark, "KernelBench-v3")
+        self.assertEqual(case.source_case_version, "v3.1")
+        self.assertTrue(case.metadata["held_out"])
+        self.assertEqual(task.task_id, "task/kernelbench_v3/level1/23_softmax_official/eval/v1")
+
+    def test_describe_kernelbench_v3_reports_provenance_coverage(self) -> None:
+        summary = describe_adapter(ROOT, "kernelbench_v3")
+        self.assertEqual(summary["case_count"], 2)
+        self.assertEqual(summary["by_benchmark_level"]["level1"], 2)
+        self.assertEqual(summary["by_provenance_kind"]["official-heldout"], 1)
+        self.assertEqual(summary["by_provenance_kind"]["curated-derivative"], 1)
+        self.assertEqual(summary["by_track"]["open"], 2)
+        self.assertIn("import_manifest", summary)
 
     def test_load_computeeval_case_and_task(self) -> None:
         adapter = get_adapter("computeeval")

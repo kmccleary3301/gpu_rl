@@ -107,6 +107,54 @@
       "default": null,
       "title": "Candidate Role"
     },
+    "candidate_status": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Candidate Status"
+    },
+    "candidate_origin_kind": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Candidate Origin Kind"
+    },
+    "candidate_operation_kind": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Candidate Operation Kind"
+    },
+    "candidate_diff_ref": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Candidate Diff Ref"
+    },
     "exit_code": {
       "anyOf": [
         {

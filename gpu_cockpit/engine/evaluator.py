@@ -233,6 +233,29 @@ def _extract_hook_failure_details(writer: RunBundleWriter, execution: HookExecut
     return summary, details
 
 
+def _default_failure_packet(
+    visible_failure_details: dict[str, Any] | None,
+    hidden_failure_details: dict[str, Any] | None,
+) -> dict[str, Any]:
+    for scope in (hidden_failure_details, visible_failure_details):
+        if not isinstance(scope, dict):
+            continue
+        packet = {
+            "failure_class": scope.get("code"),
+            "benchmark_case_id": scope.get("benchmark_case_id"),
+            "case_config_path": scope.get("case_config_path"),
+            "observed": scope.get("observed"),
+            "expected": scope.get("expected"),
+            "suspected_region": scope.get("suspected_region"),
+            "likely_next_actions": scope.get("likely_next_actions", []),
+            "fix_family": scope.get("fix_family"),
+            "confidence": scope.get("confidence"),
+        }
+        if any(value not in (None, [], {}) for value in packet.values()):
+            return packet
+    return {}
+
+
 def _build_learning_reward_trace(
     *,
     task: TaskSpec,
@@ -353,6 +376,7 @@ def run_evaluation_hooks(
         failures=failures,
         visible_failure_summary=visible_failure_summary,
         hidden_failure_summary=hidden_failure_summary,
+        default_failure_packet=_default_failure_packet(visible_failure_details, hidden_failure_details),
         failure_localization={
             key: value
             for key, value in {

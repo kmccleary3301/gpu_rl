@@ -83,6 +83,40 @@
       },
       "title": "Failures",
       "type": "array"
+    },
+    "visible_failure_summary": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Visible Failure Summary"
+    },
+    "hidden_failure_summary": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Hidden Failure Summary"
+    },
+    "default_failure_packet": {
+      "additionalProperties": true,
+      "title": "Default Failure Packet",
+      "type": "object"
+    },
+    "failure_localization": {
+      "additionalProperties": true,
+      "title": "Failure Localization",
+      "type": "object"
     }
   },
   "required": [

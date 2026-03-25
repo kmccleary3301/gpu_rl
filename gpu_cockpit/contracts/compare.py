@@ -12,8 +12,11 @@ class RunComparison(ContractModel):
     rhs_run_id: str
     lhs_status: str
     rhs_status: str
+    compare_type: str | None = None
     optimize_delta_summary: dict[str, Any] = Field(default_factory=dict)
     candidate_delta_brief: dict[str, Any] = Field(default_factory=dict)
+    benchmark_provenance: dict[str, Any] = Field(default_factory=dict)
+    perf_localization: dict[str, Any] = Field(default_factory=dict)
     recommended_next_actions: list[str] = Field(default_factory=list)
     summary_lines: list[str] = Field(default_factory=list)
     lhs_candidate_role: str | None = None

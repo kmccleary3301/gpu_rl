@@ -1,0 +1,12 @@
+{
+  "baseline_id": "baseline/kernelbench_v3/level1/23_softmax_official/eval/v1",
+  "command": [
+    "python3",
+    "workloads/reference/kernelbench_v3_softmax_official_candidate.py",
+    "--benchmark-repeats",
+    "30"
+  ],
+  "notes": [
+    "Reference runner for the official held-out KernelBench-v3 Level 1 Softmax case."
+  ]
+}

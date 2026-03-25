@@ -12,7 +12,7 @@ if str(ROOT) not in sys.path:
 
 from gpu_cockpit.engine.replay import export_proof_bundle, validate_run_bundle
 from gpu_cockpit.engine.runner import run_task
-from gpu_cockpit.engine.patching import apply_patch_candidate
+from gpu_cockpit.engine.patching import apply_patch_candidate, branch_candidate, promote_candidate
 
 
 class ReplayTests(unittest.TestCase):
@@ -94,6 +94,13 @@ class ReplayTests(unittest.TestCase):
         self.assertEqual(replay_pack["candidate_origin_kind"], "patch")
         self.assertEqual(replay_pack["candidate_operation_kind"], "patch_apply")
         self.assertEqual(replay_pack["candidate_role_group"], "trial")
+        self.assertEqual(replay_pack["candidate_tree_depth"], 0)
+        self.assertEqual(replay_pack["best_known_candidate_id"], candidate_state.candidate_id)
+        self.assertEqual(replay_pack["best_known_candidate_reason"], "candidate_created")
+        self.assertEqual(replay_pack["legal_next_actions"], [])
+        self.assertEqual(replay_pack["dominated_candidate_ids"], [])
+        self.assertEqual(replay_pack["active_candidate_ids"], [candidate_state.candidate_id])
+        self.assertEqual(replay_pack["archived_candidate_ids"], [])
         self.assertEqual(replay_pack["source_candidate_id"], None)
         self.assertEqual(replay_pack["sibling_candidate_refs"], [])
         self.assertTrue(payload["checks"]["patch_ref"])
@@ -127,6 +134,47 @@ class ReplayTests(unittest.TestCase):
         self.assertIn("candidate/operation.json", names)
         self.assertIn("patches/applied_patch.json", names)
         self.assertIn("patches/unified_diff.patch", names)
+
+    def test_deeper_candidate_tree_replay_pack_preserves_parentage(self) -> None:
+        patch_run_dir, _, patched_candidate, _ = apply_patch_candidate(
+            self.tmp_root,
+            task_ref="task/reduction_debug/eval/v1",
+            target_file="workloads/reference/triton_row_sum_broken_kernel.py",
+            replacement_text=(self.tmp_root / "workloads" / "reference" / "triton_row_sum_repaired_kernel.py").read_text(encoding="utf-8"),
+            intent="repair the row-sum kernel mask",
+            expected_effect="restore the omitted column",
+            patch_kind="bug_fix",
+            transition_kind="repaired",
+        )
+        branch_run_dir, branched_candidate, _ = branch_candidate(
+            self.tmp_root,
+            task_ref="task/reduction_debug/eval/v1",
+            intent="branch into an alternate candidate line",
+            branch_label="alt_branch",
+            parent_run_ref=str(patch_run_dir),
+            parent_run_id=patch_run_dir.name,
+            parent_candidate_id=patched_candidate.candidate_id,
+        )
+        promote_run_dir, promoted_candidate, _ = promote_candidate(
+            self.tmp_root,
+            task_ref="task/reduction_debug/eval/v1",
+            intent="promote the branched candidate",
+            promotion_label="preferred_branch",
+            parent_run_ref=str(branch_run_dir),
+            parent_run_id=branch_run_dir.name,
+            parent_candidate_id=branched_candidate.candidate_id,
+        )
+
+        payload = validate_run_bundle(self.tmp_root, str(promote_run_dir))
+        replay_pack = payload["replay_pack"]
+        self.assertEqual(replay_pack["candidate_id"], promoted_candidate.candidate_id)
+        self.assertEqual(replay_pack["candidate_status"], "promoted")
+        self.assertEqual(replay_pack["candidate_origin_kind"], "promotion")
+        self.assertEqual(replay_pack["candidate_operation_kind"], "promote")
+        self.assertEqual(replay_pack["parent_candidate_id"], branched_candidate.candidate_id)
+        self.assertEqual(replay_pack["source_candidate_id"], branched_candidate.candidate_id)
+        self.assertEqual(replay_pack["candidate_tree_depth"], 2)
+        self.assertTrue(payload["checks"]["candidate_lineage_present"])
 
 
 if __name__ == "__main__":

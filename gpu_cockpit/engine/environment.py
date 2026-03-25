@@ -186,7 +186,8 @@ def initialize_environment_state(
     step_budget: int = 5,
 ) -> AgentEnvironmentState:
     task = TaskRegistry(root).get(task_ref)
-    return AgentEnvironmentState(
+    return _refresh_candidate_tree_state(
+        AgentEnvironmentState(
         episode_id=f"env_episode_{datetime.now(tz=UTC).strftime('%Y%m%d_%H%M%S')}_{uuid4().hex[:6]}",
         policy_id=policy_id,
         task_id=task.task_id,
@@ -198,6 +199,7 @@ def initialize_environment_state(
             "difficulty": task.difficulty,
             "allowed_backends": list(task.allowed_backends),
         },
+        )
     )
 
 
@@ -321,6 +323,130 @@ def _candidate_role_group(candidate_role: object | None) -> str | None:
     return role
 
 
+def _candidate_tree_depth(
+    lineage_events: list[dict[str, object]],
+    candidate_id: str | None,
+) -> int | None:
+    if candidate_id is None:
+        return None
+    parent_index: dict[str, str | None] = {}
+    for event in lineage_events:
+        if not isinstance(event, dict):
+            continue
+        event_candidate_id = event.get("candidate_id")
+        if event_candidate_id is None:
+            continue
+        parent_index[str(event_candidate_id)] = (
+            str(event.get("parent_candidate_id")) if event.get("parent_candidate_id") is not None else None
+        )
+    if candidate_id not in parent_index:
+        return None
+    depth = 0
+    cursor = parent_index.get(candidate_id)
+    seen: set[str] = {candidate_id}
+    while cursor is not None and cursor not in seen:
+        depth += 1
+        seen.add(cursor)
+        cursor = parent_index.get(cursor)
+    return depth
+
+
+def _candidate_bucket_lists(lineage_events: list[dict[str, object]]) -> tuple[list[str], list[str], list[str]]:
+    latest_event_by_candidate: dict[str, dict[str, object]] = {}
+    for event in lineage_events:
+        if not isinstance(event, dict):
+            continue
+        candidate_id = event.get("candidate_id")
+        if candidate_id is None:
+            continue
+        latest_event_by_candidate[str(candidate_id)] = event
+    dominated: list[str] = []
+    active: list[str] = []
+    archived: list[str] = []
+    for candidate_id, event in latest_event_by_candidate.items():
+        status = str(event.get("status")) if event.get("status") is not None else None
+        metadata = event.get("metadata")
+        if isinstance(metadata, dict) and metadata.get("dominated") is True:
+            dominated.append(candidate_id)
+            continue
+        if status in {"dominated"}:
+            dominated.append(candidate_id)
+            continue
+        if status in {"promoted", "archived"}:
+            archived.append(candidate_id)
+            continue
+        active.append(candidate_id)
+    return dominated, active, archived
+
+
+def _candidate_legal_next_actions(state: AgentEnvironmentState, candidate_role_group: str | None) -> list[str]:
+    if state.current_candidate_id is None:
+        return ["bench", "patch_candidate", "knowledge_query"]
+    status = state.current_candidate_status
+    if status == "dominated":
+        return ["revert_candidate", "patch_candidate", "compare", "eval"]
+    if status == "promoted":
+        return ["eval", "compare", "inspect_quality", "inspect_build"]
+    if status == "reverted":
+        return ["bench", "compare", "patch_candidate", "branch_candidate", "eval"]
+    if candidate_role_group == "branch":
+        return ["bench", "compare", "patch_candidate", "revert_candidate", "promote_candidate", "eval"]
+    return ["bench", "compare", "patch_candidate", "branch_candidate", "revert_candidate", "promote_candidate", "eval"]
+
+
+def _refresh_candidate_tree_state(state: AgentEnvironmentState) -> AgentEnvironmentState:
+    lineage_events = [event for event in state.candidate_lineage_events if isinstance(event, dict)]
+    current_event = None
+    if state.current_candidate_id is not None:
+        for raw_event in reversed(lineage_events):
+            if raw_event.get("candidate_id") == state.current_candidate_id:
+                current_event = raw_event
+                break
+    candidate_role = str(current_event.get("candidate_role")) if isinstance(current_event, dict) and current_event.get("candidate_role") is not None else None
+    candidate_role_group = _candidate_role_group(candidate_role)
+    tree_depth = _candidate_tree_depth(lineage_events, state.current_candidate_id)
+    dominated_candidate_ids, active_candidate_ids, archived_candidate_ids = _candidate_bucket_lists(lineage_events)
+    current_status = state.current_candidate_status
+    current_branch_state = None
+    if candidate_role_group == "branch":
+        current_branch_state = "branched"
+    elif state.current_candidate_parent_id is not None and state.current_candidate_id is not None:
+        current_branch_state = "child_candidate"
+    if current_status == "dominated":
+        current_branch_state = "dominated"
+    current_promote_state = "promoted" if current_status == "promoted" else "not_promoted"
+    current_revert_state = "reverted" if current_status == "reverted" else "not_reverted"
+    current_supersede_reason = state.current_supersede_reason
+    if current_supersede_reason is None and state.current_candidate_id == state.best_known_candidate_id:
+        current_supersede_reason = state.best_known_candidate_reason
+    if current_status == "promoted":
+        current_endgame_recommendation = "eval"
+    elif current_status == "reverted":
+        current_endgame_recommendation = "bench"
+    elif current_status == "dominated":
+        current_endgame_recommendation = "revert"
+    elif current_status in {"eval_passed", "eval_failed"}:
+        current_endgame_recommendation = "stop"
+    else:
+        current_endgame_recommendation = state.current_endgame_recommendation or "compare"
+    return state.model_copy(
+        update={
+            "current_candidate_role": candidate_role,
+            "current_candidate_role_group": candidate_role_group,
+            "current_candidate_tree_depth": tree_depth,
+            "current_branch_state": current_branch_state,
+            "current_promote_state": current_promote_state,
+            "current_revert_state": current_revert_state,
+            "current_supersede_reason": current_supersede_reason,
+            "current_endgame_recommendation": current_endgame_recommendation,
+            "current_legal_next_actions": _candidate_legal_next_actions(state, candidate_role_group),
+            "dominated_candidate_ids": dominated_candidate_ids,
+            "active_candidate_ids": active_candidate_ids,
+            "archived_candidate_ids": archived_candidate_ids,
+        }
+    )
+
+
 def _sibling_candidate_refs(state: AgentEnvironmentState, candidate_id: str | None, parent_candidate_id: str | None) -> list[str]:
     if candidate_id is None or parent_candidate_id is None:
         return []
@@ -358,16 +484,26 @@ def _candidate_tree_brief(state: AgentEnvironmentState) -> dict[str, object]:
         "current_status": state.current_candidate_status,
         "current_candidate_attempt_index": state.current_candidate_attempt_index,
         "current_candidate_ref": state.current_candidate_run_ref,
-        "candidate_role": candidate_role,
-        "candidate_role_group": _candidate_role_group(candidate_role),
+        "candidate_role": state.current_candidate_role or candidate_role,
+        "candidate_role_group": state.current_candidate_role_group or _candidate_role_group(candidate_role),
+        "tree_depth": state.current_candidate_tree_depth,
+        "branch_state": state.current_branch_state,
+        "promote_state": state.current_promote_state,
+        "revert_state": state.current_revert_state,
         "parent_candidate_ref": current_parent_candidate_id,
         "sibling_candidate_refs": sibling_refs,
         "why_this_candidate_exists": current_event.get("summary") if isinstance(current_event, dict) else None,
+        "supersede_reason": state.current_supersede_reason,
+        "endgame_recommendation": state.current_endgame_recommendation,
+        "legal_next_actions": list(state.current_legal_next_actions),
         "recent_events": list(state.candidate_lineage_events[-3:]),
         "best_known_candidate_id": state.best_known_candidate_id,
         "best_known_candidate_parent_id": state.best_known_candidate_parent_id,
         "best_known_candidate_run_ref": state.best_known_candidate_run_ref,
         "best_known_candidate_reason": state.best_known_candidate_reason,
+        "dominated_candidate_ids": list(state.dominated_candidate_ids),
+        "active_candidate_ids": list(state.active_candidate_ids),
+        "archived_candidate_ids": list(state.archived_candidate_ids),
     }
 
 
@@ -394,6 +530,92 @@ def _update_best_known_candidate_from_compare(
             updates["best_known_candidate_reason"] = "perf_improved"
         else:
             updates["best_known_candidate_reason"] = "first_candidate_anchor"
+    return updates
+
+
+def _compare_tree_updates(
+    state: AgentEnvironmentState,
+    payload: dict[str, object],
+    best_known_updates: dict[str, object],
+) -> dict[str, object]:
+    if state.current_candidate_id is None:
+        return {}
+    optimize_delta = payload.get("optimize_delta_summary")
+    correctness_change = None
+    perf_change = None
+    if isinstance(optimize_delta, dict):
+        correctness_change = str(optimize_delta.get("correctness_change")) if optimize_delta.get("correctness_change") is not None else None
+        perf_change = str(optimize_delta.get("perf_change")) if optimize_delta.get("perf_change") is not None else None
+    old_best_candidate_id = state.best_known_candidate_id
+    new_best_candidate_id = best_known_updates.get("best_known_candidate_id", state.best_known_candidate_id)
+    new_best_reason = best_known_updates.get("best_known_candidate_reason", state.best_known_candidate_reason)
+    lineage_events = [*state.candidate_lineage_events]
+    updates: dict[str, object] = {}
+    current_candidate_id = state.current_candidate_id
+    current_candidate_role = state.current_candidate_role
+    current_candidate_status = state.current_candidate_status
+    is_regression_against_best_known = (
+        old_best_candidate_id is not None
+        and old_best_candidate_id != current_candidate_id
+        and (correctness_change == "regressed" or perf_change == "regressed")
+    )
+    if is_regression_against_best_known:
+        lineage_events.append(
+            _candidate_lineage_event(
+                action_name="compare",
+                candidate_id=current_candidate_id,
+                parent_candidate_id=state.current_candidate_parent_id,
+                source_candidate_id=current_candidate_id,
+                run_ref=state.current_candidate_run_ref or state.last_run_ref or "compare",
+                status="dominated",
+                transition_kind=None,
+                summary="candidate regressed against the best-known branch and was pruned",
+                candidate_role=current_candidate_role,
+                candidate_attempt_index=state.current_candidate_attempt_index,
+                metadata={
+                    "dominated": True,
+                    "compare_decision": "prune",
+                    "best_known_candidate_id": old_best_candidate_id,
+                    "regression_against_best_known": True,
+                },
+            )
+        )
+        updates.update(
+            {
+                "current_candidate_status": "dominated",
+                "current_supersede_reason": "regressed_against_best_known",
+                "current_endgame_recommendation": "revert",
+            }
+        )
+    elif new_best_candidate_id == current_candidate_id and old_best_candidate_id not in {None, current_candidate_id}:
+        lineage_events.append(
+            _candidate_lineage_event(
+                action_name="compare",
+                candidate_id=str(old_best_candidate_id),
+                parent_candidate_id=state.best_known_candidate_parent_id,
+                source_candidate_id=str(old_best_candidate_id),
+                run_ref=state.best_known_candidate_run_ref or state.last_run_ref or "compare",
+                status="dominated",
+                transition_kind=None,
+                summary="previous best-known branch was superseded by the current candidate",
+                candidate_role=None,
+                candidate_attempt_index=state.current_candidate_attempt_index,
+                metadata={
+                    "dominated": True,
+                    "compare_decision": "superseded",
+                    "superseded_by_candidate_id": current_candidate_id,
+                },
+            )
+        )
+        updates.update(
+            {
+                "current_candidate_status": current_candidate_status,
+                "current_supersede_reason": str(new_best_reason) if new_best_reason is not None else "superseded_previous_best_known",
+                "current_endgame_recommendation": "promote",
+            }
+        )
+    if lineage_events != state.candidate_lineage_events:
+        updates["candidate_lineage_events"] = lineage_events
     return updates
 
 
@@ -431,10 +653,20 @@ def _lineage_from_candidate_state(root: Path, state: AgentEnvironmentState) -> d
         "candidate_role": candidate_state.get("candidate_role"),
         "candidate_role_group": _candidate_role_group(candidate_state.get("candidate_role")),
         "candidate_status": candidate_state.get("status"),
+        "candidate_tree_depth": state.current_candidate_tree_depth,
         "candidate_origin_kind": candidate_state.get("origin_kind"),
         "candidate_operation_kind": operation.get("operation_kind") or candidate_state.get("last_operation_kind"),
         "operation_ref": "candidate/operation.json" if operation else None,
         "transition_kind": transition.get("transition_kind"),
+        "best_known_candidate_id": state.best_known_candidate_id,
+        "best_known_candidate_reason": state.best_known_candidate_reason,
+        "supersede_reason": state.current_supersede_reason,
+        "branch_state": state.current_branch_state,
+        "endgame_recommendation": state.current_endgame_recommendation,
+        "legal_next_actions": list(state.current_legal_next_actions),
+        "dominated_candidate_ids": list(state.dominated_candidate_ids),
+        "active_candidate_ids": list(state.active_candidate_ids),
+        "archived_candidate_ids": list(state.archived_candidate_ids),
         "patch_present": isinstance(applied_patch, dict),
         "patch_kind": applied_patch.get("patch_kind") if isinstance(applied_patch, dict) else None,
         "sibling_candidate_refs": sibling_candidate_refs,
@@ -791,13 +1023,16 @@ def _derive_reward_ledger(
             shaping_components["tool_cost"] = round(tool_cost, 4)
             total_shaping_components["tool_cost"] += shaping_components["tool_cost"]
         if step.action.action_type == "compare":
-            if compare_bonus_remaining > 0:
+            projection = step.observation.projection if isinstance(step.observation.projection, dict) else {}
+            optimize_delta = projection.get("optimize_delta_summary", {})
+            candidate_delta = projection.get("candidate_delta_brief", {})
+            compare_has_optimize_evidence = isinstance(optimize_delta, dict) and bool(optimize_delta)
+            compare_has_candidate_evidence = isinstance(candidate_delta, dict) and bool(candidate_delta)
+            if compare_bonus_remaining > 0 and patch_bearing and (compare_has_optimize_evidence or compare_has_candidate_evidence):
                 shaping_components["compare_use_bonus"] = compare_bonus_remaining
                 total_shaping_components["compare_use_bonus"] += compare_bonus_remaining
                 notes.append("compare_bonus_awarded")
                 compare_bonus_remaining = 0.0
-            projection = step.observation.projection if isinstance(step.observation.projection, dict) else {}
-            optimize_delta = projection.get("optimize_delta_summary", {})
             if isinstance(optimize_delta, dict):
                 correctness_change = str(optimize_delta.get("correctness_change", "unknown"))
                 perf_change = str(optimize_delta.get("perf_change", "unknown"))
@@ -841,10 +1076,13 @@ def _derive_reward_ledger(
                 notes.append("promote_closeout_bonus_awarded")
         if step.terminal:
             if (
+                correctness_passed
+                and
                 not task_success
                 and terminal_state in {"two_attempt_positive_complete", "three_attempt_positive_complete", "post_patch_eval_failed"}
                 and compare_used
                 and patch_bearing
+                and perf_gate in {"fail", "blocked", "not_run"}
             ):
                 shaping_components["near_miss_progress_bonus"] = 0.03
                 total_shaping_components["near_miss_progress_bonus"] += 0.03
@@ -1433,6 +1671,8 @@ def step_environment(
                     "last_patch_hash": applied_patch.patch_hash,
                     "last_patch_kind": applied_patch.patch_kind,
                     "last_candidate_attempt_reason": candidate_attempt_reason,
+                    "stale_perf_invalidated": True,
+                    "stale_perf_invalidation_reason": "patch_candidate",
                 },
             }
         )
@@ -1506,7 +1746,13 @@ def step_environment(
                         metadata={"branch_label": branch_label},
                     ),
                 ],
-                "metadata": {**state.metadata, "last_candidate_operation": "branch", "last_branch_label": branch_label},
+                "metadata": {
+                    **state.metadata,
+                    "last_candidate_operation": "branch",
+                    "last_branch_label": branch_label,
+                    "stale_perf_invalidated": True,
+                    "stale_perf_invalidation_reason": "branch_candidate",
+                },
             }
         )
     elif action_name == "revert_candidate":
@@ -1610,6 +1856,8 @@ def step_environment(
                     **state.metadata,
                     "last_candidate_operation": "revert",
                     "last_revert_target_candidate_id": revert_target_candidate_id,
+                    "stale_perf_invalidated": True,
+                    "stale_perf_invalidation_reason": "revert_candidate",
                 },
             }
         )
@@ -1683,7 +1931,13 @@ def step_environment(
                         metadata={"promote_label": promote_label},
                     ),
                 ],
-                "metadata": {**state.metadata, "last_candidate_operation": "promote", "last_promote_label": promote_label},
+                "metadata": {
+                    **state.metadata,
+                    "last_candidate_operation": "promote",
+                    "last_promote_label": promote_label,
+                    "stale_perf_invalidated": True,
+                    "stale_perf_invalidation_reason": "promote_candidate",
+                },
             }
         )
     elif action_name == "eval":
@@ -1822,6 +2076,7 @@ def step_environment(
                 )
         payload["regression_against_best_known"] = current_worse_than_best_known
         payload["best_known_candidate_reason"] = state.best_known_candidate_reason
+        compare_tree_updates = _compare_tree_updates(state, payload, best_known_updates)
         action_metadata.update({"lhs_run_ref": lhs, "rhs_run_ref": rhs})
         observation = TrajectoryObservation(
             observation_type="comparison",
@@ -1843,6 +2098,8 @@ def step_environment(
         )
         if best_known_updates:
             next_state = next_state.model_copy(update=best_known_updates)
+        if compare_tree_updates:
+            next_state = next_state.model_copy(update=compare_tree_updates)
     elif action_name == "replay":
         target_run_ref = run_ref or state.last_run_ref
         if not target_run_ref:
@@ -1891,6 +2148,7 @@ def step_environment(
         patch_hash=str(action_metadata.get("patch_hash")) if action_metadata.get("patch_hash") is not None else None,
         recommended_next_actions=_recommended_actions_from_projection(observation.observation_type, observation.projection),
     )
+    next_state = _refresh_candidate_tree_state(next_state)
     next_state = _finalize_budget(next_state)
     return next_state, step
 

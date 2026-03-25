@@ -116,6 +116,71 @@ class GPT54BaselineHarnessTests(unittest.TestCase):
         self.assertEqual(snapshot["candidate_lineage"]["why_this_candidate_exists"], "branch for a focused alternate optimization")
         self.assertEqual(snapshot["candidate_lineage"]["best_known_candidate_id"], "cand_parent")
 
+    def test_observation_packet_exposes_decision_spine(self) -> None:
+        ctx = harness._task_context(self.tmp_root, "task/attention_score/eval/v1", "positive")
+        ctx["interface_profile"] = "compare_plus_localization_plus_branch_v1"
+        state = initialize_environment_state(self.tmp_root, "task/attention_score/eval/v1", step_budget=8).model_copy(
+            update={
+                "current_candidate_id": "cand_branch",
+                "current_candidate_parent_id": "cand_parent",
+                "current_candidate_run_ref": "runs/cand_branch_run",
+                "current_candidate_status": "benchmarked",
+                "current_candidate_attempt_index": 2,
+                "best_known_candidate_id": "cand_parent",
+                "best_known_candidate_reason": "perf_improved",
+                "current_candidate_role": "branched_candidate",
+                "current_candidate_role_group": "branch",
+                "current_candidate_tree_depth": 1,
+                "current_branch_state": "branched",
+                "current_legal_next_actions": ["compare", "promote_candidate", "eval"],
+                "candidate_history": ["cand_parent", "cand_branch"],
+                "candidate_lineage_events": [
+                    {"action_name": "branch_candidate", "candidate_id": "cand_branch", "parent_candidate_id": "cand_parent", "candidate_role": "branched_candidate", "summary": "branch for a focused alternate optimization"},
+                ],
+            }
+        )
+        packet = harness._observation_packet(
+            task_ctx=ctx,
+            allowed_actions=["bench", "compare", "promote_candidate", "eval"],
+            state_snapshot=harness._state_snapshot(state),
+            budgets={"step_budget": 8, "max_retries": 1, "max_patches": 2, "max_compares": 2, "max_replays": 1, "max_knowledge_queries": 1},
+            counters={"model_calls": 0, "provider_failures": 0, "failed_tool_calls": 0, "controller_rejections": 0, "knowledge_queries": 0, "patches": 1, "branches": 1, "reverts": 0, "promotes": 0, "compares": 1, "replays": 0, "eval_actions": 0, "bench_actions": 2},
+            step_records=[
+                {
+                    "step_index": 1,
+                    "step_label": "compare_action",
+                    "action_name": "compare",
+                    "reward_total": -0.01,
+                    "reward_components": {"tool_cost": -0.01},
+                    "recommended_next_actions": ["promote_candidate", "eval"],
+                    "transition_kind": None,
+                    "observation": {
+                        "type": "comparison",
+                        "status": "ok",
+                        "run_id": "runs/cand_branch_run",
+                        "task_id": "task/attention_score/eval/v1",
+                        "summary_ref": "summary.json",
+                        "salient_artifact_refs": [],
+                        "projection_excerpt": {
+                            "compare_type": "baseline_to_candidate",
+                            "optimize_delta_summary": {"perf_change": "improved"},
+                            "candidate_delta_brief": {"lineage_relationship": "lhs_parent_of_rhs"},
+                            "failure_localization": {"failure_class": "hidden_attention_score_mismatch"},
+                            "perf_localization": {"likely_bottleneck_class": "memory_bound"},
+                            "recommended_next_actions": ["promote_candidate", "eval"],
+                            "benchmark_provenance": {"benchmark_source": "internal"},
+                        },
+                    },
+                }
+            ],
+        )
+        self.assertEqual(packet["task_card"]["task_ref"], "task/attention_score/eval/v1")
+        self.assertEqual(packet["candidate_brief"]["candidate_id"], "cand_branch")
+        self.assertEqual(packet["candidate_tree_brief"]["tree_depth"], 1)
+        self.assertEqual(packet["budget_brief"]["step_budget_remaining"], 8)
+        self.assertEqual(packet["compare_brief"]["compare_type"], "baseline_to_candidate")
+        self.assertEqual(packet["localization_brief"]["perf_localization"]["likely_bottleneck_class"], "memory_bound")
+
     def test_branch_revert_promote_kwargs_require_existing_candidate(self) -> None:
         ctx = harness._task_context(self.tmp_root, "task/attention_score/eval/v1", "positive")
         state = initialize_environment_state(self.tmp_root, "task/attention_score/eval/v1", step_budget=6).model_copy(
@@ -754,6 +819,59 @@ class GPT54BaselineHarnessTests(unittest.TestCase):
         self.assertNotIn("candidate_lineage", packet["state"])
         self.assertIn("failure_localization", packet["last_step"]["observation"]["projection_excerpt"])
         self.assertEqual(packet["last_step"]["recommended_next_actions"], ["inspect_quality", "patch_candidate", "eval"])
+
+    def test_default_hard_optimize_packet_spine_is_stable_across_internal_public_and_kbv3_tasks(self) -> None:
+        task_refs = [
+            "task/attention_score/eval/v1",
+            "task/kernelbench/level1/23_softmax_wide/eval/v1",
+            "task/kernelbench_v3/level1/23_softmax_official/eval/v1",
+        ]
+        required_keys = {
+            "task_card",
+            "candidate_brief",
+            "candidate_tree_brief",
+            "compare_brief",
+            "localization_brief",
+            "budget_brief",
+        }
+        for task_ref in task_refs:
+            with self.subTest(task_ref=task_ref):
+                ctx = harness._task_context(self.tmp_root, task_ref, "positive")
+                state = initialize_environment_state(self.tmp_root, task_ref, step_budget=8)
+                packet = harness._observation_packet(
+                    task_ctx=ctx,
+                    allowed_actions=["bench", "eval", "compare"],
+                    state_snapshot=harness._state_snapshot(state),
+                    budgets={
+                        "step_budget": 8,
+                        "max_retries": 1,
+                        "max_patches": 1,
+                        "max_compares": 1,
+                        "max_replays": 1,
+                        "max_knowledge_queries": 1,
+                    },
+                    counters={
+                        "model_calls": 0,
+                        "provider_failures": 0,
+                        "failed_tool_calls": 0,
+                        "controller_rejections": 0,
+                        "knowledge_queries": 0,
+                        "patches": 0,
+                        "branches": 0,
+                        "reverts": 0,
+                        "promotes": 0,
+                        "compares": 0,
+                        "replays": 0,
+                        "eval_actions": 0,
+                        "bench_actions": 0,
+                    },
+                    step_records=[],
+                )
+                self.assertTrue(required_keys.issubset(packet.keys()))
+                self.assertIsInstance(packet["task_card"], dict)
+                self.assertIsInstance(packet["candidate_brief"], dict)
+                self.assertIsInstance(packet["candidate_tree_brief"], dict)
+                self.assertIsInstance(packet["budget_brief"], dict)
 
     def test_reduction_row_sum_task_context_enables_bounded_patch_iteration(self) -> None:
         ctx = harness._task_context(self.tmp_root, "task/reduction_row_sum/eval/v1", "positive")

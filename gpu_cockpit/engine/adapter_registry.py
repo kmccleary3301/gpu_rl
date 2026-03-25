@@ -9,6 +9,7 @@ from gpu_cockpit.workloads.adapters.attention_reformulate import AttentionReform
 from gpu_cockpit.workloads.adapters.computeeval import ComputeEvalBenchmarkAdapter
 from gpu_cockpit.workloads.adapters.kv_cache_gather import KVCacheGatherBenchmarkAdapter
 from gpu_cockpit.workloads.adapters.kernelbench import KernelBenchBenchmarkAdapter
+from gpu_cockpit.workloads.adapters.kernelbench_v3 import KernelBenchV3BenchmarkAdapter
 from gpu_cockpit.workloads.adapters.profile_diagnose import ProfileDiagnoseBenchmarkAdapter
 from gpu_cockpit.workloads.adapters.reduction_debug import ReductionDebugBenchmarkAdapter
 from gpu_cockpit.workloads.adapters.reduction_sum import ReductionSumBenchmarkAdapter
@@ -29,6 +30,7 @@ def _all_adapters() -> list[BenchmarkAdapter]:
         KVCacheGatherBenchmarkAdapter(),
         ProfileDiagnoseBenchmarkAdapter(),
         KernelBenchBenchmarkAdapter(),
+        KernelBenchV3BenchmarkAdapter(),
         ComputeEvalBenchmarkAdapter(),
     ]
 

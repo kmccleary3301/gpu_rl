@@ -30,6 +30,7 @@ CandidateStatus = Literal[
     "eval_failed",
     "benchmarked",
     "profiled",
+    "dominated",
     "promoted",
     "reverted",
     "archived",

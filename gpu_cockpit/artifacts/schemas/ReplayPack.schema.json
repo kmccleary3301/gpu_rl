@@ -109,6 +109,18 @@
       "default": null,
       "title": "Parent Candidate Id"
     },
+    "source_candidate_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Source Candidate Id"
+    },
     "source_run_ref": {
       "anyOf": [
         {
@@ -157,6 +169,18 @@
       "default": null,
       "title": "Transition Ref"
     },
+    "operation_ref": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Operation Ref"
+    },
     "candidate_role": {
       "anyOf": [
         {
@@ -169,6 +193,66 @@
       "default": null,
       "title": "Candidate Role"
     },
+    "candidate_role_group": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Candidate Role Group"
+    },
+    "candidate_status": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Candidate Status"
+    },
+    "candidate_tree_depth": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Candidate Tree Depth"
+    },
+    "candidate_origin_kind": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Candidate Origin Kind"
+    },
+    "candidate_operation_kind": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Candidate Operation Kind"
+    },
     "transition_kind": {
       "anyOf": [
         {
@@ -180,6 +264,101 @@
       ],
       "default": null,
       "title": "Transition Kind"
+    },
+    "best_known_candidate_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Best Known Candidate Id"
+    },
+    "best_known_candidate_reason": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Best Known Candidate Reason"
+    },
+    "supersede_reason": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Supersede Reason"
+    },
+    "branch_state": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Branch State"
+    },
+    "endgame_recommendation": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Endgame Recommendation"
+    },
+    "legal_next_actions": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Legal Next Actions",
+      "type": "array"
+    },
+    "dominated_candidate_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Dominated Candidate Ids",
+      "type": "array"
+    },
+    "active_candidate_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Active Candidate Ids",
+      "type": "array"
+    },
+    "archived_candidate_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Archived Candidate Ids",
+      "type": "array"
+    },
+    "sibling_candidate_refs": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Sibling Candidate Refs",
+      "type": "array"
     },
     "required_artifacts": {
       "items": {

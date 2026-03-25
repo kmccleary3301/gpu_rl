@@ -17,4 +17,5 @@ class CorrectnessReport(ContractModel):
     failures: list[str] = Field(default_factory=list)
     visible_failure_summary: str | None = None
     hidden_failure_summary: str | None = None
+    default_failure_packet: dict[str, Any] = Field(default_factory=dict)
     failure_localization: dict[str, Any] = Field(default_factory=dict)

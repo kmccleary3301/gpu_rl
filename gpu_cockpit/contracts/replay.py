@@ -26,8 +26,18 @@ class ReplayPack(ContractModel):
     candidate_role: str | None = None
     candidate_role_group: str | None = None
     candidate_status: str | None = None
+    candidate_tree_depth: int | None = None
     candidate_origin_kind: str | None = None
     candidate_operation_kind: str | None = None
     transition_kind: str | None = None
+    best_known_candidate_id: str | None = None
+    best_known_candidate_reason: str | None = None
+    supersede_reason: str | None = None
+    branch_state: str | None = None
+    endgame_recommendation: str | None = None
+    legal_next_actions: list[str] = Field(default_factory=list)
+    dominated_candidate_ids: list[str] = Field(default_factory=list)
+    active_candidate_ids: list[str] = Field(default_factory=list)
+    archived_candidate_ids: list[str] = Field(default_factory=list)
     sibling_candidate_refs: list[str] = Field(default_factory=list)
     required_artifacts: list[str] = Field(default_factory=list)

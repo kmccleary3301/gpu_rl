@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+import json
 from pathlib import Path
 import shutil
 import sys
@@ -49,6 +50,10 @@ class BenchmarkTests(unittest.TestCase):
             seed_pack=SeedPack(global_seed=1, input_seed=2),
         )
         writer.initialize(run_spec)
+        (self.tmp_root / "runs" / "bench_test_001" / "meta" / "hardware_fingerprint.json").write_text(
+            '{"vendor":"nvidia","gpu_name":"Test GPU","arch":"sm_test","driver_version":"555.1","runtime_version":"12.4","memory_gb":24}\n',
+            encoding="utf-8",
+        )
         perf = run_subprocess_benchmark(
             writer,
             command=["python3", "-c", "print('bench')"],
@@ -56,7 +61,15 @@ class BenchmarkTests(unittest.TestCase):
             repeats=3,
         )
         self.assertGreaterEqual(perf.steady_state_ms_p50, 0.0)
+        self.assertEqual(perf.timing_method, "wall_clock")
+        self.assertTrue(perf.split_compile_from_run)
+        self.assertIsNotNone(perf.candidate_command_sha256)
+        self.assertEqual(perf.hardware_fingerprint["gpu_name"], "Test GPU")
         self.assertTrue((self.tmp_root / "runs" / "bench_test_001" / "perf" / "benchmark.json").exists())
+        self.assertTrue((self.tmp_root / "runs" / "bench_test_001" / "perf" / "benchmark_protocol.json").exists())
+        raw_timings = json.loads((self.tmp_root / "runs" / "bench_test_001" / "perf" / "raw_timings.json").read_text(encoding="utf-8"))
+        self.assertEqual(raw_timings["protocol"]["timing_method"], "wall_clock")
+        self.assertIn("cold_compile_ms", raw_timings["candidate"])
 
     def test_run_task_benchmark_with_baseline(self) -> None:
         shutil.copytree(ROOT / "workloads", self.tmp_root / "workloads")
@@ -90,6 +103,9 @@ class BenchmarkTests(unittest.TestCase):
         )
         self.assertIsNotNone(perf.baseline_steady_state_ms_p50)
         self.assertGreaterEqual(perf.speedup_vs_baseline, 1.0)
+        self.assertEqual(perf.timing_method, task.perf_protocol.timer)
+        self.assertEqual(perf.split_compile_from_run, task.perf_protocol.split_compile_from_run)
+        self.assertIsNotNone(perf.baseline_command_sha256)
 
 
 if __name__ == "__main__":

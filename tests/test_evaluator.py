@@ -17,7 +17,7 @@ from gpu_cockpit.contracts.run import RunSpec
 from gpu_cockpit.contracts.trace import SystemTraceSummary
 from gpu_cockpit.engine.benchmark import run_task_benchmark
 from gpu_cockpit.engine.command_runner import run_command
-from gpu_cockpit.engine.evaluator import _extract_hook_failure_details, run_evaluation_hooks
+from gpu_cockpit.engine.evaluator import _default_failure_packet, _extract_hook_failure_details, run_evaluation_hooks
 from gpu_cockpit.engine.run_bundle import RunBundleWriter
 from gpu_cockpit.engine.task_registry import TaskRegistry
 
@@ -97,6 +97,24 @@ class EvaluatorTests(unittest.TestCase):
         self.assertEqual(reward_trace["schema_id"], "optimize_reward_v1")
         self.assertAlmostEqual(reward_trace["reward_components"]["task_success"], 0.6)
         self.assertAlmostEqual(reward_trace["total_reward"], 1.0)
+
+    def test_default_failure_packet_prefers_hidden_structured_details(self) -> None:
+        packet = _default_failure_packet(
+            {"code": "visible_issue", "likely_next_actions": ["inspect_quality"]},
+            {
+                "code": "missing_optimization_summary",
+                "case_config_path": "/tmp/case.json",
+                "observed": {"summary_present": False},
+                "expected": {"summary_present": True},
+                "suspected_region": "optimization_summary",
+                "likely_next_actions": ["patch_candidate", "eval"],
+                "fix_family": "missing_summary",
+                "confidence": 0.9,
+            },
+        )
+        self.assertEqual(packet["failure_class"], "missing_optimization_summary")
+        self.assertEqual(packet["suspected_region"], "optimization_summary")
+        self.assertEqual(packet["likely_next_actions"], ["patch_candidate", "eval"])
 
     def test_antihack_fails_on_forbidden_pattern(self) -> None:
         registry = TaskRegistry(self.tmp_root)
@@ -690,6 +708,52 @@ class EvaluatorTests(unittest.TestCase):
             command_summary=command_summary,
             perf_report=perf_report,
             scan_paths=[self.tmp_root / "workloads" / "reference" / "kernelbench_softmax_optimize_candidate.py"],
+        )
+        self.assertTrue(correctness.compile_ok)
+        self.assertTrue(correctness.visible_tests_ok)
+        self.assertTrue(correctness.hidden_tests_ok)
+        self.assertTrue(determinism.passed)
+        self.assertGreaterEqual(envelope.final_score, 0.8)
+
+    def test_kernelbench_v3_softmax_official_task_passes_with_reference_candidate(self) -> None:
+        registry = TaskRegistry(self.tmp_root)
+        task = registry.get("task/kernelbench_v3/level1/23_softmax_official/eval/v1")
+        writer = RunBundleWriter(self.tmp_root)
+        run_spec = RunSpec(
+            run_id="eval_test_kernelbench_v3_softmax_official",
+            created_at=datetime.now(tz=UTC),
+            task_ref=task.task_id,
+            mode="human",
+            target_backend="cuda",
+            target_vendor="nvidia",
+            executor="local_host",
+            policy_pack="balanced",
+            budgets=BudgetSpec(
+                wall_seconds=60,
+                compile_attempts=1,
+                bench_runs=1,
+                profile_runs=0,
+                artifact_mb=64,
+            ),
+            seed_pack=SeedPack(global_seed=1, input_seed=2),
+        )
+        writer.initialize(run_spec)
+        command = ["python3", "workloads/reference/kernelbench_v3_softmax_official_candidate.py", "--benchmark-repeats", "3"]
+        command_summary = run_command(writer, command=command)
+        perf_report = run_task_benchmark(
+            writer=writer,
+            root=self.tmp_root,
+            task=task,
+            command=command,
+        )
+        correctness, anti_hack, determinism, envelope = run_evaluation_hooks(
+            writer=writer,
+            root=self.tmp_root,
+            task=task,
+            command=command,
+            command_summary=command_summary,
+            perf_report=perf_report,
+            scan_paths=[self.tmp_root / "workloads" / "reference" / "kernelbench_v3_softmax_official_candidate.py"],
         )
         self.assertTrue(correctness.compile_ok)
         self.assertTrue(correctness.visible_tests_ok)

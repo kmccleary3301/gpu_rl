@@ -65,6 +65,376 @@
       "title": "EpisodeReadinessReport",
       "type": "object"
     },
+    "EvidenceQualityReport": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "score_kind": {
+          "default": "governance",
+          "title": "Score Kind",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "task_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Task Id"
+        },
+        "required_artifact_count": {
+          "default": 0,
+          "title": "Required Artifact Count",
+          "type": "integer"
+        },
+        "missing_required_artifact_count": {
+          "default": 0,
+          "title": "Missing Required Artifact Count",
+          "type": "integer"
+        },
+        "required_artifact_completeness": {
+          "title": "Required Artifact Completeness",
+          "type": "number"
+        },
+        "replay_completeness": {
+          "title": "Replay Completeness",
+          "type": "number"
+        },
+        "build_completeness": {
+          "title": "Build Completeness",
+          "type": "number"
+        },
+        "profile_completeness": {
+          "title": "Profile Completeness",
+          "type": "number"
+        },
+        "eval_completeness": {
+          "title": "Eval Completeness",
+          "type": "number"
+        },
+        "provenance_completeness": {
+          "default": 0.0,
+          "title": "Provenance Completeness",
+          "type": "number"
+        },
+        "overall_score": {
+          "title": "Overall Score",
+          "type": "number"
+        },
+        "benchmark_reporting": {
+          "$ref": "#/$defs/ReadinessDecision"
+        },
+        "sft_collection": {
+          "$ref": "#/$defs/ReadinessDecision"
+        },
+        "rl_reward_trace": {
+          "$ref": "#/$defs/ReadinessDecision"
+        },
+        "missing_provenance_fields": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Missing Provenance Fields",
+          "type": "array"
+        },
+        "training_example_kind": {
+          "default": "unusable",
+          "title": "Training Example Kind",
+          "type": "string"
+        },
+        "notes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Notes",
+          "type": "array"
+        }
+      },
+      "required": [
+        "run_id",
+        "required_artifact_completeness",
+        "replay_completeness",
+        "build_completeness",
+        "profile_completeness",
+        "eval_completeness",
+        "overall_score",
+        "benchmark_reporting",
+        "sft_collection",
+        "rl_reward_trace"
+      ],
+      "title": "EvidenceQualityReport",
+      "type": "object"
+    },
+    "LearningRewardTrace": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "schema_id": {
+          "default": "optimize_reward_v1",
+          "title": "Schema Id",
+          "type": "string"
+        },
+        "task_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Task Id"
+        },
+        "task_verb": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Task Verb"
+        },
+        "terminal_state": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Terminal State"
+        },
+        "task_outcome": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Task Outcome"
+        },
+        "trace_usability": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Trace Usability"
+        },
+        "task_success": {
+          "default": false,
+          "title": "Task Success",
+          "type": "boolean"
+        },
+        "correctness_passed": {
+          "default": false,
+          "title": "Correctness Passed",
+          "type": "boolean"
+        },
+        "determinism_passed": {
+          "default": false,
+          "title": "Determinism Passed",
+          "type": "boolean"
+        },
+        "anti_hack_passed": {
+          "default": false,
+          "title": "Anti Hack Passed",
+          "type": "boolean"
+        },
+        "perf_gate": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Perf Gate"
+        },
+        "compare_used": {
+          "default": false,
+          "title": "Compare Used",
+          "type": "boolean"
+        },
+        "patch_bearing": {
+          "default": false,
+          "title": "Patch Bearing",
+          "type": "boolean"
+        },
+        "branch_count": {
+          "default": 0,
+          "title": "Branch Count",
+          "type": "integer"
+        },
+        "revert_count": {
+          "default": 0,
+          "title": "Revert Count",
+          "type": "integer"
+        },
+        "promote_count": {
+          "default": 0,
+          "title": "Promote Count",
+          "type": "integer"
+        },
+        "reward_components": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Reward Components",
+          "type": "object"
+        },
+        "shaping_components": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Shaping Components",
+          "type": "object"
+        },
+        "excluded_governance_signals": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Excluded Governance Signals",
+          "type": "array"
+        },
+        "total_reward": {
+          "default": 0.0,
+          "title": "Total Reward",
+          "type": "number"
+        },
+        "notes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Notes",
+          "type": "array"
+        },
+        "reward_ledger": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RewardLedger"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "LearningRewardTrace",
+      "type": "object"
+    },
+    "OptimizeTraceSnapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "step_index": {
+          "minimum": 0,
+          "title": "Step Index",
+          "type": "integer"
+        },
+        "action_type": {
+          "title": "Action Type",
+          "type": "string"
+        },
+        "snapshot_kind": {
+          "title": "Snapshot Kind",
+          "type": "string"
+        },
+        "run_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Run Id"
+        },
+        "payload": {
+          "additionalProperties": true,
+          "title": "Payload",
+          "type": "object"
+        }
+      },
+      "required": [
+        "step_index",
+        "action_type",
+        "snapshot_kind"
+      ],
+      "title": "OptimizeTraceSnapshot",
+      "type": "object"
+    },
+    "OptimizeTraceSnapshots": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "candidate_snapshots": {
+          "items": {
+            "$ref": "#/$defs/OptimizeTraceSnapshot"
+          },
+          "title": "Candidate Snapshots",
+          "type": "array"
+        },
+        "compare_snapshots": {
+          "items": {
+            "$ref": "#/$defs/OptimizeTraceSnapshot"
+          },
+          "title": "Compare Snapshots",
+          "type": "array"
+        },
+        "failure_localization_snapshots": {
+          "items": {
+            "$ref": "#/$defs/OptimizeTraceSnapshot"
+          },
+          "title": "Failure Localization Snapshots",
+          "type": "array"
+        }
+      },
+      "title": "OptimizeTraceSnapshots",
+      "type": "object"
+    },
     "ReadinessDecision": {
       "additionalProperties": false,
       "properties": {
@@ -89,6 +459,148 @@
         "eligible"
       ],
       "title": "ReadinessDecision",
+      "type": "object"
+    },
+    "RewardLedger": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "schema_id": {
+          "default": "optimize_reward_ledger_v1",
+          "title": "Schema Id",
+          "type": "string"
+        },
+        "task_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Task Id"
+        },
+        "task_verb": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Task Verb"
+        },
+        "task_outcome": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Task Outcome"
+        },
+        "trace_usability": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Trace Usability"
+        },
+        "entries": {
+          "items": {
+            "$ref": "#/$defs/RewardLedgerEntry"
+          },
+          "title": "Entries",
+          "type": "array"
+        },
+        "total_reward_components": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Total Reward Components",
+          "type": "object"
+        },
+        "total_shaping_components": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Total Shaping Components",
+          "type": "object"
+        },
+        "total_reward": {
+          "default": 0.0,
+          "title": "Total Reward",
+          "type": "number"
+        }
+      },
+      "title": "RewardLedger",
+      "type": "object"
+    },
+    "RewardLedgerEntry": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "step_index": {
+          "minimum": 0,
+          "title": "Step Index",
+          "type": "integer"
+        },
+        "action_type": {
+          "title": "Action Type",
+          "type": "string"
+        },
+        "reward_components": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Reward Components",
+          "type": "object"
+        },
+        "shaping_components": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Shaping Components",
+          "type": "object"
+        },
+        "total_delta": {
+          "default": 0.0,
+          "title": "Total Delta",
+          "type": "number"
+        },
+        "notes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Notes",
+          "type": "array"
+        }
+      },
+      "required": [
+        "step_index",
+        "action_type"
+      ],
+      "title": "RewardLedgerEntry",
       "type": "object"
     },
     "TrajectoryAction": {
@@ -499,6 +1011,50 @@
       "anyOf": [
         {
           "$ref": "#/$defs/EpisodeReadinessReport"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "governance_score": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/EvidenceQualityReport"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "learning_reward_trace": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/LearningRewardTrace"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "reward_ledger": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/RewardLedger"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "optimize_trace_snapshots": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/OptimizeTraceSnapshots"
         },
         {
           "type": "null"

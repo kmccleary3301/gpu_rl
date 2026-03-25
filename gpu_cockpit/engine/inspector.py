@@ -182,6 +182,80 @@ def _public_benchmark_projection(command_payload: dict[str, Any] | None) -> dict
     return result
 
 
+def _hardware_fingerprint_projection(run_dir: Path) -> dict[str, Any] | None:
+    fingerprint = _load_optional_json(run_dir, "meta/hardware_fingerprint.json")
+    if not isinstance(fingerprint, dict):
+        return None
+    return {
+        "vendor": fingerprint.get("vendor"),
+        "backend": fingerprint.get("backend"),
+        "gpu_name": fingerprint.get("gpu_name") or fingerprint.get("device_name"),
+        "compute_capability": fingerprint.get("compute_capability"),
+        "driver_version": fingerprint.get("driver_version"),
+    }
+
+
+def _perf_localization_packet(
+    run_dir: Path,
+    projection: dict[str, Any],
+) -> dict[str, Any]:
+    perf = _load_optional_json(run_dir, "perf/benchmark.json") or {}
+    profile_summary = projection.get("profile_summary") or {}
+    bottleneck_card = projection.get("bottleneck_card") or {}
+    hardware_fingerprint = _hardware_fingerprint_projection(run_dir) or {}
+    baseline_runtime = perf.get("baseline_steady_state_ms_p50")
+    candidate_runtime = perf.get("steady_state_ms_p50")
+    delta = None
+    if isinstance(baseline_runtime, (int, float)) and isinstance(candidate_runtime, (int, float)):
+        delta = float(candidate_runtime) - float(baseline_runtime)
+    return {
+        "warmup_policy": {
+            "warmups": perf.get("warmups"),
+            "repeats": perf.get("repeats"),
+            "split_compile_from_run": perf.get("split_compile_from_run"),
+        },
+        "timing_method": perf.get("timing_method") or perf.get("timer") or "wall_clock_benchmark",
+        "compile_vs_runtime_split": {
+            "cold_compile_ms": perf.get("cold_compile_ms"),
+            "baseline_cold_compile_ms": perf.get("baseline_cold_compile_ms"),
+            "steady_state_ms_p50": perf.get("steady_state_ms_p50"),
+        },
+        "baseline_runtime": baseline_runtime,
+        "candidate_runtime": candidate_runtime,
+        "p50": perf.get("steady_state_ms_p50"),
+        "p95": perf.get("steady_state_ms_p95"),
+        "delta": delta,
+        "benchmark_scope": perf.get("benchmark_scope"),
+        "benchmark_protocol_version": perf.get("benchmark_protocol_version"),
+        "candidate_command_sha256": perf.get("candidate_command_sha256"),
+        "baseline_command_sha256": perf.get("baseline_command_sha256"),
+        "likely_bottleneck_class": bottleneck_card.get("primary_bottleneck") or profile_summary.get("classification"),
+        "hotspot_summary": bottleneck_card.get("summary") or bottleneck_card.get("primary_bottleneck"),
+        "launch_shape_summary": profile_summary.get("launch_shape_summary"),
+        "benchmark_hardware_fingerprint": perf.get("hardware_fingerprint") or hardware_fingerprint,
+    }
+
+
+def _benchmark_provenance_packet(
+    lhs: RunSummary,
+    rhs: RunSummary,
+    lhs_public_benchmark: dict[str, Any] | None,
+    rhs_public_benchmark: dict[str, Any] | None,
+) -> dict[str, Any]:
+    public = rhs_public_benchmark if isinstance(rhs_public_benchmark, dict) else lhs_public_benchmark if isinstance(lhs_public_benchmark, dict) else {}
+    return {
+        "benchmark_source": public.get("benchmark_source"),
+        "benchmark_case_id": public.get("benchmark_case_id"),
+        "benchmark_case_version": public.get("benchmark_case_version"),
+        "case_config_path": public.get("case_config_path"),
+        "problem_path": public.get("problem_path"),
+        "lhs_backend": lhs.backend,
+        "rhs_backend": rhs.backend,
+        "lhs_vendor": lhs.vendor,
+        "rhs_vendor": rhs.vendor,
+    }
+
+
 def _optimization_summary_from_payload(command_payload: dict[str, Any] | None) -> dict[str, Any] | None:
     if not isinstance(command_payload, dict):
         return None
@@ -657,6 +731,29 @@ def _candidate_delta_brief(
     }
 
 
+def _compare_type(
+    *,
+    lineage_relationship: str | None,
+    lhs_patch_present: bool,
+    rhs_patch_present: bool,
+    lhs_candidate_ref: str | None,
+    rhs_candidate_ref: str | None,
+) -> str:
+    if lineage_relationship in {"lhs_parent_of_rhs", "rhs_parent_of_lhs"}:
+        return "parent_child_candidate"
+    if lineage_relationship == "same_parent":
+        return "sibling_candidate"
+    if rhs_candidate_ref is not None and lhs_candidate_ref is None:
+        return "baseline_to_candidate"
+    if rhs_candidate_ref is not None and lhs_candidate_ref is not None and rhs_candidate_ref != lhs_candidate_ref:
+        return "baseline_to_candidate"
+    if rhs_patch_present and not lhs_patch_present:
+        return "baseline_to_candidate"
+    if lhs_patch_present and rhs_patch_present:
+        return "candidate_to_candidate"
+    return "candidate_delta"
+
+
 def project_run_bundle(run_dir: Path) -> dict[str, Any]:
     projection = _required_artifact_projection(run_dir)
     projection["failed_scopes"] = _load_failed_scopes(run_dir)
@@ -685,10 +782,12 @@ def project_run_bundle(run_dir: Path) -> dict[str, Any]:
     projection["candidate_projection"] = _candidate_projection(run_dir)
     projection["command_payload"] = _load_command_payload(run_dir)
     projection["public_benchmark_projection"] = _public_benchmark_projection(projection["command_payload"])
+    projection["hardware_fingerprint"] = _hardware_fingerprint_projection(run_dir)
     projection["evidence_quality"] = assess_run_evidence(run_dir).model_dump(mode="json")
     projection["governance_score"] = projection["evidence_quality"]
     projection["failure_triage"] = _failure_triage(run_dir)
     projection["profile_triage"] = _profile_triage(projection)
+    projection["perf_localization"] = _perf_localization_packet(run_dir, projection)
     projection["recommended_next_actions"] = _recommended_next_actions(projection)
     evidence_quality = projection["evidence_quality"]
     projection["training_readiness"] = {
@@ -738,9 +837,9 @@ def select_inspection_section(payload: dict[str, Any], section: str) -> dict[str
     section_map = {
         "build": ["build_record", "tri_view", "build_projection"],
         "eval": ["correctness_summary", "failure_localization", "determinism_summary", "anti_hack_summary", "eval_envelope", "gate_summary"],
-        "profile": ["profile_summary", "sanitizer_summary", "bottleneck_card", "profile_triage"],
+        "profile": ["profile_summary", "sanitizer_summary", "bottleneck_card", "profile_triage", "perf_localization", "hardware_fingerprint"],
         "replay": ["replay_validation", "replay_pack"],
-        "quality": ["evidence_quality", "governance_score", "learning_reward_trace", "training_readiness", "training_trace_triage", "failure_triage", "failure_localization", "profile_triage", "public_benchmark_projection", "recommended_next_actions"],
+        "quality": ["evidence_quality", "governance_score", "learning_reward_trace", "training_readiness", "training_trace_triage", "failure_triage", "failure_localization", "profile_triage", "perf_localization", "public_benchmark_projection", "hardware_fingerprint", "recommended_next_actions"],
         "transition": ["candidate_projection", "recommended_next_actions"],
     }
     keys = section_map.get(section)
@@ -989,6 +1088,25 @@ def compare_runs(root: Path, lhs_ref: str, rhs_ref: str) -> RunComparison:
         rhs_changed_file_count=rhs_changed_file_count,
         lineage_relationship=lineage_relationship,
     )
+    compare_type = _compare_type(
+        lineage_relationship=lineage_relationship,
+        lhs_patch_present=lhs_patch_present,
+        rhs_patch_present=rhs_patch_present,
+        lhs_candidate_ref=lhs_optimization_summary.get("candidate_ref") if isinstance(lhs_optimization_summary, dict) else None,
+        rhs_candidate_ref=rhs_optimization_summary.get("candidate_ref") if isinstance(rhs_optimization_summary, dict) else None,
+    )
+    benchmark_provenance = _benchmark_provenance_packet(lhs, rhs, lhs_public_benchmark, rhs_public_benchmark)
+    perf_localization = {
+        "lhs": lhs_projection.get("perf_localization"),
+        "rhs": rhs_projection.get("perf_localization"),
+        "delta_ms": (rhs_perf_p50 - lhs_perf_p50)
+        if isinstance(lhs_perf_p50, (int, float)) and isinstance(rhs_perf_p50, (int, float))
+        else None,
+        "classification_change": {
+            "lhs": lhs_profile.get("classification"),
+            "rhs": rhs_profile.get("classification"),
+        },
+    }
     summary_lines.extend(line for line in optimize_summary_lines if line not in summary_lines)
     if lineage_relationship is not None:
         summary_lines.append(
@@ -999,7 +1117,10 @@ def compare_runs(root: Path, lhs_ref: str, rhs_ref: str) -> RunComparison:
         rhs_run_id=rhs.run_id,
         lhs_status=lhs.status,
         rhs_status=rhs.status,
+        compare_type=compare_type,
         candidate_delta_brief=candidate_delta_brief,
+        benchmark_provenance=benchmark_provenance,
+        perf_localization=perf_localization,
         lhs_candidate_role=str(lhs_candidate_state.get("candidate_role")) if lhs_candidate_state.get("candidate_role") is not None else None,
         rhs_candidate_role=str(rhs_candidate_state.get("candidate_role")) if rhs_candidate_state.get("candidate_role") is not None else None,
         lhs_candidate_role_group=_candidate_role_group(lhs_candidate_state.get("candidate_role")),
