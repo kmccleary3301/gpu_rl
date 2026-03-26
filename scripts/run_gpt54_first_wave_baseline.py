@@ -1291,7 +1291,7 @@ def _run_episode(
             task_ctx[extra_key] = task_spec[extra_key]
     workspace_snapshot = _capture_restore_targets(task_ctx)
     action_specs = [spec.model_dump(mode="json") for spec in list_action_space()]
-    allowed_actions = _allowed_actions(action_specs, task_ctx)
+    base_allowed_actions = _allowed_actions(action_specs, task_ctx)
     state = initialize_environment_state(root, task_ctx["task_ref"], policy_id=str(config["policy_id"]), step_budget=budgets["step_budget"])
     step_records: list[dict[str, Any]] = []
     model_turns: list[dict[str, Any]] = []
@@ -1338,6 +1338,12 @@ def _run_episode(
         write_partial("initialized")
         while state.step_budget_remaining > 0:
             state_view = _state_snapshot(state)
+            allowed_actions = [
+                action_name
+                for action_name in base_allowed_actions
+                if _action_within_limits(action_name, counters, budgets, task_ctx)
+                and _action_allowed_in_state(action_name, state, task_ctx, counters, budgets)
+            ]
             observation_packet = _observation_packet(
                 task_ctx=task_ctx,
                 allowed_actions=allowed_actions,
