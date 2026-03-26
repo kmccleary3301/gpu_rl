@@ -1,0 +1,180 @@
+{
+  "report_id": "gpt54_first_wave_20260326_001842",
+  "created_at": "2026-03-26T00:18:42.422222+00:00",
+  "config": {
+    "config_id": "cfg/baseline/gpt54_phase5a_tranche1_hard_targets/v1",
+    "policy_id": "gpt54_phase5a_tranche1_hard_targets_v1",
+    "provider_priority": [
+      "openai"
+    ],
+    "model_by_provider": {
+      "openai": "gpt-5.4",
+      "openrouter": "openai/gpt-5.4-pro"
+    },
+    "generation": {
+      "temperature": 0.2,
+      "max_completion_tokens": 900,
+      "timeout_s": 90
+    },
+    "budgets": {
+      "step_budget": 15,
+      "max_retries": 1,
+      "max_patches": 3,
+      "max_branches": 2,
+      "max_reverts": 1,
+      "max_promotes": 1,
+      "max_compares": 3,
+      "max_replays": 1,
+      "max_knowledge_queries": 1
+    },
+    "tasks": [
+      {
+        "task_ref": "task/attention_score/eval/v1",
+        "variant": "positive",
+        "multi_candidate_mode": "three_attempt_positive_v1"
+      },
+      {
+        "task_ref": "task/kernelbench/level1/23_softmax_wide/eval/v1",
+        "variant": "positive",
+        "multi_candidate_mode": "three_attempt_positive_v1"
+      },
+      {
+        "task_ref": "task/routing_argmax_hard/eval/v1",
+        "variant": "positive",
+        "multi_candidate_mode": "three_attempt_positive_v1"
+      },
+      {
+        "task_ref": "task/kernelbench/level1/47_sum_reduction/eval/v1",
+        "variant": "positive",
+        "multi_candidate_mode": "branch_promote_positive_v1"
+      }
+    ],
+    "notes": [
+      "Phase 5A Frontier Transition Tranche 1 shared hard-target tranche.",
+      "Extends the original internal/public hard pair with a harder routing-style internal successor while keeping the public control."
+    ]
+  },
+  "summary": {
+    "config_id": "cfg/baseline/gpt54_phase5a_tranche1_hard_targets/v1",
+    "task_count": 4,
+    "success_count": 2,
+    "success_rate": 0.5,
+    "avg_step_count": 14.75,
+    "avg_patch_count": 2.5,
+    "avg_compare_count": 3.0,
+    "avg_replay_count": 0.0,
+    "avg_failed_tool_calls": 0.0,
+    "success_by_variant": {
+      "positive": 2,
+      "negative": 0
+    },
+    "success_by_verb": {
+      "optimize": {
+        "tasks": 4,
+        "successes": 2
+      }
+    }
+  },
+  "episodes": [
+    {
+      "task_ref": "task/attention_score/eval/v1",
+      "variant": "positive",
+      "verb": "optimize",
+      "success": false,
+      "terminal_reason": "continue",
+      "provider": "openai",
+      "model": "gpt-5.4",
+      "step_count": 15,
+      "counters": {
+        "model_calls": 15,
+        "provider_failures": 0,
+        "failed_tool_calls": 0,
+        "controller_rejections": 4,
+        "knowledge_queries": 0,
+        "patches": 3,
+        "branches": 2,
+        "reverts": 1,
+        "promotes": 0,
+        "compares": 3,
+        "replays": 0,
+        "eval_actions": 0,
+        "bench_actions": 6
+      }
+    },
+    {
+      "task_ref": "task/kernelbench/level1/23_softmax_wide/eval/v1",
+      "variant": "positive",
+      "verb": "optimize",
+      "success": false,
+      "terminal_reason": "continue",
+      "provider": "openai",
+      "model": "gpt-5.4",
+      "step_count": 15,
+      "counters": {
+        "model_calls": 15,
+        "provider_failures": 0,
+        "failed_tool_calls": 0,
+        "controller_rejections": 5,
+        "knowledge_queries": 0,
+        "patches": 3,
+        "branches": 2,
+        "reverts": 1,
+        "promotes": 1,
+        "compares": 3,
+        "replays": 0,
+        "eval_actions": 0,
+        "bench_actions": 5
+      }
+    },
+    {
+      "task_ref": "task/routing_argmax_hard/eval/v1",
+      "variant": "positive",
+      "verb": "optimize",
+      "success": true,
+      "terminal_reason": "success_after_eval",
+      "provider": "openai",
+      "model": "gpt-5.4",
+      "step_count": 14,
+      "counters": {
+        "model_calls": 14,
+        "provider_failures": 0,
+        "failed_tool_calls": 0,
+        "controller_rejections": 4,
+        "knowledge_queries": 0,
+        "patches": 3,
+        "branches": 2,
+        "reverts": 0,
+        "promotes": 1,
+        "compares": 3,
+        "replays": 0,
+        "eval_actions": 1,
+        "bench_actions": 4
+      }
+    },
+    {
+      "task_ref": "task/kernelbench/level1/47_sum_reduction/eval/v1",
+      "variant": "positive",
+      "verb": "optimize",
+      "success": true,
+      "terminal_reason": "success_after_eval",
+      "provider": "openai",
+      "model": "gpt-5.4",
+      "step_count": 15,
+      "counters": {
+        "model_calls": 15,
+        "provider_failures": 0,
+        "failed_tool_calls": 0,
+        "controller_rejections": 3,
+        "knowledge_queries": 0,
+        "patches": 1,
+        "branches": 1,
+        "reverts": 0,
+        "promotes": 1,
+        "compares": 3,
+        "replays": 0,
+        "eval_actions": 1,
+        "bench_actions": 8
+      }
+    }
+  ]
+}

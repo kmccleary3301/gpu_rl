@@ -383,6 +383,8 @@ def _candidate_legal_next_actions(state: AgentEnvironmentState, candidate_role_g
     if state.current_candidate_id is None:
         return ["bench", "patch_candidate", "knowledge_query"]
     status = state.current_candidate_status
+    if status in {"patched", "build_passed"}:
+        return ["bench", "build", "patch_candidate", "branch_candidate", "revert_candidate"]
     if status == "dominated":
         return ["revert_candidate", "patch_candidate", "compare", "eval"]
     if status == "promoted":
@@ -422,6 +424,8 @@ def _refresh_candidate_tree_state(state: AgentEnvironmentState) -> AgentEnvironm
     if current_status == "promoted":
         current_endgame_recommendation = "eval"
     elif current_status == "reverted":
+        current_endgame_recommendation = "bench"
+    elif current_status in {"patched", "build_passed"}:
         current_endgame_recommendation = "bench"
     elif current_status == "dominated":
         current_endgame_recommendation = "revert"

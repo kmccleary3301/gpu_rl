@@ -43,6 +43,10 @@ def _read_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _write_json(path: Path, payload: dict[str, Any]) -> None:
+    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+
+
 def _load_dotenv(path: Path) -> dict[str, str]:
     env: dict[str, str] = {}
     if not path.exists():
@@ -627,6 +631,39 @@ def _controller_hints(task_ctx: dict[str, Any], state_snapshot: dict[str, Any], 
             and counters["compares"] < budgets["max_compares"]
         ):
             priority_actions = ["compare", "eval"]
+    if task_ctx.get("multi_candidate_mode") is not None:
+        recommendation_map = {
+            "bench": "bench",
+            "compare": "compare",
+            "branch": "branch_candidate",
+            "revert": "revert_candidate",
+            "promote": "promote_candidate",
+            "eval": "eval",
+        }
+        candidate_lineage = state_snapshot.get("candidate_lineage") or {}
+        recommended = recommendation_map.get(
+            str(
+                state_snapshot.get("current_endgame_recommendation")
+                or candidate_lineage.get("endgame_recommendation")
+                or ""
+            )
+        )
+        legal_actions = {
+            str(action)
+            for action in list(
+                state_snapshot.get("current_legal_next_actions")
+                or candidate_lineage.get("legal_next_actions")
+                or []
+            )
+        }
+        if recommended and (not legal_actions or recommended in legal_actions):
+            if recommended in {"promote_candidate", "revert_candidate"}:
+                tail = ["eval"] if (not legal_actions or "eval" in legal_actions) else []
+                priority_actions = [recommended] + [action for action in tail if action != recommended]
+            elif recommended == "eval":
+                priority_actions = ["eval"]
+            else:
+                priority_actions = [recommended] + [action for action in priority_actions if action != recommended]
     return {
         "run_producing_actions": ["run", "build", "bench", "eval", "patch_candidate", "branch_candidate", "revert_candidate", "promote_candidate"],
         "requires_prior_run": ["inspect", "inspect_build", "inspect_profile", "inspect_quality", "replay", "compare"],
@@ -1245,6 +1282,7 @@ def _run_episode(
     config: dict[str, Any],
     provider_info: dict[str, str],
     task_spec: dict[str, Any],
+    partial_output_path: Path | None = None,
 ) -> dict[str, Any]:
     budgets = {key: int(value) for key, value in config["budgets"].items()}
     task_ctx = _task_context(root, str(task_spec["task_ref"]), str(task_spec["variant"]))
@@ -1274,7 +1312,30 @@ def _run_episode(
     }
     terminal_reason = "budget_exhausted"
 
+    def write_partial(phase: str, extra: dict[str, Any] | None = None) -> None:
+        if partial_output_path is None:
+            return
+        payload = {
+            "phase": phase,
+            "updated_at": datetime.now(tz=UTC).isoformat(),
+            "task_ref": task_ctx["task_ref"],
+            "variant": task_ctx["variant"],
+            "verb": task_ctx["verb"],
+            "provider": provider_info["provider"],
+            "model": provider_info["model"],
+            "terminal_reason": terminal_reason,
+            "counters": counters,
+            "state": _state_snapshot(state),
+            "step_count": len([step for step in step_records if step.get("step_label") != "controller_error"]),
+            "steps": step_records,
+            "model_turns": model_turns,
+        }
+        if extra:
+            payload.update(extra)
+        _write_json(partial_output_path, payload)
+
     try:
+        write_partial("initialized")
         while state.step_budget_remaining > 0:
             state_view = _state_snapshot(state)
             observation_packet = _observation_packet(
@@ -1286,6 +1347,13 @@ def _run_episode(
                 step_records=step_records,
             )
             user_prompt = json.dumps(observation_packet, indent=2, sort_keys=True)
+            write_partial(
+                "awaiting_model_response",
+                {
+                    "turn_index": len(model_turns),
+                    "observation_packet": observation_packet,
+                },
+            )
             model_response: dict[str, Any] | None = None
             last_provider_error: dict[str, Any] | None = None
             for provider in config["provider_priority"]:
@@ -1322,6 +1390,13 @@ def _run_episode(
                         "provider_error": last_provider_error,
                     }
                 )
+                write_partial(
+                    "provider_failure",
+                    {
+                        "turn_index": len(model_turns) - 1,
+                        "provider_error": last_provider_error,
+                    },
+                )
                 break
 
             counters["model_calls"] += 1
@@ -1348,6 +1423,15 @@ def _run_episode(
                 "timestamp": datetime.now(tz=UTC).isoformat(),
             }
             model_turns.append(turn_record)
+            write_partial(
+                "model_response_received",
+                {
+                    "turn_index": turn_record["turn_index"],
+                    "selected_action": requested_action,
+                    "active_provider": model_response["provider"],
+                    "active_model": model_response["model"],
+                },
+            )
 
             try:
                 kwargs = _resolve_action_kwargs(requested_action, task_ctx, state, query)
@@ -1372,6 +1456,14 @@ def _run_episode(
                     counters["eval_actions"] += 1
                 elif requested_action == "bench":
                     counters["bench_actions"] += 1
+                write_partial(
+                    "step_applied",
+                    {
+                        "turn_index": turn_record["turn_index"],
+                        "selected_action": requested_action,
+                        "last_step": step_dict,
+                    },
+                )
                 should_stop, terminal_reason = _should_stop(task_ctx, step_dict, counters, budgets)
                 if should_stop:
                     break
@@ -1389,6 +1481,16 @@ def _run_episode(
                 )
                 if counters["failed_tool_calls"] > budgets["max_retries"]:
                     terminal_reason = "tool_failure"
+                write_partial(
+                    "tool_failure",
+                    {
+                        "turn_index": turn_record["turn_index"],
+                        "selected_action": requested_action,
+                        "error_type": type(exc).__name__,
+                        "error_message": str(exc),
+                    },
+                )
+                if counters["failed_tool_calls"] > budgets["max_retries"]:
                     break
     finally:
         _restore_files(workspace_snapshot)
@@ -1397,7 +1499,7 @@ def _run_episode(
     if step_records:
         last = step_records[-1]
         success = str(last.get("action_name")) == "eval" and str(last.get("observation", {}).get("status")) == "ok"
-    return {
+    report = {
         "task_ref": task_ctx["task_ref"],
         "variant": task_ctx["variant"],
         "verb": task_ctx["verb"],
@@ -1411,6 +1513,8 @@ def _run_episode(
         "steps": step_records,
         "model_turns": model_turns,
     }
+    write_partial("completed", {"success": success, "report": report})
+    return report
 
 
 def _summarize_batch(config: dict[str, Any], episode_reports: list[dict[str, Any]]) -> dict[str, Any]:
@@ -1478,10 +1582,11 @@ def main() -> int:
     args.out_dir.mkdir(parents=True, exist_ok=True)
     episode_reports: list[dict[str, Any]] = []
     for task_spec in tasks:
-        report = _run_episode(ROOT, config, provider_info, task_spec)
-        episode_reports.append(report)
         label = f"{task_spec['task_ref'].replace('/', '__')}__{task_spec['variant']}.json"
-        (args.out_dir / label).write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+        partial_label = label.replace(".json", ".partial.json")
+        report = _run_episode(ROOT, config, provider_info, task_spec, partial_output_path=args.out_dir / partial_label)
+        episode_reports.append(report)
+        _write_json(args.out_dir / label, report)
 
     batch_report = {
         "report_id": f"gpt54_first_wave_{datetime.now(tz=UTC).strftime('%Y%m%d_%H%M%S')}",
@@ -1503,7 +1608,7 @@ def main() -> int:
             for report in episode_reports
         ],
     }
-    (args.out_dir / "batch_report.json").write_text(json.dumps(batch_report, indent=2) + "\n", encoding="utf-8")
+    _write_json(args.out_dir / "batch_report.json", batch_report)
     print(json.dumps(batch_report["summary"], indent=2))
     return 0
 

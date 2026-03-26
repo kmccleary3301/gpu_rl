@@ -1,0 +1,48 @@
+{
+  "task_id": "task/routing_argmax_hard/eval/v1",
+  "verb": "optimize",
+  "operator_family": "routing_argmax",
+  "difficulty": "hard",
+  "prompt": "Run a Triton routing kernel that computes stable top-1 expert assignment per row and print JSON with visible_routing and hidden_routing payloads plus optimization_summary. Ties must prefer the lowest index. Use Triton rather than torch.argmax or torch.max for the routing path, and preserve the accepted optimization-summary contract.",
+  "baseline_ref": "workloads/baselines/routing_argmax_eval_baseline.json",
+  "reference_impl_ref": "workloads/reference/triton_routing_argmax_optimize_patchable_candidate.py",
+  "visible_tests_ref": "workloads/tests/routing_visible.py",
+  "hidden_tests_ref": "workloads/tests/routing_argmax_hard_hidden.py",
+  "input_generator_ref": null,
+  "deterministic_mode": true,
+  "feature_requirements": [
+    "cuda",
+    "torch",
+    "triton"
+  ],
+  "numerical_policy": {
+    "dtype_matrix": [
+      "fp32"
+    ],
+    "rtol": 1e-05,
+    "atol": 1e-06
+  },
+  "perf_protocol": {
+    "warmups": 1,
+    "repeats": 3,
+    "timer": "wall_clock",
+    "split_compile_from_run": true
+  },
+  "allowed_backends": [
+    "triton"
+  ],
+  "forbidden_patterns": [
+    "torch.argmax",
+    "torch.max("
+  ],
+  "required_artifacts": [
+    "meta/doctor_report.json",
+    "prompt/task_spec.json",
+    "correctness/correctness.json",
+    "correctness/determinism.json",
+    "eval/anti_hack_report.json",
+    "eval/eval_envelope.json",
+    "perf/benchmark.json",
+    "perf/raw_timings.json"
+  ]
+}
