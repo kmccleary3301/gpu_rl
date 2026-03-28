@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import traceback
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -25,6 +26,45 @@ from gpu_cockpit.engine.training import _build_model_load_kwargs
 
 def _read_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _write_json(path: Path, payload: dict[str, Any]) -> None:
+    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+
+
+def _step_count(step_records: list[dict[str, Any]]) -> int:
+    return len([step for step in step_records if step.get("step_label") != "controller_error"])
+
+
+def _partial_payload(
+    *,
+    phase: str,
+    task_ctx: dict[str, Any],
+    state: Any,
+    model_label: str,
+    terminal_reason: str,
+    counters: dict[str, int],
+    step_records: list[dict[str, Any]],
+    model_turns: list[dict[str, Any]],
+    extra: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    payload = {
+        "phase": phase,
+        "updated_at": datetime.now(tz=UTC).isoformat(),
+        "task_ref": task_ctx["task_ref"],
+        "variant": task_ctx["variant"],
+        "verb": task_ctx["verb"],
+        "model": model_label,
+        "terminal_reason": terminal_reason,
+        "counters": counters,
+        "state": harness._state_snapshot(state),
+        "step_count": _step_count(step_records),
+        "steps": step_records,
+        "model_turns": model_turns,
+    }
+    if extra:
+        payload.update(extra)
+    return payload
 
 
 def _load_local_policy(
@@ -92,6 +132,7 @@ def _run_episode(
     model: Any,
     tokenizer: Any,
     model_label: str,
+    partial_output_path: Path | None = None,
 ) -> dict[str, Any]:
     budgets = {key: int(value) for key, value in config["budgets"].items()}
     task_ctx = harness._task_context(ROOT, str(task_spec["task_ref"]), str(task_spec["variant"]))
@@ -122,7 +163,26 @@ def _run_episode(
     terminal_reason = "budget_exhausted"
     generation = dict(config.get("generation", {}))
 
+    def write_partial(phase: str, extra: dict[str, Any] | None = None) -> None:
+        if partial_output_path is None:
+            return
+        _write_json(
+            partial_output_path,
+            _partial_payload(
+                phase=phase,
+                task_ctx=task_ctx,
+                state=state,
+                model_label=model_label,
+                terminal_reason=terminal_reason,
+                counters=counters,
+                step_records=step_records,
+                model_turns=model_turns,
+                extra=extra,
+            ),
+        )
+
     try:
+        write_partial("initialized")
         while state.step_budget_remaining > 0:
             state_view = harness._state_snapshot(state)
             observation_packet = harness._observation_packet(
@@ -134,6 +194,10 @@ def _run_episode(
                 step_records=step_records,
             )
             user_prompt = json.dumps(observation_packet, indent=2, sort_keys=True)
+            write_partial(
+                "awaiting_model_response",
+                {"turn_index": len(model_turns), "observation_packet": observation_packet},
+            )
             response = _generate_action(
                 model=model,
                 tokenizer=tokenizer,
@@ -164,6 +228,10 @@ def _run_episode(
                     "timestamp": datetime.now(tz=UTC).isoformat(),
                 }
             )
+            write_partial(
+                "model_response_received",
+                {"turn_index": len(model_turns) - 1, "selected_action": requested_action},
+            )
             try:
                 kwargs = harness._resolve_action_kwargs(requested_action, task_ctx, state, query)
                 state, step = harness.step_environment(ROOT, state, action_name=requested_action, **kwargs)
@@ -187,6 +255,14 @@ def _run_episode(
                     counters["eval_actions"] += 1
                 elif requested_action == "bench":
                     counters["bench_actions"] += 1
+                write_partial(
+                    "step_applied",
+                    {
+                        "turn_index": len(model_turns) - 1,
+                        "selected_action": requested_action,
+                        "last_step": step_dict,
+                    },
+                )
                 should_stop, terminal_reason = harness._should_stop(task_ctx, step_dict, counters, budgets)
                 if should_stop:
                     break
@@ -199,10 +275,21 @@ def _run_episode(
                         "action_name": requested_action,
                         "error_type": type(exc).__name__,
                         "error_message": str(exc),
+                        "traceback": traceback.format_exc(),
                     }
                 )
                 if counters["failed_tool_calls"] > budgets["max_retries"]:
                     terminal_reason = "tool_failure"
+                write_partial(
+                    "tool_failure",
+                    {
+                        "turn_index": len(model_turns) - 1,
+                        "selected_action": requested_action,
+                        "error_type": type(exc).__name__,
+                        "error_message": str(exc),
+                    },
+                )
+                if counters["failed_tool_calls"] > budgets["max_retries"]:
                     break
     finally:
         harness._restore_files(workspace_snapshot)
@@ -221,12 +308,14 @@ def _run_episode(
         "success": success,
         "terminal_reason": terminal_reason,
         "model": model_label,
-        "step_count": len([step for step in step_records if step.get("step_label") != "controller_error"]),
+        "step_count": _step_count(step_records),
         "counters": counters,
         "state": harness._state_snapshot(state),
         "steps": step_records,
         "model_turns": model_turns,
     }
+    write_partial("completed", {"success": success, "report": report})
+    return report
 
 
 def main() -> int:
@@ -238,19 +327,27 @@ def main() -> int:
     args = parser.parse_args()
 
     config = _read_json(args.config_path)
+    args.out_dir.mkdir(parents=True, exist_ok=True)
     model, tokenizer = _load_local_policy(
         model_id=str(config["model_id"]),
         tokenizer_id=str(config.get("tokenizer_id")) if config.get("tokenizer_id") is not None else None,
         adapter_mode=str(config.get("adapter_mode", "qlora")),
         adapter_dir=args.adapter_dir,
     )
-    args.out_dir.mkdir(parents=True, exist_ok=True)
     episode_reports: list[dict[str, Any]] = []
     for task_spec in config.get("tasks", []):
-        report = _run_episode(config, task_spec, model=model, tokenizer=tokenizer, model_label=args.label)
-        episode_reports.append(report)
         label = f"{task_spec['task_ref'].replace('/', '__')}__{task_spec['variant']}.json"
-        (args.out_dir / label).write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+        partial_label = label.replace(".json", ".partial.json")
+        report = _run_episode(
+            config,
+            task_spec,
+            model=model,
+            tokenizer=tokenizer,
+            model_label=args.label,
+            partial_output_path=args.out_dir / partial_label,
+        )
+        episode_reports.append(report)
+        _write_json(args.out_dir / label, report)
     summary = harness._summarize_batch(config, episode_reports)
     batch_report = {
         "report_id": f"local_checkpoint_eval_{datetime.now(tz=UTC).strftime('%Y%m%d_%H%M%S')}",
@@ -271,7 +368,7 @@ def main() -> int:
             for report in episode_reports
         ],
     }
-    (args.out_dir / "batch_report.json").write_text(json.dumps(batch_report, indent=2) + "\n", encoding="utf-8")
+    _write_json(args.out_dir / "batch_report.json", batch_report)
     print(json.dumps(summary, indent=2))
     return 0
 
