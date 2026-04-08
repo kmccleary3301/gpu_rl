@@ -497,6 +497,26 @@ def _allowed_actions(action_specs: list[dict[str, Any]], task_ctx: dict[str, Any
     return names
 
 
+def _current_allowed_actions(
+    base_allowed_actions: list[str],
+    state: Any,
+    task_ctx: dict[str, Any],
+    counters: dict[str, int],
+    budgets: dict[str, int],
+) -> list[str]:
+    allowed_actions = [
+        action_name
+        for action_name in base_allowed_actions
+        if _action_within_limits(action_name, counters, budgets, task_ctx)
+        and _action_allowed_in_state(action_name, state, task_ctx, counters, budgets)
+    ]
+    legal_actions = [str(action) for action in list(getattr(state, "current_legal_next_actions", []) or []) if action is not None]
+    if task_ctx.get("multi_candidate_mode") and legal_actions:
+        legal_set = set(legal_actions)
+        allowed_actions = [action_name for action_name in allowed_actions if action_name in legal_set]
+    return allowed_actions
+
+
 def _task_summary(task_ctx: dict[str, Any]) -> dict[str, Any]:
     patch = task_ctx.get("patch")
     return {
@@ -580,6 +600,8 @@ def _controller_hints(task_ctx: dict[str, Any], state_snapshot: dict[str, Any], 
                 priority_actions = ["patch_candidate", "inspect_quality"]
             elif counters["patches"] == 0:
                 priority_actions = ["patch_candidate", "bench"]
+            elif counters["compares"] >= 1 and counters.get("branches", 0) == 0:
+                priority_actions = ["branch_candidate", "patch_candidate", "bench"]
             elif counters["bench_actions"] <= 1:
                 priority_actions = ["bench", "compare"]
             elif counters["compares"] == 0:
@@ -648,6 +670,13 @@ def _controller_hints(task_ctx: dict[str, Any], state_snapshot: dict[str, Any], 
                 or ""
             )
         )
+        if (
+            task_ctx.get("multi_candidate_mode") == "three_attempt_positive_v1"
+            and recommended == "compare"
+            and counters.get("compares", 0) >= 1
+            and counters.get("branches", 0) == 0
+        ):
+            recommended = None
         legal_actions = {
             str(action)
             for action in list(
@@ -1157,6 +1186,13 @@ def _action_allowed_in_state(action_name: str, state: Any, task_ctx: dict[str, A
             return False
     if (
         task_ctx.get("multi_candidate_mode") == "three_attempt_positive_v1"
+        and action_name == "bench"
+        and state.current_candidate_id is not None
+    ):
+        if counters.get("compares", 0) >= 1 and counters.get("branches", 0) == 0:
+            return False
+    if (
+        task_ctx.get("multi_candidate_mode") == "three_attempt_positive_v1"
         and action_name == "branch_candidate"
         and state.current_candidate_id is not None
     ):
@@ -1338,12 +1374,13 @@ def _run_episode(
         write_partial("initialized")
         while state.step_budget_remaining > 0:
             state_view = _state_snapshot(state)
-            allowed_actions = [
-                action_name
-                for action_name in base_allowed_actions
-                if _action_within_limits(action_name, counters, budgets, task_ctx)
-                and _action_allowed_in_state(action_name, state, task_ctx, counters, budgets)
-            ]
+            allowed_actions = _current_allowed_actions(
+                base_allowed_actions,
+                state,
+                task_ctx,
+                counters,
+                budgets,
+            )
             observation_packet = _observation_packet(
                 task_ctx=task_ctx,
                 allowed_actions=allowed_actions,

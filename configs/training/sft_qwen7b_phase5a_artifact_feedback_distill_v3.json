@@ -1,0 +1,38 @@
+{
+  "config_id": "cfg/sft/qwen7b/phase5a_artifact_feedback_distill/v3",
+  "model_id": "Qwen/Qwen2.5-Coder-7B-Instruct",
+  "tokenizer_id": "Qwen/Qwen2.5-Coder-7B-Instruct",
+  "adapter_mode": "qlora",
+  "dataset_refs": [
+    {
+      "dataset_kind": "sft",
+      "path": "datasets/phase5a_artifact_feedback_distill_train_v3",
+      "split": "train",
+      "required": true,
+      "notes": [
+        "Turn-level artifact-conditioned distillation train split from phase5a_hard_trace_freeze_v2."
+      ]
+    },
+    {
+      "dataset_kind": "sft",
+      "path": "datasets/phase5a_artifact_feedback_distill_dev_v3",
+      "split": "dev",
+      "required": true,
+      "notes": [
+        "Turn-level artifact-conditioned distillation dev split from phase5a_hard_trace_freeze_v2."
+      ]
+    }
+  ],
+  "eval_dataset_refs": [],
+  "context_length": 4096,
+  "per_device_batch_size": 1,
+  "gradient_accumulation_steps": 8,
+  "learning_rate": 2e-05,
+  "num_epochs": 1,
+  "max_steps": 28,
+  "output_dir": "artifacts/training/qwen7b_phase5a_artifact_feedback_distill_v3",
+  "notes": [
+    "Artifact-conditioned distillation refresh on the expanded Phase 5A freeze that now includes kv_cache_gather_hard.",
+    "Primary goal is to test whether the harder-slice refresh plus slightly longer budget improves over distill_v2 on the decisive hard pair."
+  ]
+}

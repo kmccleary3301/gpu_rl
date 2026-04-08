@@ -1,0 +1,13 @@
+{
+  "report_id": "phase5a_hard_trace_freeze_v3_contamination_audit",
+  "created_at": "2026-04-08T19:21:13.844828+00:00",
+  "checks": {
+    "held_out_traces_excluded_from_train": true,
+    "official_kbv3_traces_excluded_from_train": true,
+    "all_rows_have_provenance_kind": true,
+    "all_rows_have_interface_profile": true
+  },
+  "held_out_train_refs": [],
+  "official_train_refs": [],
+  "status": "pass"
+}

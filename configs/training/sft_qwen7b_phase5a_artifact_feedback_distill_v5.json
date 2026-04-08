@@ -1,0 +1,39 @@
+{
+  "config_id": "cfg/sft/qwen7b/phase5a_artifact_feedback_distill/v5",
+  "model_id": "Qwen/Qwen2.5-Coder-7B-Instruct",
+  "tokenizer_id": "Qwen/Qwen2.5-Coder-7B-Instruct",
+  "adapter_mode": "qlora",
+  "dataset_refs": [
+    {
+      "dataset_kind": "sft",
+      "path": "datasets/phase5a_sum_reduction_repair_distill_train_v1",
+      "split": "train",
+      "required": true,
+      "notes": [
+        "Focused repair train split from phase5a_hard_trace_freeze_v3."
+      ]
+    },
+    {
+      "dataset_kind": "sft",
+      "path": "datasets/phase5a_sum_reduction_repair_distill_dev_v1",
+      "split": "dev",
+      "required": true,
+      "notes": [
+        "Focused repair dev split from phase5a_hard_trace_freeze_v3."
+      ]
+    }
+  ],
+  "eval_dataset_refs": [],
+  "context_length": 4096,
+  "per_device_batch_size": 1,
+  "gradient_accumulation_steps": 8,
+  "learning_rate": 2e-05,
+  "num_epochs": 1,
+  "max_steps": 32,
+  "output_dir": "artifacts/training/qwen7b_phase5a_artifact_feedback_distill_v5",
+  "notes": [
+    "Artifact-distill repair turn on freeze v3 after distill_v4 reached broader-tranche parity with the best control surface at 3/4.",
+    "This turn overweights the successful sum_reduction branch-and-promote closeout while retaining the broader positives that already transfer.",
+    "Primary goal is to repair the remaining sum_reduction miss without losing attention_score, softmax_wide, or routing_argmax_hard."
+  ]
+}

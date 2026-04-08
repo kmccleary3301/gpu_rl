@@ -37,6 +37,7 @@ def main() -> int:
     )
     args = parser.parse_args()
 
+    args.freeze_dir = args.freeze_dir.resolve()
     manifest_path = args.freeze_dir / "optimize_trace_manifest.json"
     out_path = args.freeze_dir / "pairwise_ranking_dataset_report.json"
     manifest = _read_json(manifest_path)

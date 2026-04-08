@@ -19,7 +19,19 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--benchmark-repeats", type=int, default=50)
     args = parser.parse_args()
-    print(json.dumps(build_case_payload(CASE_CONFIG_PATH, benchmark_repeats=args.benchmark_repeats), sort_keys=True))
+    payload = build_case_payload(
+        CASE_CONFIG_PATH,
+        benchmark_repeats=args.benchmark_repeats,
+        extra_payload={
+            "optimization_summary": {
+                "strategy_change": "promote_curated_kernelbench_sum_reduction_candidate_wrapper",
+                "candidate_ref": "workloads/reference/kernelbench_sum_reduction_optimize_candidate.py",
+                "baseline_ref": "workloads/reference/kernelbench_reference_runner.py",
+                "case_config_ref": "workloads/public_benchmarks/kernelbench/v0_1/cases/level1_047_sum_reduction.json",
+            }
+        },
+    )
+    print(json.dumps(payload, sort_keys=True))
 
 
 if __name__ == "__main__":

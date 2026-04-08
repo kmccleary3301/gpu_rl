@@ -166,6 +166,10 @@ def main() -> int:
     )
     args = parser.parse_args()
 
+    args.freeze_dir = args.freeze_dir.resolve()
+    args.train_out_dir = args.train_out_dir.resolve()
+    args.dev_out_dir = args.dev_out_dir.resolve()
+
     manifest_path = args.freeze_dir / "optimize_trace_manifest.json"
     report_path = args.freeze_dir / "artifact_feedback_distill_dataset_report.json"
     manifest = _read_json(manifest_path)

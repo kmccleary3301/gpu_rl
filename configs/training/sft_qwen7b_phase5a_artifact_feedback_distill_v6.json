@@ -1,0 +1,39 @@
+{
+  "config_id": "cfg/sft/qwen7b/phase5a_artifact_feedback_distill/v6",
+  "model_id": "Qwen/Qwen2.5-Coder-7B-Instruct",
+  "tokenizer_id": "Qwen/Qwen2.5-Coder-7B-Instruct",
+  "adapter_mode": "qlora",
+  "dataset_refs": [
+    {
+      "dataset_kind": "sft",
+      "path": "datasets/phase5a_artifact_feedback_distill_train_v5",
+      "split": "train",
+      "required": true,
+      "notes": [
+        "Artifact-conditioned train split from phase5a_hard_trace_freeze_v4."
+      ]
+    },
+    {
+      "dataset_kind": "sft",
+      "path": "datasets/phase5a_artifact_feedback_distill_dev_v5",
+      "split": "dev",
+      "required": true,
+      "notes": [
+        "Artifact-conditioned dev split from phase5a_hard_trace_freeze_v4."
+      ]
+    }
+  ],
+  "eval_dataset_refs": [],
+  "context_length": 4096,
+  "per_device_batch_size": 1,
+  "gradient_accumulation_steps": 8,
+  "learning_rate": 2e-05,
+  "num_epochs": 1,
+  "max_steps": 32,
+  "output_dir": "artifacts/training/qwen7b_phase5a_artifact_feedback_distill_v6",
+  "notes": [
+    "Artifact-distill refresh on freeze v4 after the harder KV-cache gather rerun converted the earlier near miss into a real GPT-5.4 success.",
+    "This turn keeps the broader Phase 5A control-surface winner traces while adding the successful harder-KV teacher episode into the trainable tranche.",
+    "Primary goal is to see whether the refreshed harder-task teacher slice preserves the broader 3/4 learner capability while improving the next frontier rung."
+  ]
+}

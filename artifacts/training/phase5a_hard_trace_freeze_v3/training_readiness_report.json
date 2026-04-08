@@ -1,0 +1,43 @@
+{
+  "dataset_id": "phase5a_hard_trace_freeze_v3",
+  "created_at": "2026-04-08T19:21:13.844828+00:00",
+  "checks": {
+    "has_internal_hard_positive": true,
+    "has_public_hard_positive": true,
+    "has_routing_hard_positive": true,
+    "has_kv_hard_near_miss": true,
+    "has_kbv3_curated_positive": true,
+    "has_kbv3_official_positive": true,
+    "has_near_miss": true,
+    "has_usable_negative": true,
+    "has_learning_trio_analysis_rows": true,
+    "held_out_entries_confined_to_dev": true
+  },
+  "recommended_next_use": {
+    "train_refs": [
+      "artifacts/baselines/gpt54_phase5a_tranche1_hard_targets_v2/batch_v2_openai_rejection_trim/task__attention_score__eval__v1__positive.json",
+      "artifacts/baselines/gpt54_phase5_block_b_compare_packet_v1/batch_v1/task__attention_score__eval__v1__positive.json",
+      "artifacts/baselines/gpt54_phase5a_tranche1_hard_targets_v2/batch_v2_openai_rejection_trim/task__kernelbench__level1__23_softmax_wide__eval__v1__positive.json",
+      "artifacts/baselines/gpt54_final_teacher_policy_tranche_v1/batch_v1_retry1/task__kernelbench__level1__23_softmax_wide__eval__v1__positive.json",
+      "artifacts/baselines/gpt54_routing_argmax_hard_three_attempt_positive_probe_v1/batch_v5_openai/task__routing_argmax_hard__eval__v1__positive.json",
+      "artifacts/baselines/gpt54_kv_cache_gather_hard_three_attempt_positive_probe_v1/batch_v1_openai/task__kv_cache_gather_hard__eval__v1__positive.json",
+      "artifacts/baselines/gpt54_phase5_kbv3_teacher_slice_v1/batch_v1_retry1/task__kernelbench_v3__level1__23_softmax_wide__eval__v1__positive.json",
+      "artifacts/baselines/gpt54_final_teacher_policy_tranche_v1/batch_v1_retry1/task__kernelbench__level1__23_softmax__eval__v1__negative.json",
+      "artifacts/baselines/qwen7b_phase5a_tranche1_eval_base_controlfix_v2/task__kernelbench__level1__23_softmax_wide__eval__v1__positive.json",
+      "artifacts/baselines/qwen7b_phase5a_tranche1_eval_base_controlfix_v2/task__routing_argmax_hard__eval__v1__positive.json",
+      "artifacts/baselines/qwen7b_phase5a_tranche1_eval_base_controlfix_v2/task__kernelbench__level1__47_sum_reduction__eval__v1__positive.json",
+      "artifacts/baselines/qwen7b_phase5a_attention_only_eval_base_controlfix_v5/task__attention_score__eval__v1__positive.json"
+    ],
+    "dev_refs": [
+      "artifacts/baselines/gpt54_phase5a_tranche1_hard_targets_v2/batch_v1_openai/task__kernelbench__level1__47_sum_reduction__eval__v1__positive.json",
+      "artifacts/baselines/gpt54_phase5a_tranche1_hard_targets_v2/batch_v1_openai/task__routing_argmax_hard__eval__v1__positive.json",
+      "artifacts/baselines/gpt54_phase5_kbv3_teacher_slice_v1/batch_v1_retry1/task__kernelbench_v3__level1__23_softmax_official__eval__v1__positive.json"
+    ],
+    "analysis_refs": [
+      "artifacts/baselines/qwen7b_phase5a_hard_pair_eval_base_v1/task__kernelbench__level1__23_softmax_wide__eval__v1__positive.json",
+      "artifacts/baselines/qwen7b_phase5a_hard_pair_eval_distill_v2_v1/task__kernelbench__level1__23_softmax_wide__eval__v1__positive.json",
+      "artifacts/baselines/qwen7b_phase5a_hard_pair_eval_teacher_corrected_v1/task__kernelbench__level1__23_softmax_wide__eval__v1__positive.json",
+      "artifacts/baselines/qwen7b_phase5a_hard_pair_eval_rwr_branchaware_v1/task__kernelbench__level1__23_softmax_wide__eval__v1__positive.json"
+    ]
+  }
+}

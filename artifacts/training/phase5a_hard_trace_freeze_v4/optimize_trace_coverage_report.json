@@ -1,0 +1,111 @@
+{
+  "dataset_id": "phase5a_hard_trace_freeze_v4",
+  "created_at": "2026-04-08T21:21:41.465491+00:00",
+  "split_counts": {
+    "train": 13,
+    "dev": 3,
+    "analysis": 6
+  },
+  "quality_counts": {
+    "usable_positive": 12,
+    "near_miss": 3,
+    "usable_negative": 1,
+    "analysis_only": 6
+  },
+  "task_scope_counts": {
+    "internal": 9,
+    "public": 11,
+    "public_kbv3": 2
+  },
+  "difficulty_counts": {
+    "medium": 4,
+    "public_benchmark_level1_variant": 7,
+    "hard": 5,
+    "public_benchmark_level1_trainable": 1,
+    "public_benchmark_level1": 4,
+    "public_benchmark_level1_heldout": 1
+  },
+  "candidate_mode_counts": {
+    "multi_candidate": 19,
+    "single_candidate": 1,
+    "reference_only": 2
+  },
+  "slice_role_counts": {
+    "internal_hard_positive": 1,
+    "internal_hard_near_miss": 1,
+    "public_hard_positive": 1,
+    "public_hard_near_miss": 1,
+    "routing_hard_positive": 2,
+    "kv_hard_near_miss": 1,
+    "kbv3_curated_positive": 1,
+    "branch_revert_negative": 1,
+    "control_positive": 1,
+    "kbv3_official_positive": 1,
+    "base_hard_pair_analysis": 1,
+    "distill_hard_pair_analysis": 1,
+    "teacher_corrected_hard_pair_analysis": 1,
+    "rwr_hard_pair_analysis": 1,
+    "local_controlfix_positive": 3,
+    "local_attention_probe_positive": 1,
+    "harder_kv_positive": 1,
+    "learner_repair_comparison": 2
+  },
+  "source_block_counts": {
+    "phase5a_tranche1": 5,
+    "phase5_block_b": 1,
+    "phase4_final_teacher": 2,
+    "phase5a_tranche1_extension": 1,
+    "phase5_kbv3_teacher_slice": 2,
+    "phase5a_learning_trio": 4,
+    "phase5a_controlfix_winner": 3,
+    "phase5a_controlfix_attention_probe": 1,
+    "phase5a_kv_hard_budget_rerun": 1,
+    "phase5a_sum_reduction_repair_turn": 2
+  },
+  "provenance_kind_counts": {
+    "internal_curated": 6,
+    "kernelbench_curated": 4,
+    "kernelbench_v3_curated": 1,
+    "kernelbench_v3_official": 1,
+    "analysis_eval": 4,
+    "local_control_surface": 6
+  },
+  "trainability_counts": {
+    "trainable": 15,
+    "held_out": 1,
+    "analysis_only": 6
+  },
+  "interface_profile_counts": {
+    "compare_plus_localization_plus_branch_v1": 11,
+    "compare_packet_v1": 1,
+    "local_eval_hard_pair_v1": 4,
+    "local_eval_controlfix_v2": 5,
+    "local_eval_attention_only_controlfix_v5": 1
+  },
+  "branch_depth_counts": {
+    "3": 11,
+    "1": 4,
+    "2": 5,
+    "0": 2
+  },
+  "teacher_model_counts": {
+    "gpt-5.4": 12,
+    "base_qwen7b_phase5a_v2": 1,
+    "qwen7b_phase5a_artifact_feedback_distill_v2": 1,
+    "qwen7b_phase5a_teacher_corrected_v1": 1,
+    "qwen7b_phase5a_optimize_rwr_branchaware_v1": 1,
+    "qwen7b_phase5a_tranche1_eval_base_controlfix_v2": 3,
+    "qwen7b_phase5a_attention_only_eval_base_controlfix_v5": 1,
+    "qwen7b_phase5a_artifact_feedback_distill_v5": 2
+  },
+  "aggregate_counters": {
+    "patches": 48,
+    "compares": 53,
+    "branches": 31,
+    "reverts": 8,
+    "promotes": 13,
+    "replays": 1,
+    "bench_actions": 120,
+    "eval_actions": 21
+  }
+}

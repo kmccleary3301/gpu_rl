@@ -1,0 +1,66 @@
+{
+  "report_id": "phase5a_kv_surface_refresh_v1",
+  "created_at": "2026-04-08T23:03:15+00:00",
+  "scope": "phase5a hard-pair-plus-kv decision surface after freeze-v4 learner refresh",
+  "eval_config": "configs/training/qwen7b_phase5a_hard_pair_plus_kv_eval_v1.json",
+  "leaderboard": [
+    {
+      "rank": 1,
+      "model_label": "qwen7b_phase5a_artifact_feedback_distill_v3",
+      "eval_report": "artifacts/baselines/qwen7b_phase5a_hard_pair_plus_kv_eval_distill_v3_v1/batch_report.json",
+      "success_count": 1,
+      "task_count": 3,
+      "success_rate": 0.3333,
+      "notes": [
+        "First learner win on the tighter surface.",
+        "Wins on attention_score.",
+        "Fails on softmax_wide and kv_cache_gather_hard."
+      ]
+    },
+    {
+      "rank": 1,
+      "model_label": "qwen7b_phase5a_artifact_feedback_distill_v6",
+      "eval_report": "artifacts/baselines/qwen7b_phase5a_hard_pair_plus_kv_eval_distill_v6_v1/batch_report.json",
+      "success_count": 1,
+      "task_count": 3,
+      "success_rate": 0.3333,
+      "notes": [
+        "Freeze-v4 refresh after the successful harder-KV GPT-5.4 rerun.",
+        "Wins on kv_cache_gather_hard.",
+        "Fails on attention_score and softmax_wide."
+      ]
+    },
+    {
+      "rank": 3,
+      "model_label": "qwen7b_phase5a_base",
+      "eval_report": "artifacts/baselines/qwen7b_phase5a_hard_pair_plus_kv_eval_base_v1/batch_report.json",
+      "success_count": 0,
+      "task_count": 3,
+      "success_rate": 0.0,
+      "notes": [
+        "Base checkpoint on the tighter frontier surface.",
+        "Fails all three tasks."
+      ]
+    },
+    {
+      "rank": 3,
+      "model_label": "qwen7b_phase5a_teacher_corrected_v2",
+      "eval_report": "artifacts/baselines/qwen7b_phase5a_hard_pair_plus_kv_eval_teacher_corrected_v2_v1/batch_report.json",
+      "success_count": 0,
+      "task_count": 3,
+      "success_rate": 0.0,
+      "notes": [
+        "Teacher-corrected learner on the tighter frontier surface.",
+        "Fails all three tasks."
+      ]
+    }
+  ],
+  "decision": {
+    "best_tight_surface_models": [
+      "qwen7b_phase5a_artifact_feedback_distill_v3",
+      "qwen7b_phase5a_artifact_feedback_distill_v6"
+    ],
+    "net_result": "freeze_v4_refresh_shifted_the_single_success_from_attention_to_harder_kv_but_did_not_raise_headline_success_rate",
+    "next_focus": "carry the harder-kv learner success forward while seeking a surface that preserves attention and softmax behavior"
+  }
+}

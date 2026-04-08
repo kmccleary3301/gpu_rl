@@ -49,8 +49,9 @@ def main() -> None:
                 "hidden_attention_scores": _serialize(HIDDEN_Q, HIDDEN_K),
                 "optimization_summary": {
                     "baseline_ref": "workloads/reference/triton_attention_score_baseline.py",
-                    "candidate_ref": "workloads/reference/triton_attention_score_optimize_candidate.py",
-                    "strategy_change": "replace_cpu_reference_path_with_tiled_triton_kernel_candidate",
+                    "candidate_ref": "workloads/reference/triton_attention_score_optimize_candidate_v2.py",
+                    "strategy_change": "supersede_tiled_triton_kernel_candidate_with_ranked_variant",
+                    "supersedes_candidate_ref": "workloads/reference/triton_attention_score_optimize_candidate.py",
                 },
             },
             sort_keys=True,

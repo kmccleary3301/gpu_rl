@@ -1,0 +1,90 @@
+{
+  "report_id": "gpt54_first_wave_20260408_212017",
+  "created_at": "2026-04-08T21:20:17.711564+00:00",
+  "config": {
+    "config_id": "cfg/baseline/gpt54_kv_cache_gather_hard_three_attempt_positive_probe/v2",
+    "policy_id": "gpt54_kv_cache_gather_hard_three_attempt_positive_probe_v2",
+    "provider_priority": [
+      "openai"
+    ],
+    "model_by_provider": {
+      "openai": "gpt-5.4",
+      "openrouter": "openai/gpt-5.4-pro"
+    },
+    "generation": {
+      "temperature": 0.2,
+      "max_completion_tokens": 900,
+      "timeout_s": 120
+    },
+    "budgets": {
+      "step_budget": 19,
+      "max_retries": 1,
+      "max_patches": 3,
+      "max_branches": 2,
+      "max_reverts": 1,
+      "max_promotes": 1,
+      "max_compares": 3,
+      "max_replays": 1,
+      "max_knowledge_queries": 1
+    },
+    "tasks": [
+      {
+        "task_ref": "task/kv_cache_gather_hard/eval/v1",
+        "variant": "positive",
+        "multi_candidate_mode": "three_attempt_positive_v1"
+      }
+    ],
+    "notes": [
+      "Phase 5A harder KV-cache gather successor probe rerun with a slightly larger closeout budget.",
+      "Tests whether the previous near miss was mostly endgame budget pressure rather than a deeper capability wall."
+    ]
+  },
+  "summary": {
+    "config_id": "cfg/baseline/gpt54_kv_cache_gather_hard_three_attempt_positive_probe/v2",
+    "task_count": 1,
+    "success_count": 1,
+    "success_rate": 1.0,
+    "avg_step_count": 17.0,
+    "avg_patch_count": 3.0,
+    "avg_compare_count": 3.0,
+    "avg_replay_count": 0.0,
+    "avg_failed_tool_calls": 0.0,
+    "success_by_variant": {
+      "positive": 1,
+      "negative": 0
+    },
+    "success_by_verb": {
+      "optimize": {
+        "tasks": 1,
+        "successes": 1
+      }
+    }
+  },
+  "episodes": [
+    {
+      "task_ref": "task/kv_cache_gather_hard/eval/v1",
+      "variant": "positive",
+      "verb": "optimize",
+      "success": true,
+      "terminal_reason": "success_after_eval",
+      "provider": "openai",
+      "model": "gpt-5.4",
+      "step_count": 17,
+      "counters": {
+        "model_calls": 17,
+        "provider_failures": 0,
+        "failed_tool_calls": 0,
+        "controller_rejections": 1,
+        "knowledge_queries": 0,
+        "patches": 3,
+        "branches": 2,
+        "reverts": 1,
+        "promotes": 1,
+        "compares": 3,
+        "replays": 0,
+        "eval_actions": 1,
+        "bench_actions": 6
+      }
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "report_id": "phase5a_control_surface_refresh_v2",
+  "created_at": "2026-04-08T21:16:30+00:00",
+  "scope": "phase5a broader four-task tranche after control-aware learner repair turn",
+  "eval_config": "configs/training/qwen7b_phase5a_tranche1_eval_v1.json",
+  "leaderboard": [
+    {
+      "rank": 1,
+      "model_label": "qwen7b_phase5a_tranche1_eval_base_controlfix_v2",
+      "eval_report": "artifacts/baselines/qwen7b_phase5a_tranche1_eval_base_controlfix_v2/batch_report.json",
+      "success_count": 3,
+      "task_count": 4,
+      "success_rate": 0.75,
+      "notes": [
+        "Broader control winner.",
+        "Wins on softmax_wide, routing_argmax_hard, and sum_reduction.",
+        "Fails on attention_score."
+      ]
+    },
+    {
+      "rank": 1,
+      "model_label": "qwen7b_phase5a_artifact_feedback_distill_v4",
+      "eval_report": "artifacts/baselines/qwen7b_phase5a_tranche1_eval_distill_v4_v1/batch_report.json",
+      "success_count": 3,
+      "task_count": 4,
+      "success_rate": 0.75,
+      "notes": [
+        "Best control-aware learner so far.",
+        "Wins on attention_score, softmax_wide, and routing_argmax_hard.",
+        "Fails on sum_reduction."
+      ]
+    },
+    {
+      "rank": 3,
+      "model_label": "qwen7b_phase5a_artifact_feedback_distill_v5",
+      "eval_report": "artifacts/baselines/qwen7b_phase5a_tranche1_eval_distill_v5_v1/batch_report.json",
+      "success_count": 2,
+      "task_count": 4,
+      "success_rate": 0.5,
+      "notes": [
+        "Focused sum_reduction repair turn.",
+        "Successfully repaired sum_reduction and retained routing_argmax_hard.",
+        "Regressed on attention_score and softmax_wide, so it is not the new broader winner."
+      ]
+    }
+  ],
+  "decision": {
+    "best_broader_control_surface": "qwen7b_phase5a_tranche1_eval_base_controlfix_v2",
+    "best_control_aware_learner": "qwen7b_phase5a_artifact_feedback_distill_v4",
+    "repair_turn_read": "narrow_sum_reduction_fix_not_broader_win",
+    "next_focus": "push the harder GPT-5.4 tranche upward rather than continue blind learner reweighting"
+  }
+}

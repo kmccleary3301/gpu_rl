@@ -1,0 +1,39 @@
+{
+  "config_id": "cfg/sft/qwen7b/phase5a_tranche1_transfer_distill/v1",
+  "model_id": "Qwen/Qwen2.5-Coder-7B-Instruct",
+  "tokenizer_id": "Qwen/Qwen2.5-Coder-7B-Instruct",
+  "adapter_mode": "qlora",
+  "dataset_refs": [
+    {
+      "dataset_kind": "sft",
+      "path": "datasets/phase5a_tranche1_transfer_distill_train_v1",
+      "split": "train",
+      "required": true,
+      "notes": [
+        "Focused tranche-transfer artifact distill train split built from phase5a_hard_trace_freeze_v2."
+      ]
+    },
+    {
+      "dataset_kind": "sft",
+      "path": "datasets/phase5a_tranche1_transfer_distill_dev_v1",
+      "split": "dev",
+      "required": true,
+      "notes": [
+        "Small out-of-tranche dev split with KB-v3 official and kv hard near-miss examples."
+      ]
+    }
+  ],
+  "eval_dataset_refs": [],
+  "context_length": 4096,
+  "per_device_batch_size": 1,
+  "gradient_accumulation_steps": 8,
+  "learning_rate": 2e-05,
+  "num_epochs": 1,
+  "max_steps": 32,
+  "output_dir": "artifacts/training/qwen7b_phase5a_tranche1_transfer_distill_v1",
+  "notes": [
+    "Focused refresh after distill_v3 failed to transfer from the three-task decision surface to the broader Phase 5A tranche.",
+    "Hypothesis: the failure is partly a curriculum and split problem because sum_reduction was previously only in dev and routing_argmax_hard had too little weight in train.",
+    "This run biases training directly toward the four-task tranche targets before trying another broader learner comparison."
+  ]
+}

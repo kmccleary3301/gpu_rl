@@ -67,6 +67,17 @@ def _partial_payload(
     return payload
 
 
+def _current_allowed_actions(
+    *,
+    base_allowed_actions: list[str],
+    state: Any,
+    task_ctx: dict[str, Any],
+    counters: dict[str, int],
+    budgets: dict[str, int],
+) -> list[str]:
+    return harness._current_allowed_actions(base_allowed_actions, state, task_ctx, counters, budgets)
+
+
 def _load_local_policy(
     *,
     model_id: str,
@@ -141,7 +152,7 @@ def _run_episode(
             task_ctx[extra_key] = task_spec[extra_key]
     workspace_snapshot = harness._capture_restore_targets(task_ctx)
     action_specs = [spec.model_dump(mode="json") for spec in harness.list_action_space()]
-    allowed_actions = harness._allowed_actions(action_specs, task_ctx)
+    base_allowed_actions = harness._allowed_actions(action_specs, task_ctx)
     state = harness.initialize_environment_state(ROOT, task_ctx["task_ref"], policy_id=str(config["policy_id"]), step_budget=budgets["step_budget"])
     step_records: list[dict[str, Any]] = []
     model_turns: list[dict[str, Any]] = []
@@ -185,6 +196,13 @@ def _run_episode(
         write_partial("initialized")
         while state.step_budget_remaining > 0:
             state_view = harness._state_snapshot(state)
+            allowed_actions = _current_allowed_actions(
+                base_allowed_actions=base_allowed_actions,
+                state=state,
+                task_ctx=task_ctx,
+                counters=counters,
+                budgets=budgets,
+            )
             observation_packet = harness._observation_packet(
                 task_ctx=task_ctx,
                 allowed_actions=allowed_actions,

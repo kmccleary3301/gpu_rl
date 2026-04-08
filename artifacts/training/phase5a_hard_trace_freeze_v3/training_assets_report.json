@@ -1,0 +1,320 @@
+{
+  "report_id": "phase5a_hard_trace_training_assets_v3",
+  "created_at": "2026-04-08T19:21:13.844828+00:00",
+  "dataset_id": "phase5a_hard_trace_freeze_v3",
+  "outputs": {
+    "train_trajectory": "datasets/phase5a_hard_trace_transition_train_v3",
+    "dev_trajectory": "datasets/phase5a_hard_trace_transition_dev_v3",
+    "train_sft": "datasets/phase5a_hard_trace_sft_train_v3",
+    "dev_sft": "datasets/phase5a_hard_trace_sft_dev_v3"
+  },
+  "train_trajectory_manifest": "datasets/phase5a_hard_trace_transition_train_v3/trajectory_dataset_manifest.json",
+  "dev_trajectory_manifest": "datasets/phase5a_hard_trace_transition_dev_v3/trajectory_dataset_manifest.json",
+  "train_sft_manifest": "datasets/phase5a_hard_trace_sft_train_v3/sft_dataset_manifest.json",
+  "dev_sft_manifest": "datasets/phase5a_hard_trace_sft_dev_v3/sft_dataset_manifest.json",
+  "train_trajectory_validation": {
+    "status": "ok",
+    "episode_count": 12,
+    "missing_episode_refs": [],
+    "invalid_episode_refs": [],
+    "invalid_step_orders": [],
+    "missing_terminal_states": [],
+    "missing_governance_refs": [],
+    "broken_candidate_lineage_refs": [],
+    "broken_source_run_refs": [],
+    "broken_artifact_refs": [],
+    "manifest": {
+      "schema_version": "1.0.0",
+      "dataset_id": "trajectory_dataset_20260408_192113",
+      "created_at": "2026-04-08T19:21:13.872828Z",
+      "policy_id": "phase5a_hard_trace_converter_v3",
+      "split": "train",
+      "format_version": "1.1.0",
+      "episode_count": 12,
+      "successful_episode_count": 8,
+      "failed_episode_count": 4,
+      "patch_bearing_episode_count": 11,
+      "patch_bearing_negative_episode_count": 1,
+      "lineage_safe_episode_count": 12,
+      "usable_positive_episode_count": 8,
+      "usable_negative_episode_count": 1,
+      "episode_refs": [
+        "episodes/converted__baselines__gpt54_phase5a_tranche1_hard_targets_v2__batch_v2_openai_rejection_trim__task__attention_score__eval__v1__positive.json",
+        "episodes/converted__baselines__gpt54_phase5_block_b_compare_packet_v1__batch_v1__task__attention_score__eval__v1__positive.json",
+        "episodes/converted__baselines__gpt54_phase5a_tranche1_hard_targets_v2__batch_v2_openai_rejection_trim__task__kernelbench__level1__23_softmax_wide__eval__v1__positive.json",
+        "episodes/converted__baselines__gpt54_final_teacher_policy_tranche_v1__batch_v1_retry1__task__kernelbench__level1__23_softmax_wide__eval__v1__positive.json",
+        "episodes/converted__baselines__gpt54_routing_argmax_hard_three_attempt_positive_probe_v1__batch_v5_openai__task__routing_argmax_hard__eval__v1__positive.json",
+        "episodes/converted__baselines__gpt54_kv_cache_gather_hard_three_attempt_positive_probe_v1__batch_v1_openai__task__kv_cache_gather_hard__eval__v1__positive.json",
+        "episodes/converted__baselines__gpt54_phase5_kbv3_teacher_slice_v1__batch_v1_retry1__task__kernelbench_v3__level1__23_softmax_wide__eval__v1__positive.json",
+        "episodes/converted__baselines__gpt54_final_teacher_policy_tranche_v1__batch_v1_retry1__task__kernelbench__level1__23_softmax__eval__v1__negative.json",
+        "episodes/converted__artifacts__baselines__qwen7b_phase5a_tranche1_eval_base_controlfix_v2__task__kernelbench__level1__23_softmax_wide__eval__v1__positive.json",
+        "episodes/converted__artifacts__baselines__qwen7b_phase5a_tranche1_eval_base_controlfix_v2__task__routing_argmax_hard__eval__v1__positive.json",
+        "episodes/converted__artifacts__baselines__qwen7b_phase5a_tranche1_eval_base_controlfix_v2__task__kernelbench__level1__47_sum_reduction__eval__v1__positive.json",
+        "episodes/converted__artifacts__baselines__qwen7b_phase5a_attention_only_eval_base_controlfix_v5__task__attention_score__eval__v1__positive.json"
+      ],
+      "task_ids": [
+        "task/attention_score/eval/v1",
+        "task/kernelbench/level1/23_softmax/eval/v1",
+        "task/kernelbench/level1/23_softmax_wide/eval/v1",
+        "task/kernelbench/level1/47_sum_reduction/eval/v1",
+        "task/kernelbench_v3/level1/23_softmax_wide/eval/v1",
+        "task/kv_cache_gather_hard/eval/v1",
+        "task/routing_argmax_hard/eval/v1"
+      ],
+      "verb_counts": {
+        "optimize": 12
+      },
+      "operator_family_counts": {
+        "attention_score_tile": 3,
+        "activation_softmax": 5,
+        "routing_argmax": 2,
+        "kv_cache_gather": 1,
+        "reduction_sum": 1
+      },
+      "terminal_state_counts": {
+        "success": 8,
+        "post_patch_eval_failed": 1,
+        "two_attempt_positive_complete": 1,
+        "continue": 1,
+        "multi_candidate_negative_complete": 1
+      },
+      "readiness_counts": {
+        "positive_sft_example": 8,
+        "unusable": 3,
+        "negative_reformulate_example": 1
+      },
+      "episode_governance_counts": {
+        "usable_positive_sft": 8,
+        "unusable": 3,
+        "usable_negative_transition": 1
+      },
+      "transition_kind_counts": {
+        "patch_applied": 11,
+        "branched": 17,
+        "reformulated": 17,
+        "reverted": 5,
+        "promoted": 9
+      },
+      "patch_kind_counts": {
+        "perf_transform": 26,
+        "no_op": 2
+      },
+      "metadata": {}
+    }
+  },
+  "dev_trajectory_validation": {
+    "status": "ok",
+    "episode_count": 3,
+    "missing_episode_refs": [],
+    "invalid_episode_refs": [],
+    "invalid_step_orders": [],
+    "missing_terminal_states": [],
+    "missing_governance_refs": [],
+    "broken_candidate_lineage_refs": [],
+    "broken_source_run_refs": [],
+    "broken_artifact_refs": [],
+    "manifest": {
+      "schema_version": "1.0.0",
+      "dataset_id": "trajectory_dataset_20260408_192113",
+      "created_at": "2026-04-08T19:21:13.874551Z",
+      "policy_id": "phase5a_hard_trace_converter_v3",
+      "split": "dev",
+      "format_version": "1.1.0",
+      "episode_count": 3,
+      "successful_episode_count": 3,
+      "failed_episode_count": 0,
+      "patch_bearing_episode_count": 2,
+      "patch_bearing_negative_episode_count": 0,
+      "lineage_safe_episode_count": 3,
+      "usable_positive_episode_count": 3,
+      "usable_negative_episode_count": 0,
+      "episode_refs": [
+        "episodes/converted__baselines__gpt54_phase5a_tranche1_hard_targets_v2__batch_v1_openai__task__kernelbench__level1__47_sum_reduction__eval__v1__positive.json",
+        "episodes/converted__baselines__gpt54_phase5a_tranche1_hard_targets_v2__batch_v1_openai__task__routing_argmax_hard__eval__v1__positive.json",
+        "episodes/converted__baselines__gpt54_phase5_kbv3_teacher_slice_v1__batch_v1_retry1__task__kernelbench_v3__level1__23_softmax_official__eval__v1__positive.json"
+      ],
+      "task_ids": [
+        "task/kernelbench/level1/47_sum_reduction/eval/v1",
+        "task/kernelbench_v3/level1/23_softmax_official/eval/v1",
+        "task/routing_argmax_hard/eval/v1"
+      ],
+      "verb_counts": {
+        "optimize": 3
+      },
+      "operator_family_counts": {
+        "reduction_sum": 1,
+        "routing_argmax": 1,
+        "activation_softmax": 1
+      },
+      "terminal_state_counts": {
+        "success": 3
+      },
+      "readiness_counts": {
+        "positive_sft_example": 3
+      },
+      "episode_governance_counts": {
+        "usable_positive_sft": 3
+      },
+      "transition_kind_counts": {
+        "reformulated": 3,
+        "branched": 3,
+        "promoted": 2,
+        "patch_applied": 1
+      },
+      "patch_kind_counts": {
+        "perf_transform": 4
+      },
+      "metadata": {}
+    }
+  },
+  "train_sft_validation": {
+    "status": "ok",
+    "example_count": 9,
+    "missing_examples": [],
+    "manifest": {
+      "schema_version": "1.0.0",
+      "dataset_id": "sft_dataset_20260408_192113",
+      "created_at": "2026-04-08T19:21:13.883474Z",
+      "split": "train",
+      "example_count": 9,
+      "example_refs": [
+        "examples/sft_converted__baselines__gpt54_phase5a_tranche1_hard_targets_v2__batch_v2_openai_rejection_trim__task__attention_score__eval__v1__positive.json",
+        "examples/sft_converted__baselines__gpt54_phase5a_tranche1_hard_targets_v2__batch_v2_openai_rejection_trim__task__kernelbench__level1__23_softmax_wide__eval__v1__positive.json",
+        "examples/sft_converted__baselines__gpt54_routing_argmax_hard_three_attempt_positive_probe_v1__batch_v5_openai__task__routing_argmax_hard__eval__v1__positive.json",
+        "examples/sft_converted__baselines__gpt54_phase5_kbv3_teacher_slice_v1__batch_v1_retry1__task__kernelbench_v3__level1__23_softmax_wide__eval__v1__positive.json",
+        "examples/sft_converted__baselines__gpt54_final_teacher_policy_tranche_v1__batch_v1_retry1__task__kernelbench__level1__23_softmax__eval__v1__negative.json",
+        "examples/sft_converted__artifacts__baselines__qwen7b_phase5a_tranche1_eval_base_controlfix_v2__task__kernelbench__level1__23_softmax_wide__eval__v1__positive.json",
+        "examples/sft_converted__artifacts__baselines__qwen7b_phase5a_tranche1_eval_base_controlfix_v2__task__routing_argmax_hard__eval__v1__positive.json",
+        "examples/sft_converted__artifacts__baselines__qwen7b_phase5a_tranche1_eval_base_controlfix_v2__task__kernelbench__level1__47_sum_reduction__eval__v1__positive.json",
+        "examples/sft_converted__artifacts__baselines__qwen7b_phase5a_attention_only_eval_base_controlfix_v5__task__attention_score__eval__v1__positive.json"
+      ],
+      "task_ids": [
+        "task/attention_score/eval/v1",
+        "task/kernelbench/level1/23_softmax/eval/v1",
+        "task/kernelbench/level1/23_softmax_wide/eval/v1",
+        "task/kernelbench/level1/47_sum_reduction/eval/v1",
+        "task/kernelbench_v3/level1/23_softmax_wide/eval/v1",
+        "task/routing_argmax_hard/eval/v1"
+      ],
+      "metadata": {
+        "source_dataset": "/home/kmccleary/projects/gpu_code_agents/gpu_rl/datasets/phase5a_hard_trace_transition_train_v3",
+        "include_failures": true,
+        "only_public_benchmarks": false,
+        "include_benchmark_only": false,
+        "patch_bearing_only": false,
+        "verb_allowlist": [],
+        "governance_allowlist": [
+          "usable_negative_transition",
+          "usable_positive_sft"
+        ],
+        "transition_kind_allowlist": [],
+        "allowed_training_example_kinds": [
+          "negative_debug_example",
+          "negative_reformulate_example",
+          "positive_rl_trace",
+          "positive_sft_example"
+        ],
+        "prompt_family_counts": {
+          "optimize": 9
+        },
+        "verb_counts": {
+          "optimize": 9
+        },
+        "operator_family_counts": {
+          "attention_score_tile": 2,
+          "activation_softmax": 4,
+          "routing_argmax": 2,
+          "reduction_sum": 1
+        },
+        "training_example_kind_counts": {
+          "positive_sft_example": 8,
+          "negative_reformulate_example": 1
+        },
+        "episode_governance_counts": {
+          "usable_positive_sft": 8,
+          "usable_negative_transition": 1
+        },
+        "patch_kind_counts": {
+          "perf_transform": 7,
+          "no_op": 1
+        },
+        "transition_kind_counts": {
+          "patch_applied": 8,
+          "branched": 14,
+          "reformulated": 13,
+          "reverted": 4,
+          "promoted": 7
+        },
+        "patch_bearing_example_count": 8
+      }
+    }
+  },
+  "dev_sft_validation": {
+    "status": "ok",
+    "example_count": 3,
+    "missing_examples": [],
+    "manifest": {
+      "schema_version": "1.0.0",
+      "dataset_id": "sft_dataset_20260408_192113",
+      "created_at": "2026-04-08T19:21:13.886119Z",
+      "split": "dev",
+      "example_count": 3,
+      "example_refs": [
+        "examples/sft_converted__baselines__gpt54_phase5a_tranche1_hard_targets_v2__batch_v1_openai__task__kernelbench__level1__47_sum_reduction__eval__v1__positive.json",
+        "examples/sft_converted__baselines__gpt54_phase5a_tranche1_hard_targets_v2__batch_v1_openai__task__routing_argmax_hard__eval__v1__positive.json",
+        "examples/sft_converted__baselines__gpt54_phase5_kbv3_teacher_slice_v1__batch_v1_retry1__task__kernelbench_v3__level1__23_softmax_official__eval__v1__positive.json"
+      ],
+      "task_ids": [
+        "task/kernelbench/level1/47_sum_reduction/eval/v1",
+        "task/kernelbench_v3/level1/23_softmax_official/eval/v1",
+        "task/routing_argmax_hard/eval/v1"
+      ],
+      "metadata": {
+        "source_dataset": "/home/kmccleary/projects/gpu_code_agents/gpu_rl/datasets/phase5a_hard_trace_transition_dev_v3",
+        "include_failures": true,
+        "only_public_benchmarks": false,
+        "include_benchmark_only": false,
+        "patch_bearing_only": false,
+        "verb_allowlist": [],
+        "governance_allowlist": [
+          "usable_negative_transition",
+          "usable_positive_sft"
+        ],
+        "transition_kind_allowlist": [],
+        "allowed_training_example_kinds": [
+          "negative_debug_example",
+          "negative_reformulate_example",
+          "positive_rl_trace",
+          "positive_sft_example"
+        ],
+        "prompt_family_counts": {
+          "optimize": 3
+        },
+        "verb_counts": {
+          "optimize": 3
+        },
+        "operator_family_counts": {
+          "reduction_sum": 1,
+          "routing_argmax": 1,
+          "activation_softmax": 1
+        },
+        "training_example_kind_counts": {
+          "positive_sft_example": 3
+        },
+        "episode_governance_counts": {
+          "usable_positive_sft": 3
+        },
+        "patch_kind_counts": {
+          "perf_transform": 2
+        },
+        "transition_kind_counts": {
+          "reformulated": 3,
+          "branched": 3,
+          "promoted": 2,
+          "patch_applied": 1
+        },
+        "patch_bearing_example_count": 2
+      }
+    }
+  }
+}

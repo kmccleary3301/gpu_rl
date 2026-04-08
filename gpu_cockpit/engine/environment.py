@@ -381,6 +381,8 @@ def _candidate_bucket_lists(lineage_events: list[dict[str, object]]) -> tuple[li
 
 def _candidate_legal_next_actions(state: AgentEnvironmentState, candidate_role_group: str | None) -> list[str]:
     if state.current_candidate_id is None:
+        if state.comparison_anchor_run_ref is not None:
+            return ["patch_candidate", "knowledge_query"]
         return ["bench", "patch_candidate", "knowledge_query"]
     status = state.current_candidate_status
     if status in {"patched", "build_passed"}:

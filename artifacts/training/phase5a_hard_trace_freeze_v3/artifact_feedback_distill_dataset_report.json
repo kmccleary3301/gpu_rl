@@ -1,0 +1,28 @@
+{
+  "report_id": "phase5a_hard_trace_freeze_v3_artifact_feedback_distill_dataset",
+  "created_at": "2026-04-08T19:22:01.031083+00:00",
+  "source_manifest": "artifacts/training/phase5a_hard_trace_freeze_v3/optimize_trace_manifest.json",
+  "train_manifest": "datasets/phase5a_artifact_feedback_distill_train_v4/sft_dataset_manifest.json",
+  "dev_manifest": "datasets/phase5a_artifact_feedback_distill_dev_v4/sft_dataset_manifest.json",
+  "train_example_count": 340,
+  "dev_example_count": 26,
+  "train_task_ids": [
+    "task/attention_score/eval/v1",
+    "task/kernelbench/level1/23_softmax/eval/v1",
+    "task/kernelbench/level1/23_softmax_wide/eval/v1",
+    "task/kernelbench/level1/47_sum_reduction/eval/v1",
+    "task/kernelbench_v3/level1/23_softmax_wide/eval/v1",
+    "task/kv_cache_gather_hard/eval/v1",
+    "task/routing_argmax_hard/eval/v1"
+  ],
+  "dev_task_ids": [
+    "task/kernelbench/level1/47_sum_reduction/eval/v1",
+    "task/kernelbench_v3/level1/23_softmax_official/eval/v1",
+    "task/routing_argmax_hard/eval/v1"
+  ],
+  "notes": [
+    "Turn-level artifact-conditioned distillation dataset built from the Phase 5 hard-slice freeze.",
+    "Prompts preserve the original observation packets plus hard-slice quality/source metadata.",
+    "Train split duplicates hard positives and near-misses to keep the tiny tranche informative."
+  ]
+}

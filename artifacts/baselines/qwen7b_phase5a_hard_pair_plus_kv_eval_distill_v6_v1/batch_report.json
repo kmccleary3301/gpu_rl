@@ -1,0 +1,138 @@
+{
+  "report_id": "local_checkpoint_eval_20260408_230233",
+  "created_at": "2026-04-08T23:02:33.658055+00:00",
+  "config": {
+    "config_id": "cfg/eval/qwen7b/phase5a_hard_pair_plus_kv/v1",
+    "policy_id": "qwen7b_phase5a_hard_pair_plus_kv_eval_v1",
+    "model_id": "Qwen/Qwen2.5-Coder-7B-Instruct",
+    "tokenizer_id": "Qwen/Qwen2.5-Coder-7B-Instruct",
+    "adapter_mode": "qlora",
+    "generation": {
+      "temperature": 0.0,
+      "max_new_tokens": 96
+    },
+    "budgets": {
+      "step_budget": 17,
+      "max_retries": 1,
+      "max_patches": 3,
+      "max_branches": 2,
+      "max_reverts": 1,
+      "max_promotes": 1,
+      "max_compares": 3,
+      "max_replays": 1,
+      "max_knowledge_queries": 1
+    },
+    "tasks": [
+      {
+        "task_ref": "task/attention_score/eval/v1",
+        "variant": "positive",
+        "multi_candidate_mode": "three_attempt_positive_v1"
+      },
+      {
+        "task_ref": "task/kernelbench/level1/23_softmax_wide/eval/v1",
+        "variant": "positive",
+        "multi_candidate_mode": "three_attempt_positive_v1"
+      },
+      {
+        "task_ref": "task/kv_cache_gather_hard/eval/v1",
+        "variant": "positive",
+        "multi_candidate_mode": "three_attempt_positive_v1"
+      }
+    ],
+    "notes": [
+      "Phase 5A decision-oriented eval surface with the decisive hard pair plus the new harder KV successor.",
+      "Intended as the first post-freeze-v2 checkpoint read before moving to a larger tranche rerun."
+    ]
+  },
+  "model_label": "qwen7b_phase5a_artifact_feedback_distill_v6",
+  "adapter_dir": "/home/kmccleary/projects/gpu_code_agents/gpu_rl/artifacts/training/qwen7b_phase5a_artifact_feedback_distill_v6/adapter",
+  "summary": {
+    "config_id": "cfg/eval/qwen7b/phase5a_hard_pair_plus_kv/v1",
+    "task_count": 3,
+    "success_count": 1,
+    "success_rate": 0.3333,
+    "avg_step_count": 16.6667,
+    "avg_patch_count": 2.3333,
+    "avg_compare_count": 2.0,
+    "avg_replay_count": 0.0,
+    "avg_failed_tool_calls": 0.0,
+    "success_by_variant": {
+      "positive": 1,
+      "negative": 0
+    },
+    "success_by_verb": {
+      "optimize": {
+        "tasks": 3,
+        "successes": 1
+      }
+    }
+  },
+  "episodes": [
+    {
+      "task_ref": "task/attention_score/eval/v1",
+      "variant": "positive",
+      "success": false,
+      "terminal_reason": "budget_exhausted",
+      "step_count": 17,
+      "counters": {
+        "model_calls": 17,
+        "provider_failures": 0,
+        "failed_tool_calls": 0,
+        "controller_rejections": 2,
+        "knowledge_queries": 0,
+        "patches": 2,
+        "branches": 1,
+        "reverts": 0,
+        "promotes": 0,
+        "compares": 1,
+        "replays": 0,
+        "eval_actions": 0,
+        "bench_actions": 13
+      }
+    },
+    {
+      "task_ref": "task/kernelbench/level1/23_softmax_wide/eval/v1",
+      "variant": "positive",
+      "success": false,
+      "terminal_reason": "budget_exhausted",
+      "step_count": 17,
+      "counters": {
+        "model_calls": 17,
+        "provider_failures": 0,
+        "failed_tool_calls": 0,
+        "controller_rejections": 2,
+        "knowledge_queries": 0,
+        "patches": 2,
+        "branches": 1,
+        "reverts": 1,
+        "promotes": 0,
+        "compares": 2,
+        "replays": 0,
+        "eval_actions": 0,
+        "bench_actions": 11
+      }
+    },
+    {
+      "task_ref": "task/kv_cache_gather_hard/eval/v1",
+      "variant": "positive",
+      "success": true,
+      "terminal_reason": "success_after_eval",
+      "step_count": 16,
+      "counters": {
+        "model_calls": 16,
+        "provider_failures": 0,
+        "failed_tool_calls": 0,
+        "controller_rejections": 4,
+        "knowledge_queries": 0,
+        "patches": 3,
+        "branches": 2,
+        "reverts": 1,
+        "promotes": 1,
+        "compares": 3,
+        "replays": 0,
+        "eval_actions": 1,
+        "bench_actions": 5
+      }
+    }
+  ]
+}

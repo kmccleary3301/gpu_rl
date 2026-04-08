@@ -1,0 +1,39 @@
+{
+  "config_id": "cfg/sft/qwen7b/phase5a_artifact_feedback_distill/v4",
+  "model_id": "Qwen/Qwen2.5-Coder-7B-Instruct",
+  "tokenizer_id": "Qwen/Qwen2.5-Coder-7B-Instruct",
+  "adapter_mode": "qlora",
+  "dataset_refs": [
+    {
+      "dataset_kind": "sft",
+      "path": "datasets/phase5a_artifact_feedback_distill_train_v4",
+      "split": "train",
+      "required": true,
+      "notes": [
+        "Control-aware artifact-conditioned distillation train split from phase5a_hard_trace_freeze_v3."
+      ]
+    },
+    {
+      "dataset_kind": "sft",
+      "path": "datasets/phase5a_artifact_feedback_distill_dev_v4",
+      "split": "dev",
+      "required": true,
+      "notes": [
+        "Control-aware artifact-conditioned distillation dev split from phase5a_hard_trace_freeze_v3."
+      ]
+    }
+  ],
+  "eval_dataset_refs": [],
+  "context_length": 4096,
+  "per_device_batch_size": 1,
+  "gradient_accumulation_steps": 8,
+  "learning_rate": 2e-05,
+  "num_epochs": 1,
+  "max_steps": 32,
+  "output_dir": "artifacts/training/qwen7b_phase5a_artifact_feedback_distill_v4",
+  "notes": [
+    "Artifact-distill refresh on freeze v3 after the broader control ablation established base_controlfix_v2 as the winning local policy surface.",
+    "Train split now includes the winning broader local control traces plus the successful attention-only local probe, alongside the existing GPT-5.4 hard tranche.",
+    "Primary goal is to see whether control-aware supervision lifts broader four-task tranche transfer beyond the earlier 0/4 and 1/4 reads."
+  ]
+}

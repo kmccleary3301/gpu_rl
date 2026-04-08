@@ -1,0 +1,38 @@
+{
+  "config_id": "cfg/sft/qwen7b/phase5a_teacher_corrected/v2",
+  "model_id": "Qwen/Qwen2.5-Coder-7B-Instruct",
+  "tokenizer_id": "Qwen/Qwen2.5-Coder-7B-Instruct",
+  "adapter_mode": "qlora",
+  "dataset_refs": [
+    {
+      "dataset_kind": "sft",
+      "path": "datasets/phase5a_teacher_corrected_train_v2",
+      "split": "train",
+      "required": true,
+      "notes": [
+        "Teacher-corrected train split built from phase5a_hard_trace_freeze_v2."
+      ]
+    },
+    {
+      "dataset_kind": "sft",
+      "path": "datasets/phase5a_teacher_corrected_dev_v2",
+      "split": "dev",
+      "required": true,
+      "notes": [
+        "Teacher-corrected dev split built from phase5a_hard_trace_freeze_v2."
+      ]
+    }
+  ],
+  "eval_dataset_refs": [],
+  "context_length": 4096,
+  "per_device_batch_size": 1,
+  "gradient_accumulation_steps": 8,
+  "learning_rate": 2e-05,
+  "num_epochs": 1,
+  "max_steps": 28,
+  "output_dir": "artifacts/training/qwen7b_phase5a_teacher_corrected_v2",
+  "notes": [
+    "Teacher-corrected refresh on the expanded Phase 5A freeze that now includes kv_cache_gather_hard.",
+    "Primary goal is to test whether correction framing becomes more valuable once the harder KV near miss is included in the teacher corpus."
+  ]
+}

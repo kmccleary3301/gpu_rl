@@ -1,0 +1,38 @@
+{
+  "config_id": "cfg/sft/qwen7b/phase5a_teacher_corrected/v1",
+  "model_id": "Qwen/Qwen2.5-Coder-7B-Instruct",
+  "tokenizer_id": "Qwen/Qwen2.5-Coder-7B-Instruct",
+  "adapter_mode": "qlora",
+  "dataset_refs": [
+    {
+      "dataset_kind": "sft",
+      "path": "datasets/phase5a_teacher_corrected_train_v1",
+      "split": "train",
+      "required": true,
+      "notes": [
+        "Teacher-corrected train split built from the aligned Phase 5A hard-tranche freeze."
+      ]
+    },
+    {
+      "dataset_kind": "sft",
+      "path": "datasets/phase5a_teacher_corrected_dev_v1",
+      "split": "dev",
+      "required": true,
+      "notes": [
+        "Teacher-corrected dev split built from the aligned Phase 5A hard-tranche freeze."
+      ]
+    }
+  ],
+  "eval_dataset_refs": [],
+  "context_length": 4096,
+  "per_device_batch_size": 1,
+  "gradient_accumulation_steps": 8,
+  "learning_rate": 2e-05,
+  "num_epochs": 1,
+  "max_steps": 24,
+  "output_dir": "artifacts/training/qwen7b_phase5a_teacher_corrected_v1",
+  "notes": [
+    "First teacher-corrected on-policy distillation run aligned to the cleaned Phase 5A hard tranche.",
+    "Primary goal is to test whether explicit correction framing helps more than plain artifact-conditioned imitation on the same slice."
+  ]
+}
