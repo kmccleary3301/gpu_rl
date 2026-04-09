@@ -1,0 +1,13 @@
+{
+  "baseline_id": "baseline/routing_argmax_harder/eval/v1",
+  "command": [
+    "python3",
+    "workloads/reference/triton_routing_argmax_harder_baseline.py",
+    "--benchmark-repeats",
+    "20"
+  ],
+  "notes": [
+    "Stable CPU argmax baseline for the harder routing-argmax successor task.",
+    "Ties prefer the lowest index and the hidden path uses a wider row layout than routing_argmax_hard."
+  ]
+}

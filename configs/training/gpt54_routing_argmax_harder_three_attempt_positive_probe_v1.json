@@ -1,0 +1,39 @@
+{
+  "config_id": "cfg/baseline/gpt54_routing_argmax_harder_three_attempt_positive_probe/v1",
+  "policy_id": "gpt54_routing_argmax_harder_three_attempt_positive_probe_v1",
+  "provider_priority": [
+    "openai",
+    "openrouter"
+  ],
+  "model_by_provider": {
+    "openai": "gpt-5.4",
+    "openrouter": "openai/gpt-5.4-pro"
+  },
+  "generation": {
+    "temperature": 0.2,
+    "max_completion_tokens": 900,
+    "timeout_s": 90
+  },
+  "budgets": {
+    "step_budget": 19,
+    "max_retries": 1,
+    "max_patches": 3,
+    "max_branches": 2,
+    "max_reverts": 1,
+    "max_promotes": 1,
+    "max_compares": 3,
+    "max_replays": 1,
+    "max_knowledge_queries": 1
+  },
+  "tasks": [
+    {
+      "task_ref": "task/routing_argmax_harder/eval/v1",
+      "variant": "positive",
+      "multi_candidate_mode": "three_attempt_positive_v1"
+    }
+  ],
+  "notes": [
+    "Phase 5A next harder internal routing successor probe.",
+    "Exercises a wider tie-heavy routing lane with the same ranked three-attempt candidate tree."
+  ]
+}
