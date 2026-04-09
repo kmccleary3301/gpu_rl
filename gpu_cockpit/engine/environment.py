@@ -429,6 +429,8 @@ def _refresh_candidate_tree_state(state: AgentEnvironmentState) -> AgentEnvironm
         current_endgame_recommendation = "bench"
     elif current_status in {"patched", "build_passed"}:
         current_endgame_recommendation = "bench"
+    elif current_status == "benchmarked":
+        current_endgame_recommendation = "compare"
     elif current_status == "dominated":
         current_endgame_recommendation = "revert"
     elif current_status in {"eval_passed", "eval_failed"}:

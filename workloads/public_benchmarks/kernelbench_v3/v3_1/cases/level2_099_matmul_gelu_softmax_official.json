@@ -1,0 +1,36 @@
+{
+  "benchmark_source": "kernelbench-v3",
+  "benchmark_case_id": "kernelbench-v3/level2/99_matmul_gelu_softmax",
+  "benchmark_case_version": "v3.1",
+  "problem_relpath": "../problems/level2/99_Matmul_GELU_Softmax.py",
+  "provenance_kind": "official-heldout",
+  "official_track": "open",
+  "official_problem_id": 99,
+  "source_repo": "https://github.com/Infatoshi/KernelBench-v3",
+  "source_commit": "abb0a50e9444021761955d9ac44021e9e9dfe63c",
+  "hardware_targets": ["RTX3090", "H100", "B200"],
+  "visible": {
+    "seed": 42,
+    "module_overrides": {
+      "batch_size": 16,
+      "in_features": 192,
+      "out_features": 160
+    }
+  },
+  "hidden": {
+    "seed": 123,
+    "module_overrides": {
+      "batch_size": 24,
+      "in_features": 256,
+      "out_features": 224
+    }
+  },
+  "benchmark": {
+    "seed": 456,
+    "module_overrides": {
+      "batch_size": 64,
+      "in_features": 768,
+      "out_features": 768
+    }
+  }
+}

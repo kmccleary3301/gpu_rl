@@ -74,6 +74,10 @@ def main() -> None:
             "reference_kernelbench_v3_curated_softmax_wide_candidate",
             "workloads/reference/kernelbench_v3_softmax_wide_candidate.py",
         ),
+        "level2_099_matmul_gelu_softmax_official.json": (
+            "reference_kernelbench_v3_official_matmul_gelu_softmax_candidate",
+            "workloads/reference/kernelbench_v3_matmul_gelu_softmax_official_candidate.py",
+        ),
     }
     expected_pair = expected_pairs.get(case_config_path.name)
     observed_pair = (summary.get("strategy_change"), summary.get("candidate_ref"))

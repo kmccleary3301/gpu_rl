@@ -60,6 +60,49 @@ class Phase5AControlTests(unittest.TestCase):
         self.assertNotIn("compare", refreshed.current_legal_next_actions)
         self.assertNotIn("eval", refreshed.current_legal_next_actions)
 
+    def test_benchmarked_candidate_prefers_compare_over_stale_bench(self) -> None:
+        state = AgentEnvironmentState(
+            episode_id="env_episode_test",
+            policy_id="policy_test",
+            task_id="task/attention_score_hard/eval/v1",
+            step_budget_total=19,
+            step_budget_remaining=6,
+            steps_taken=13,
+            current_candidate_id="cand_beta",
+            current_candidate_run_ref="/tmp/bench_run",
+            current_candidate_status="benchmarked",
+            current_candidate_attempt_index=2,
+            current_endgame_recommendation="bench",
+            comparison_anchor_run_ref="/tmp/baseline_bench",
+            comparison_anchor_label="baseline_bench",
+            best_known_candidate_id="cand_alpha",
+            best_known_candidate_run_ref="/tmp/old_best",
+            best_known_candidate_reason="correctness_recovered",
+            candidate_history=["cand_alpha", "cand_beta"],
+            candidate_run_history=["/tmp/old_best", "/tmp/bench_run"],
+            candidate_lineage_events=[
+                {
+                    "candidate_id": "cand_alpha",
+                    "candidate_role": "patched_candidate",
+                    "parent_candidate_id": None,
+                    "run_ref": "/tmp/old_best",
+                    "status": "benchmarked",
+                },
+                {
+                    "candidate_id": "cand_beta",
+                    "candidate_role": "branched_candidate",
+                    "parent_candidate_id": "cand_alpha",
+                    "run_ref": "/tmp/bench_run",
+                    "status": "benchmarked",
+                },
+            ],
+        )
+
+        refreshed = _refresh_candidate_tree_state(state)
+
+        self.assertEqual(refreshed.current_endgame_recommendation, "compare")
+        self.assertIn("compare", refreshed.current_legal_next_actions)
+
 
 if __name__ == "__main__":
     unittest.main()
