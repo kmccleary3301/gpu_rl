@@ -5,7 +5,7 @@
   "source_commit": "abb0a50e9444021761955d9ac44021e9e9dfe63c",
   "source_subtree": "problems",
   "curation_batch": "kernelbench_v3_initial_slice",
-  "case_count": 3,
+  "case_count": 5,
   "included_cases": [
     {
       "official_problem_id": 23,
@@ -28,6 +28,22 @@
       "official_problem_id": 99,
       "source_case_ref": "problems/level2/99_Matmul_GELU_Softmax.py",
       "operator_family": "fused_matmul_activation_softmax",
+      "provenance_kind": "official-heldout",
+      "official_track": "open",
+      "held_out": true
+    },
+    {
+      "official_problem_id": 43,
+      "source_case_ref": "problems/level3/43_MinGPTCausalAttention.py",
+      "operator_family": "causal_attention_block",
+      "provenance_kind": "official-heldout",
+      "official_track": "open",
+      "held_out": true
+    },
+    {
+      "official_problem_id": 44,
+      "source_case_ref": "problems/level3/44_MiniGPTBlock.py",
+      "operator_family": "transformer_block",
       "provenance_kind": "official-heldout",
       "official_track": "open",
       "held_out": true
