@@ -1,0 +1,40 @@
+{
+  "task_id": "task/attention_score_harder/eval/v1",
+  "verb": "optimize",
+  "operator_family": "attention_score_tile",
+  "difficulty": "harder",
+  "prompt": "Run a Triton causal attention-score kernel on CUDA for an even wider head and denser causal score grid and print JSON with visible_attention_scores, hidden_attention_scores, and optimization_summary. The harder hidden path uses a wider head dimension and a larger causal matrix than attention_score_hard, and the accepted optimization summary may either promote the harder attention candidate or supersede it with a ranked variant. Use Triton rather than torch.matmul or scaled_dot_product_attention shortcuts.",
+  "baseline_ref": "workloads/baselines/attention_score_harder_eval_baseline.json",
+  "reference_impl_ref": "workloads/reference/triton_attention_score_harder_optimize_patchable_candidate.py",
+  "visible_tests_ref": "workloads/tests/attention_score_hard_visible.py",
+  "hidden_tests_ref": "workloads/tests/attention_score_harder_hidden.py",
+  "input_generator_ref": null,
+  "deterministic_mode": true,
+  "feature_requirements": ["cuda", "torch", "triton"],
+  "numerical_policy": {
+    "dtype_matrix": ["fp32"],
+    "rtol": 1e-05,
+    "atol": 1e-06
+  },
+  "perf_protocol": {
+    "warmups": 1,
+    "repeats": 3,
+    "timer": "wall_clock",
+    "split_compile_from_run": true
+  },
+  "allowed_backends": ["triton"],
+  "forbidden_patterns": [
+    "torch.matmul(",
+    "scaled_dot_product_attention("
+  ],
+  "required_artifacts": [
+    "meta/doctor_report.json",
+    "prompt/task_spec.json",
+    "correctness/correctness.json",
+    "correctness/determinism.json",
+    "eval/anti_hack_report.json",
+    "eval/eval_envelope.json",
+    "perf/benchmark.json",
+    "perf/raw_timings.json"
+  ]
+}

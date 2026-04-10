@@ -1,0 +1,35 @@
+{
+  "benchmark_source": "kernelbench-v3",
+  "benchmark_case_id": "kernelbench-v3/level1/23_online_softmax_streaming_harder",
+  "benchmark_case_version": "v3.1",
+  "problem_relpath": "../problems/level1/23_Softmax.py",
+  "provenance_kind": "curated-derivative",
+  "official_track": "open",
+  "official_problem_id": 23,
+  "variant_kind": "online-softmax-streaming-harder",
+  "source_variant_of": "kernelbench-v3/level1/23_softmax",
+  "source_repo": "https://github.com/Infatoshi/KernelBench-v3",
+  "source_commit": "abb0a50e9444021761955d9ac44021e9e9dfe63c",
+  "hardware_targets": ["RTX3090", "H100", "B200"],
+  "visible": {
+    "seed": 42,
+    "module_overrides": {
+      "batch_size": 16,
+      "dim": 384
+    }
+  },
+  "hidden": {
+    "seed": 123,
+    "module_overrides": {
+      "batch_size": 24,
+      "dim": 640
+    }
+  },
+  "benchmark": {
+    "seed": 456,
+    "module_overrides": {
+      "batch_size": 48,
+      "dim": 1536
+    }
+  }
+}

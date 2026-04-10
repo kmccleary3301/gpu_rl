@@ -1,0 +1,53 @@
+{
+  "config_id": "cfg/baseline/gpt54_phase5a_successor_slice/v5",
+  "policy_id": "gpt54_phase5a_successor_slice_v5",
+  "provider_priority": [
+    "openai",
+    "openrouter"
+  ],
+  "model_by_provider": {
+    "openai": "gpt-5.4",
+    "openrouter": "openai/gpt-5.4-pro"
+  },
+  "generation": {
+    "temperature": 0.2,
+    "max_completion_tokens": 900,
+    "timeout_s": 120
+  },
+  "budgets": {
+    "step_budget": 19,
+    "max_retries": 1,
+    "max_patches": 3,
+    "max_branches": 2,
+    "max_reverts": 1,
+    "max_promotes": 1,
+    "max_compares": 3,
+    "max_replays": 1,
+    "max_knowledge_queries": 1
+  },
+  "tasks": [
+    {
+      "task_ref": "task/attention_score_harder/eval/v1",
+      "variant": "positive",
+      "multi_candidate_mode": "three_attempt_positive_v1"
+    },
+    {
+      "task_ref": "task/kv_cache_gather_harder/eval/v1",
+      "variant": "positive",
+      "multi_candidate_mode": "three_attempt_positive_v1"
+    },
+    {
+      "task_ref": "task/routing_argmax_hardest/eval/v1",
+      "variant": "positive",
+      "multi_candidate_mode": "three_attempt_positive_v1"
+    },
+    {
+      "task_ref": "task/kernelbench_v3/level2/99_matmul_gelu_softmax_official/eval/v1",
+      "variant": "positive"
+    }
+  ],
+  "notes": [
+    "Phase 5A successor slice v5 after successor slice v4 went 4/4.",
+    "Replaces routing_argmax_harder with routing_argmax_hardest while keeping the harder attention, harder KV, and KB-v3 L2 held-out rung."
+  ]
+}

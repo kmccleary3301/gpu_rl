@@ -1,0 +1,13 @@
+{
+  "baseline_id": "baseline/routing_dispatch_tileaware_harder/eval/v1",
+  "command": [
+    "python3",
+    "workloads/reference/triton_routing_argmax_hardest_baseline.py",
+    "--benchmark-repeats",
+    "20"
+  ],
+  "notes": [
+    "Stable CPU argmax baseline for the Phase 6A tile-aware routing bridge motif.",
+    "The benchmark path adds tile-grouped routing structure so dispatch-aware pressure appears before any full MoE micrograph is introduced."
+  ]
+}

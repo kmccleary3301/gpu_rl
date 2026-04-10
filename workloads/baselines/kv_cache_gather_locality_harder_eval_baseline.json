@@ -1,0 +1,13 @@
+{
+  "baseline_id": "baseline/kv_cache_gather_locality_harder/eval/v1",
+  "command": [
+    "python3",
+    "workloads/reference/triton_kv_cache_gather_baseline.py",
+    "--benchmark-repeats",
+    "20"
+  ],
+  "notes": [
+    "Naive CPU paged KV-cache gather baseline for the Phase 6A locality-sensitive bridge motif.",
+    "Uses the same baseline implementation while the benchmark path increases locality pressure through clustered repeated page_ids."
+  ]
+}

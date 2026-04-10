@@ -1,0 +1,12 @@
+{
+  "baseline_id": "baseline/online_softmax_streaming_harder/eval/v1",
+  "command": [
+    "python3",
+    "workloads/reference/kernelbench_v3_online_softmax_streaming_harder_optimize_patchable_candidate.py",
+    "--benchmark-repeats",
+    "30"
+  ],
+  "notes": [
+    "Phase 6A motif bridge baseline for the curated online-softmax streaming harder derivative."
+  ]
+}
