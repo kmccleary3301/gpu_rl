@@ -128,6 +128,18 @@ class LocalOptimizeCheckpointEvalTests(unittest.TestCase):
         )
         self.assertEqual(allowed, ["patch_candidate", "knowledge_query"])
 
+    def test_non_patch_task_drops_multi_candidate_mode(self) -> None:
+        root = Path("/home/kmccleary/projects/gpu_code_agents/gpu_rl")
+        task_ctx = local_eval.harness._task_context(
+            root,
+            "task/kernelbench_v3/level2/99_matmul_gelu_softmax_official/eval/v1",
+            "positive",
+        )
+        self.assertIsNone(task_ctx.get("patch"))
+        task_ctx["multi_candidate_mode"] = "three_attempt_positive_v1"
+        normalized = local_eval.harness._normalize_runner_task_context(task_ctx)
+        self.assertIsNone(normalized.get("multi_candidate_mode"))
+
     def test_three_attempt_hints_prefer_branch_after_first_compare(self) -> None:
         root = Path("/home/kmccleary/projects/gpu_code_agents/gpu_rl")
         task_ctx = local_eval.harness._task_context(root, "task/attention_score/eval/v1", "positive")

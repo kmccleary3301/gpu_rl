@@ -9,7 +9,7 @@ from gpu_cockpit.executors import make_executor
 from gpu_cockpit.engine.adapter_registry import describe_adapter, get_adapter, list_adapter_cases, list_adapters
 from gpu_cockpit.engine.benchmark import run_subprocess_benchmark, run_task_benchmark
 from gpu_cockpit.engine.doctor import collect_doctor_report
-from gpu_cockpit.engine.evaluator import run_evaluation_hooks
+from gpu_cockpit.engine.evaluator import eval_envelope_counts_as_success, run_evaluation_hooks
 from gpu_cockpit.engine.environment import list_action_space, run_scripted_reference_episode
 from gpu_cockpit.engine.indexer import list_runs
 from gpu_cockpit.engine.inspector import compare_runs, inspect_run
@@ -651,7 +651,7 @@ def main() -> int:
             executor=command_executor,
         )
 
-        status = "ok" if envelope.final_score > 0 else "failed"
+        status = "ok" if eval_envelope_counts_as_success(task, envelope) else "failed"
         key_artifacts = [
             "manifest.json",
             "events.jsonl",
@@ -661,6 +661,7 @@ def main() -> int:
             "correctness/correctness.json",
             "correctness/determinism.json",
             "eval/anti_hack_report.json",
+            "eval/import_trace.json",
             "eval/eval_envelope.json",
         ]
         if doctor_report.hardware_fingerprints:

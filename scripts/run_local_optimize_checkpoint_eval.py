@@ -105,16 +105,12 @@ def _generate_action(
     *,
     model: Any,
     tokenizer: Any,
-    system_prompt: str,
-    user_prompt: str,
+    messages: list[dict[str, str]],
     temperature: float,
     max_new_tokens: int,
 ) -> dict[str, Any]:
     prompt = tokenizer.apply_chat_template(
-        [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
-        ],
+        messages,
         tokenize=False,
         add_generation_prompt=True,
     )
@@ -150,6 +146,7 @@ def _run_episode(
     for extra_key in ("multi_candidate_mode",):
         if extra_key in task_spec:
             task_ctx[extra_key] = task_spec[extra_key]
+    task_ctx = harness._normalize_runner_task_context(task_ctx)
     workspace_snapshot = harness._capture_restore_targets(task_ctx)
     action_specs = [spec.model_dump(mode="json") for spec in harness.list_action_space()]
     base_allowed_actions = harness._allowed_actions(action_specs, task_ctx)
@@ -171,7 +168,7 @@ def _run_episode(
         "eval_actions": 0,
         "bench_actions": 0,
     }
-    terminal_reason = "budget_exhausted"
+    terminal_reason: str | None = None
     generation = dict(config.get("generation", {}))
 
     def write_partial(phase: str, extra: dict[str, Any] | None = None) -> None:
@@ -193,6 +190,11 @@ def _run_episode(
         )
 
     try:
+        stable_prompt_context = harness._stable_prompt_context(
+            task_ctx=task_ctx,
+            budgets=budgets,
+            base_allowed_actions=base_allowed_actions,
+        )
         write_partial("initialized")
         while state.step_budget_remaining > 0:
             state_view = harness._state_snapshot(state)
@@ -211,7 +213,7 @@ def _run_episode(
                 counters=counters,
                 step_records=step_records,
             )
-            user_prompt = json.dumps(observation_packet, indent=2, sort_keys=True)
+            messages = harness._build_chat_messages(stable_prompt_context, observation_packet)
             write_partial(
                 "awaiting_model_response",
                 {"turn_index": len(model_turns), "observation_packet": observation_packet},
@@ -219,8 +221,7 @@ def _run_episode(
             response = _generate_action(
                 model=model,
                 tokenizer=tokenizer,
-                system_prompt=harness.SYSTEM_PROMPT,
-                user_prompt=user_prompt,
+                messages=messages,
                 temperature=float(generation.get("temperature", 0.0)),
                 max_new_tokens=int(generation.get("max_new_tokens", 256)),
             )
@@ -312,8 +313,8 @@ def _run_episode(
     finally:
         harness._restore_files(workspace_snapshot)
 
-    if terminal_reason == "continue" and state.step_budget_remaining <= 0:
-        terminal_reason = "budget_exhausted"
+    if terminal_reason is None:
+        terminal_reason = "budget_exhausted" if state.step_budget_remaining <= 0 else "unknown"
 
     success = False
     if step_records:
@@ -323,11 +324,18 @@ def _run_episode(
         "task_ref": task_ctx["task_ref"],
         "variant": task_ctx["variant"],
         "verb": task_ctx["verb"],
+        "operator_family": task_ctx["operator_family"],
+        "difficulty": task_ctx.get("difficulty"),
+        "baseline_ref": task_ctx.get("baseline_ref"),
+        "baseline_id": task_ctx.get("baseline_id"),
+        "baseline_kind": task_ctx.get("baseline_kind"),
+        "task_bucket": task_ctx.get("task_bucket"),
         "success": success,
         "terminal_reason": terminal_reason,
         "model": model_label,
         "step_count": _step_count(step_records),
         "counters": counters,
+        "usage_summary": harness._usage_summary(model_turns),
         "state": harness._state_snapshot(state),
         "steps": step_records,
         "model_turns": model_turns,
@@ -378,10 +386,18 @@ def main() -> int:
             {
                 "task_ref": report["task_ref"],
                 "variant": report["variant"],
+                "verb": report["verb"],
+                "operator_family": report.get("operator_family"),
+                "difficulty": report.get("difficulty"),
+                "baseline_ref": report.get("baseline_ref"),
+                "baseline_id": report.get("baseline_id"),
+                "baseline_kind": report.get("baseline_kind"),
+                "task_bucket": report.get("task_bucket"),
                 "success": report["success"],
                 "terminal_reason": report["terminal_reason"],
                 "step_count": report["step_count"],
                 "counters": report["counters"],
+                "usage_summary": report.get("usage_summary", {}),
             }
             for report in episode_reports
         ],

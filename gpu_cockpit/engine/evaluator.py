@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import json
 import os
 import sys
@@ -55,6 +56,201 @@ def _read_text_file(path: Path, max_bytes: int = 1_000_000) -> str | None:
         return None
 
 
+def _path_within_root(path: Path, root: Path) -> bool:
+    try:
+        path.resolve().relative_to(root.resolve())
+        return True
+    except ValueError:
+        return False
+
+
+def _resolve_existing_command_files(root: Path, command: list[str]) -> list[Path]:
+    resolved: list[Path] = []
+    seen: set[Path] = set()
+    for token in command:
+        candidate = Path(token)
+        if not candidate.is_absolute():
+            candidate = root / candidate
+        candidate = candidate.resolve()
+        if not candidate.exists() or not candidate.is_file():
+            continue
+        if not _path_within_root(candidate, root):
+            continue
+        if candidate in seen:
+            continue
+        seen.add(candidate)
+        resolved.append(candidate)
+    return resolved
+
+
+def _resolve_python_import_target(importer: Path, root: Path, *, module: str | None, level: int) -> Path | None:
+    module_parts = [part for part in (module or "").split(".") if part]
+    candidate_paths: list[Path] = []
+    if level > 0:
+        base = importer.parent
+        for _ in range(level - 1):
+            base = base.parent
+        if module_parts:
+            candidate_paths.extend(
+                [
+                    (base / Path(*module_parts)).with_suffix(".py"),
+                    base / Path(*module_parts) / "__init__.py",
+                ]
+            )
+    else:
+        for search_root in [importer.parent, root]:
+            if module_parts:
+                candidate_paths.extend(
+                    [
+                        (search_root / Path(*module_parts)).with_suffix(".py"),
+                        search_root / Path(*module_parts) / "__init__.py",
+                    ]
+                )
+    for candidate in candidate_paths:
+        if candidate.exists() and candidate.is_file() and _path_within_root(candidate, root):
+            return candidate.resolve()
+    return None
+
+
+def _resolve_import_from_alias_targets(
+    importer: Path,
+    root: Path,
+    *,
+    module: str | None,
+    level: int,
+    resolved_module_target: Path | None,
+    alias_names: list[str],
+) -> list[Path]:
+    package_dir: Path | None = None
+    if resolved_module_target is not None and resolved_module_target.name == "__init__.py":
+        package_dir = resolved_module_target.parent
+    elif level > 0:
+        package_dir = importer.parent
+        for _ in range(level - 1):
+            package_dir = package_dir.parent
+        if module:
+            package_dir = package_dir / Path(*[part for part in module.split(".") if part])
+    if package_dir is None:
+        return []
+    resolved: list[Path] = []
+    for alias_name in alias_names:
+        if alias_name == "*":
+            continue
+        for candidate in [
+            (package_dir / alias_name).with_suffix(".py"),
+            package_dir / alias_name / "__init__.py",
+        ]:
+            if candidate.exists() and candidate.is_file() and _path_within_root(candidate, root):
+                resolved.append(candidate.resolve())
+                break
+    return resolved
+
+
+def _trace_python_sources(entrypoints: list[Path], root: Path) -> tuple[list[Path], dict[str, Any]]:
+    resolved_files: list[Path] = []
+    edges: list[dict[str, Any]] = []
+    unresolved_imports: list[dict[str, Any]] = []
+    seen_files: set[Path] = set()
+    seen_unresolved: set[tuple[str, int, str | None]] = set()
+    queue = [path.resolve() for path in entrypoints if path.suffix == ".py"]
+
+    while queue:
+        path = queue.pop(0)
+        if path in seen_files or not path.exists() or not path.is_file():
+            continue
+        seen_files.add(path)
+        resolved_files.append(path)
+        source = _read_text_file(path)
+        if source is None:
+            continue
+        try:
+            tree = ast.parse(source, filename=str(path))
+        except SyntaxError:
+            continue
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    module = alias.name
+                    target = _resolve_python_import_target(path, root, module=module, level=0)
+                    if target is not None:
+                        edges.append({"importer": str(path), "module": module, "resolved_path": str(target)})
+                        if target not in seen_files:
+                            queue.append(target)
+                    else:
+                        key = (str(path), 0, module)
+                        if key not in seen_unresolved:
+                            seen_unresolved.add(key)
+                            unresolved_imports.append({"importer": str(path), "module": module, "level": 0})
+            elif isinstance(node, ast.ImportFrom):
+                module = node.module
+                level = int(node.level)
+                target = _resolve_python_import_target(path, root, module=module, level=level)
+                if target is not None:
+                    edges.append(
+                        {
+                            "importer": str(path),
+                            "module": module,
+                            "level": level,
+                            "resolved_path": str(target),
+                        }
+                    )
+                    if target not in seen_files:
+                        queue.append(target)
+                alias_targets = _resolve_import_from_alias_targets(
+                    path,
+                    root,
+                    module=module,
+                    level=level,
+                    resolved_module_target=target,
+                    alias_names=[alias.name for alias in node.names],
+                )
+                for alias_target in alias_targets:
+                    edges.append(
+                        {
+                            "importer": str(path),
+                            "module": module,
+                            "level": level,
+                            "resolved_path": str(alias_target),
+                        }
+                    )
+                    if alias_target not in seen_files:
+                        queue.append(alias_target)
+                if target is None and not alias_targets:
+                    key = (str(path), level, module)
+                    if key not in seen_unresolved:
+                        seen_unresolved.add(key)
+                        unresolved_imports.append({"importer": str(path), "module": module, "level": level})
+
+    return resolved_files, {
+        "entrypoints": [str(path) for path in entrypoints],
+        "resolved_python_files": [str(path) for path in resolved_files],
+        "unresolved_imports": unresolved_imports,
+        "edges": edges,
+    }
+
+
+def resolve_antihack_scan_paths(
+    *,
+    root: Path,
+    command: list[str],
+    explicit_scan_paths: list[Path] | None = None,
+) -> tuple[list[Path], dict[str, Any]]:
+    explicit_scan_paths = explicit_scan_paths or []
+    command_files = _resolve_existing_command_files(root, command)
+    traced_python_files, import_trace = _trace_python_sources(command_files, root)
+    combined: list[Path] = []
+    seen: set[Path] = set()
+    for candidate in [*command_files, *traced_python_files, *explicit_scan_paths]:
+        resolved = candidate.resolve()
+        if not resolved.exists():
+            continue
+        if resolved in seen:
+            continue
+        seen.add(resolved)
+        combined.append(resolved)
+    return combined, import_trace
+
+
 def _pattern_category(pattern: str) -> str:
     lowered = pattern.lower()
     if "cpu_fallback" in lowered or "cpu fallback" in lowered:
@@ -62,6 +258,39 @@ def _pattern_category(pattern: str) -> str:
     if lowered.startswith("torch.") or lowered.startswith("triton.") or lowered.startswith("cupy.") or lowered.startswith("jax."):
         return "library_shortcut"
     return "forbidden_pattern"
+
+
+def eval_envelope_counts_as_success(task: TaskSpec, envelope: EvalEnvelope) -> bool:
+    non_perf_pass = (
+        envelope.compile_gate == "pass"
+        and envelope.correctness_gate == "pass"
+        and envelope.anti_hack_gate == "pass"
+        and envelope.determinism_gate == "pass"
+    )
+    if not non_perf_pass:
+        return False
+    if task.verb == "optimize" and task.baseline_ref:
+        return envelope.perf_gate == "pass"
+    return True
+
+
+def classify_perf_failure(perf_report: PerfReport) -> list[str]:
+    reasons: list[str] = []
+    notes = set(perf_report.perf_notes)
+    surfaces = perf_report.score_surfaces or {}
+    startup = surfaces.get("startup_diagnostics") if isinstance(surfaces.get("startup_diagnostics"), dict) else {}
+    if "candidate_startup_dominated" in notes or bool(startup.get("candidate_startup_dominated")):
+        reasons.append("startup_dominated_candidate")
+    if "baseline_startup_dominated" in notes or bool(startup.get("baseline_startup_dominated")):
+        reasons.append("startup_dominated_baseline")
+    if not bool((surfaces.get("inprocess_kernel_perf") or {}).get("available")):
+        reasons.append("missing_inprocess_timer")
+    baseline_kind = str(perf_report.benchmark_provenance.get("baseline_kind", "") or "")
+    if "cpu" in baseline_kind:
+        reasons.append("cpu_reference_mismatch")
+    if not reasons:
+        reasons.append("candidate_algorithm_slow")
+    return reasons
 
 
 def run_hook(
@@ -264,9 +493,10 @@ def _build_learning_reward_trace(
     determinism_passed: bool,
     perf_gate: str,
     passes_non_perf_gates: bool,
+    task_success: bool,
 ) -> LearningRewardTrace:
     reward_components = {
-        "task_success": 0.6 if passes_non_perf_gates else 0.0,
+        "task_success": 0.6 if task_success else 0.0,
         "correctness": 0.25 if correctness_gate == "pass" else 0.0,
         "determinism": 0.1 if determinism_passed else 0.0,
         "perf_improvement": 0.05 if perf_gate == "pass" else 0.0,
@@ -278,13 +508,15 @@ def _build_learning_reward_trace(
     notes: list[str] = []
     if perf_gate in {"blocked", "not_run"}:
         notes.append(f"perf_gate:{perf_gate}")
+    elif task.verb == "optimize" and perf_gate == "fail":
+        notes.append("perf_gate:fail")
     if not anti_hack_passed:
         notes.append("anti_hack_failed")
     reward_ledger = RewardLedger(
         task_id=task.task_id,
         task_verb=task.verb,
-        task_outcome="success" if passes_non_perf_gates else "failure",
-        trace_usability="trainable_positive" if passes_non_perf_gates else "analysis_only",
+        task_outcome="success" if task_success else "failure",
+        trace_usability="trainable_positive" if task_success else "analysis_only",
         entries=[
             RewardLedgerEntry(
                 step_index=0,
@@ -302,10 +534,10 @@ def _build_learning_reward_trace(
     return LearningRewardTrace(
         task_id=task.task_id,
         task_verb=task.verb,
-        terminal_state="success" if passes_non_perf_gates else "failure",
-        task_outcome="success" if passes_non_perf_gates else "failure",
-        trace_usability="trainable_positive" if passes_non_perf_gates else "analysis_only",
-        task_success=passes_non_perf_gates,
+        terminal_state="success" if task_success else "failure",
+        task_outcome="success" if task_success else "failure",
+        trace_usability="trainable_positive" if task_success else "analysis_only",
+        task_success=task_success,
         correctness_passed=correctness_gate == "pass",
         determinism_passed=determinism_passed,
         anti_hack_passed=anti_hack_passed,
@@ -331,6 +563,14 @@ def run_evaluation_hooks(
     executor: CommandExecutor | None = None,
 ) -> tuple[CorrectnessReport, AntiHackReport, DeterminismReport, EvalEnvelope]:
     executor = executor or LocalHostToolExecutor()
+    resolved_scan_paths, import_trace = resolve_antihack_scan_paths(root=root, command=command, explicit_scan_paths=scan_paths)
+    writer.write_artifact(
+        relative_path="eval/import_trace.json",
+        kind="import_trace",
+        content=json.dumps(import_trace, indent=2) + "\n",
+        mime="application/json",
+        semantic_tags=["eval", "anti-hack", "import-trace"],
+    )
     env = {
         "GPC_RUN_DIR": str(writer.run_dir),
         "GPC_COMMAND_JSON": json.dumps(command),
@@ -406,7 +646,7 @@ def run_evaluation_hooks(
         task=task,
         command=command,
         command_summary=command_summary,
-        scan_paths=scan_paths,
+        scan_paths=resolved_scan_paths,
     )
 
     correctness_gate = "pass"
@@ -441,6 +681,7 @@ def run_evaluation_hooks(
             perf_reward = 0.2 if perf_gate == "pass" else 0.0
             if perf_gate == "fail":
                 gate_reasons.append("candidate slower than baseline")
+                gate_reasons.extend(classify_perf_failure(perf_report))
 
     envelope = EvalEnvelope(
         compile_gate="pass" if correctness.compile_ok else "fail",
@@ -455,6 +696,7 @@ def run_evaluation_hooks(
         },
         final_score=binary_reward + perf_reward if passes_non_perf_gates else 0.0,
     )
+    task_success = eval_envelope_counts_as_success(task, envelope)
     learning_reward_trace = _build_learning_reward_trace(
         task=task,
         correctness_gate=correctness_gate,
@@ -462,6 +704,7 @@ def run_evaluation_hooks(
         determinism_passed=determinism.passed,
         perf_gate=perf_gate,
         passes_non_perf_gates=passes_non_perf_gates,
+        task_success=task_success,
     )
     writer.write_artifact(
         relative_path="eval/eval_envelope.json",

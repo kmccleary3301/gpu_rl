@@ -30,3 +30,4 @@ class PerfReport(ContractModel):
     hardware_fingerprint: dict[str, Any] | None = None
     benchmark_provenance: dict[str, Any] = Field(default_factory=dict)
     perf_notes: list[str] = Field(default_factory=list)
+    score_surfaces: dict[str, Any] = Field(default_factory=dict)

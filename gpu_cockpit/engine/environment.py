@@ -26,7 +26,7 @@ from gpu_cockpit.contracts import (
 from gpu_cockpit.engine.adapter_registry import get_adapter
 from gpu_cockpit.engine.benchmark import run_task_benchmark
 from gpu_cockpit.engine.doctor import collect_doctor_report
-from gpu_cockpit.engine.evaluator import run_evaluation_hooks
+from gpu_cockpit.engine.evaluator import eval_envelope_counts_as_success, run_evaluation_hooks
 from gpu_cockpit.engine.indexer import list_runs
 from gpu_cockpit.engine.inspector import compare_runs, inspect_run, resolve_run_dir
 from gpu_cockpit.engine.knowledge import query_knowledge
@@ -1243,7 +1243,7 @@ def _execute_eval(
         executor=command_executor,
     )
 
-    status = "ok" if envelope.final_score > 0 else "failed"
+    status = "ok" if eval_envelope_counts_as_success(task, envelope) else "failed"
     key_artifacts = [
         "manifest.json",
         "events.jsonl",
@@ -1253,6 +1253,7 @@ def _execute_eval(
         "correctness/correctness.json",
         "correctness/determinism.json",
         "eval/anti_hack_report.json",
+        "eval/import_trace.json",
         "eval/eval_envelope.json",
         "eval/gate_summary.json",
         "summary.json",

@@ -18,6 +18,7 @@ class PerfProtocol(ContractModel):
     repeats: int = Field(ge=1)
     timer: Literal["cuda_event", "hip_event", "wall_clock"]
     split_compile_from_run: bool = True
+    benchmark_args: list[str] = Field(default_factory=list)
 
 
 class TaskSpec(ContractModel):
