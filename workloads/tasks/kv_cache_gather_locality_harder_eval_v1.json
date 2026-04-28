@@ -26,7 +26,12 @@
     "warmups": 1,
     "repeats": 3,
     "timer": "wall_clock",
-    "split_compile_from_run": true
+    "split_compile_from_run": true,
+    "benchmark_args": [
+      "--benchmark-repeats",
+      "20",
+      "--benchmark-only"
+    ]
   },
   "allowed_backends": [
     "triton"

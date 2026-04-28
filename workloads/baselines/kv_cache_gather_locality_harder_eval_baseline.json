@@ -4,7 +4,8 @@
     "python3",
     "workloads/reference/triton_kv_cache_gather_baseline.py",
     "--benchmark-repeats",
-    "20"
+    "20",
+    "--benchmark-only"
   ],
   "notes": [
     "Naive CPU paged KV-cache gather baseline for the Phase 6A locality-sensitive bridge motif.",

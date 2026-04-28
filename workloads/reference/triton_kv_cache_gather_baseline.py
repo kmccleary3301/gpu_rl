@@ -2,8 +2,17 @@ from __future__ import annotations
 
 import argparse
 import json
+from pathlib import Path
+import sys
 
 import torch
+
+HERE = Path(__file__).resolve().parent
+ROOT = HERE.parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from gpu_cockpit.engine.inprocess_timing import wall_clock_timing_ms
 
 
 VISIBLE_CACHE = torch.tensor(
@@ -44,10 +53,19 @@ def _benchmark_inputs(num_pages: int, seq_len: int, head_dim: int) -> tuple[torc
 
 
 def _run_benchmark(repeats: int) -> None:
+    if repeats <= 0:
+        return
     cache, page_ids = _benchmark_inputs(num_pages=1024, seq_len=4096, head_dim=128)
     for _ in range(repeats):
         out = naive_kv_cache_gather(cache, page_ids)
     _ = out
+
+
+def _inprocess_timing(repeats: int) -> dict[str, object] | None:
+    if repeats < 1:
+        return None
+    cache, page_ids = _benchmark_inputs(num_pages=1024, seq_len=4096, head_dim=128)
+    return wall_clock_timing_ms(lambda: naive_kv_cache_gather(cache, page_ids), warmups=1, repeats=repeats)
 
 
 def _serialize(cache: torch.Tensor, page_ids: torch.Tensor) -> list[list[float]]:
@@ -58,8 +76,14 @@ def _serialize(cache: torch.Tensor, page_ids: torch.Tensor) -> list[list[float]]
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--benchmark-repeats", type=int, default=50)
+    parser.add_argument("--benchmark-only", action="store_true")
     args = parser.parse_args()
 
+    if args.benchmark_only:
+        timing = _inprocess_timing(args.benchmark_repeats)
+        if timing is not None:
+            print(json.dumps({"inprocess_kernel_timing": timing}, sort_keys=True))
+        return
     _run_benchmark(args.benchmark_repeats)
     print(
         json.dumps(
