@@ -29,13 +29,24 @@ def _load_episodes(batch_dirs: list[Path]) -> list[dict[str, Any]]:
 
 
 def _usage_totals(episode: dict[str, Any]) -> dict[str, int]:
-    totals = {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
+    totals = {
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "cached_tokens": 0,
+        "uncached_prompt_tokens": 0,
+    }
     for turn in episode.get("model_turns", []):
         usage = turn.get("usage", {})
-        for key in totals:
+        for key in ("prompt_tokens", "completion_tokens", "total_tokens"):
             value = usage.get(key, 0)
             if isinstance(value, int):
                 totals[key] += value
+        prompt_details = usage.get("prompt_tokens_details", {})
+        cached_value = prompt_details.get("cached_tokens", 0) if isinstance(prompt_details, dict) else 0
+        if isinstance(cached_value, int):
+            totals["cached_tokens"] += cached_value
+    totals["uncached_prompt_tokens"] = max(totals["prompt_tokens"] - totals["cached_tokens"], 0)
     return totals
 
 
@@ -164,6 +175,8 @@ def build_report(batch_dirs: list[Path]) -> dict[str, Any]:
     prompt_tokens = 0
     completion_tokens = 0
     total_tokens = 0
+    cached_tokens = 0
+    uncached_prompt_tokens = 0
 
     episode_rows: list[dict[str, Any]] = []
     for episode in episodes:
@@ -172,6 +185,8 @@ def build_report(batch_dirs: list[Path]) -> dict[str, Any]:
         prompt_tokens += usage["prompt_tokens"]
         completion_tokens += usage["completion_tokens"]
         total_tokens += usage["total_tokens"]
+        cached_tokens += usage["cached_tokens"]
+        uncached_prompt_tokens += usage["uncached_prompt_tokens"]
         if alignment == "aligned":
             aligned += 1
         elif alignment == "questionable":
@@ -200,7 +215,7 @@ def build_report(batch_dirs: list[Path]) -> dict[str, Any]:
         "provider_route": "openai_primary",
         "provider_backup": "openrouter_available",
         "model_primary": "gpt-5.4",
-        "model_backup": "openai/gpt-5.4-pro",
+        "model_backup": "openai/gpt-5.4",
         "summary": {
             "episode_count": len(episodes),
             "environment_success_count": environment_successes,
@@ -213,6 +228,9 @@ def build_report(batch_dirs: list[Path]) -> dict[str, Any]:
             "avg_total_tokens": round(total_tokens / len(episodes), 2) if episodes else 0.0,
             "avg_prompt_tokens": round(prompt_tokens / len(episodes), 2) if episodes else 0.0,
             "avg_completion_tokens": round(completion_tokens / len(episodes), 2) if episodes else 0.0,
+            "avg_cached_tokens": round(cached_tokens / len(episodes), 2) if episodes else 0.0,
+            "avg_uncached_prompt_tokens": round(uncached_prompt_tokens / len(episodes), 2) if episodes else 0.0,
+            "cached_token_rate": round(cached_tokens / prompt_tokens, 4) if prompt_tokens else 0.0,
         },
         "episodes": episode_rows,
         "strengths": _strengths(episodes),

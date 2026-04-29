@@ -192,7 +192,7 @@ def build_report(batch_dirs: list[Path]) -> dict[str, Any]:
         "provider_route": "openai_primary",
         "provider_backup": "openrouter_available",
         "model_primary": "gpt-5.4",
-        "model_backup": "openai/gpt-5.4-pro",
+        "model_backup": "openai/gpt-5.4",
         "summary": {
             "episode_count": len(episodes),
             "environment_success_count": environment_successes,
