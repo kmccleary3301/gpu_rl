@@ -7,7 +7,7 @@
   ],
   "model_by_provider": {
     "openai": "gpt-5.4",
-    "openrouter": "openai/gpt-5.4-pro"
+    "openrouter": "openai/gpt-5.4"
   },
   "generation": {
     "temperature": 0.2,
