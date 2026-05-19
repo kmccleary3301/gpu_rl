@@ -190,6 +190,11 @@
       },
       "title": "Perf Notes",
       "type": "array"
+    },
+    "score_surfaces": {
+      "additionalProperties": true,
+      "title": "Score Surfaces",
+      "type": "object"
     }
   },
   "required": [

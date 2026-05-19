@@ -47,9 +47,11 @@ class AdapterRegistryTests(unittest.TestCase):
         self.assertEqual(kernelbench["case_count"], 11)
         self.assertIn("case/kernelbench/level1/32_hardtanh/v0_1", kernelbench["cases"])
         self.assertIn("case/kernelbench/level1/23_softmax_wide/v0_1", kernelbench["cases"])
-        self.assertEqual(kernelbench_v3["case_count"], 2)
+        self.assertEqual(kernelbench_v3["case_count"], 5)
         self.assertIn("case/kernelbench_v3/level1/23_softmax_official/v3_1", kernelbench_v3["cases"])
         self.assertIn("case/kernelbench_v3/level1/23_softmax_wide/v3_1", kernelbench_v3["cases"])
+        self.assertIn("case/kernelbench_v3/level3/43_mingpt_causal_attention_official/v3_1", kernelbench_v3["cases"])
+        self.assertIn("case/kernelbench_v3/level3/44_mingpt_block_official/v3_1", kernelbench_v3["cases"])
         self.assertEqual(computeeval["case_count"], 8)
         self.assertIn("case/computeeval/2025_1/cuda_10/v1", computeeval["cases"])
         self.assertIn("case/computeeval/2025_1/cuda_16_streams_audit/v1", computeeval["cases"])
@@ -159,11 +161,13 @@ class AdapterRegistryTests(unittest.TestCase):
 
     def test_describe_kernelbench_v3_reports_provenance_coverage(self) -> None:
         summary = describe_adapter(ROOT, "kernelbench_v3")
-        self.assertEqual(summary["case_count"], 2)
+        self.assertEqual(summary["case_count"], 5)
         self.assertEqual(summary["by_benchmark_level"]["level1"], 2)
-        self.assertEqual(summary["by_provenance_kind"]["official-heldout"], 1)
+        self.assertEqual(summary["by_benchmark_level"]["level2"], 1)
+        self.assertEqual(summary["by_benchmark_level"]["level3"], 2)
+        self.assertEqual(summary["by_provenance_kind"]["official-heldout"], 4)
         self.assertEqual(summary["by_provenance_kind"]["curated-derivative"], 1)
-        self.assertEqual(summary["by_track"]["open"], 2)
+        self.assertEqual(summary["by_track"]["open"], 5)
         self.assertIn("import_manifest", summary)
 
     def test_load_computeeval_case_and_task(self) -> None:

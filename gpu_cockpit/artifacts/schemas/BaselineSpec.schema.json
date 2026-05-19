@@ -10,11 +10,30 @@
       "title": "Baseline Id",
       "type": "string"
     },
+    "baseline_kind": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Baseline Kind"
+    },
     "command": {
       "items": {
         "type": "string"
       },
       "title": "Command",
+      "type": "array"
+    },
+    "benchmark_args": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Benchmark Args",
       "type": "array"
     },
     "notes": {

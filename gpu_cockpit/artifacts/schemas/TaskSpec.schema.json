@@ -64,6 +64,13 @@
           "default": true,
           "title": "Split Compile From Run",
           "type": "boolean"
+        },
+        "benchmark_args": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Benchmark Args",
+          "type": "array"
         }
       },
       "required": [

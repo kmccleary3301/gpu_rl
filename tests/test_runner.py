@@ -4,6 +4,7 @@ from pathlib import Path
 import json
 import shutil as shell_shutil
 import shutil
+import subprocess
 import sys
 import unittest
 from unittest.mock import patch
@@ -13,6 +14,12 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from gpu_cockpit.engine.runner import run_task
+
+
+def _docker_daemon_available() -> bool:
+    if not shell_shutil.which("docker"):
+        return False
+    return subprocess.run(["docker", "info"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False).returncode == 0
 
 
 class RunnerTests(unittest.TestCase):
@@ -55,7 +62,7 @@ class RunnerTests(unittest.TestCase):
         self.assertIsNone(public_task["hidden_tests_ref"])
         self.assertEqual(full_task["hidden_tests_ref"], "workloads/tests/smoke_hidden.py")
 
-    @unittest.skipUnless(shell_shutil.which("docker"), "docker is not available")
+    @unittest.skipUnless(_docker_daemon_available(), "docker daemon is not available")
     def test_run_task_with_local_docker_executor(self) -> None:
         run_dir = run_task(
             root=self.tmp_root,
@@ -150,14 +157,18 @@ class RunnerTests(unittest.TestCase):
         self.assertTrue((run_dir / "bottlenecks" / "primary.json").exists())
 
     def test_run_task_degrades_when_nvidia_tools_are_missing(self) -> None:
-        run_dir = run_task(
-            root=self.tmp_root,
-            task_ref="task/smoke/diagnose/v1",
-            command=["python3", "-c", "print('graceful degrade')"],
-            trace_system=False,
-            profile_kernel=True,
-            sanitize=True,
-        )
+        with (
+            patch("gpu_cockpit.engine.runner.profile_kernel_nvidia", side_effect=RuntimeError("ncu is not installed.")),
+            patch("gpu_cockpit.engine.runner.sanitize_nvidia", side_effect=RuntimeError("compute-sanitizer is not installed.")),
+        ):
+            run_dir = run_task(
+                root=self.tmp_root,
+                task_ref="task/smoke/diagnose/v1",
+                command=["python3", "-c", "print('graceful degrade')"],
+                trace_system=False,
+                profile_kernel=True,
+                sanitize=True,
+            )
         summary = json.loads((run_dir / "summary.json").read_text(encoding="utf-8"))
         self.assertIn("ncu is not installed.", summary["warnings"])
         self.assertIn("compute-sanitizer is not installed.", summary["warnings"])
