@@ -1,19 +1,80 @@
+# Secrets and local environment
 .env
 .env.*
 !.env.example
+.venv/
+.venv*/
+venv/
+env/
+.python-version.local
 
+# Local package/build material
+.local_pkgs/
+.local/
+build/
+dist/
+*.egg-info/
+
+# Generated project artifacts
 docs_tmp/
 runs/
 datasets/
 knowledge/index/
 artifacts/
+logging/
+logs/
+implementations/tooling_sys_prompts_cached/
+outputs/
+checkpoints/
+wandb/
+mlruns/
+tensorboard/
+*.sqlite
+*.sqlite3
+*.db
 
+# Private/generated benchmark and candidate material.
+# Force-add specific files intentionally if a public release needs them.
+workloads/candidates/
+workloads/**/phase10/
+workloads/**/phase11/
+workloads/**/phase12/
+workloads/**/phase13/
+workloads/**/phase14/
+workloads/**/phase15/
+workloads/**/phase16/
+workloads/**/phase16b/
+workloads/**/level5/
+workloads/tests/*_hidden.py
+workloads/tests/*_hidden_*.py
+workloads/tests/generators/
+
+# Python/test/cache noise
 __pycache__/
 *.py[cod]
 *.pyo
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
 
+# Temporary test and packaging scratch
 tests/tmp_*/
+tmp/
+temp/
+*.tmp
+*.bak
+*.zip
+*.tar
+*.tar.gz
+*.tgz
 
+# OS/editor noise
 .DS_Store
 Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
